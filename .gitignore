@@ -1,0 +1,28 @@
+# Build output
+bin/
+dist/
+build/
+*.test
+*.out
+coverage*
+
+# Language toolchains (for components introduced later; see docs/engineering/repository-layout.md)
+node_modules/
+.pnpm-store/
+target/
+
+# Local configuration and secrets: never committed (docs/engineering/CONVENTIONS.md)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
