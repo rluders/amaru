@@ -16,10 +16,10 @@ Start here: [README](README.md) · [PRD](docs/product/PRD.md) · [Architecture](
 6. **No infrastructure without an ADR**: workflow engines, brokers, databases, object storage, containers.
 7. **Never commit secrets.** Never log or print them. Never weaken the security baseline ([security model](docs/security/SECURITY_MODEL.md)); never auto-approve agent permissions.
 8. **Preserve existing work.** Look before deleting or overwriting; never discard uncommitted changes; no destructive git operations on shared branches.
-9. **License**: there is no LICENSE yet. Do not add, change or describe license terms; do not call Amaru "open source".
+9. **License**: decided in [ADR-0026](docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md) (fair-code community license + commercial licensing; Apache-2.0 for contracts and SDKs), but no LICENSE file exists yet. Do not add or change license files or license text; describe licensing only by linking ADR-0026; do not call Amaru "open source".
 
-## Architecture boundaries (proposed, see ARCHITECTURE)
-- The **Platform** owns domain state, Events, Policy and Approvals. **Clients** (Desktop, Web, editor plugins) only use the public API. **Workers** run Steps through **Providers**; they hold no authoritative state.
+## Architecture boundaries (accepted, not implemented; see ARCHITECTURE)
+- The **Platform** owns domain state, Events, Policy and Approvals. **Clients** (Web, Desktop, CLI) only use the public API. **Workers** run Steps through **Providers**; they hold no authoritative state.
 - Workflows reference **Capabilities**, never vendors. A new Provider must not change core code, contract shapes or UI architecture.
 - Contracts are versioned and UI-agnostic; fixtures are shared by all consumers.
 - Domain code is pure: no OS, process, network or vendor imports.

@@ -1,7 +1,8 @@
 ---
 title: Monorepo layout introduced incrementally, by evidence
-status: proposed
-date: 2026-10-24
+status: accepted
+date: 2026-10-25
+deciders: Ricardo Lüders
 ---
 
 # 0008. Monorepo layout introduced incrementally, by evidence
@@ -22,4 +23,4 @@ Amaru is a single monorepo whose target layout is documented in [repository-layo
 - *Polyrepo*: separates release cadences but makes cross-cutting contract changes expensive.
 
 ## Approval
-Proposed by Claude in the bootstrap. Awaiting product-owner decision. (The bootstrap follows it provisionally because the approved plan chose the same scope.)
+Proposed by: Claude (bootstrap, 2026-10-24) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session that resolved all open questions (explicit acceptance of every pending ADR).

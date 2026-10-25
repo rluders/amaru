@@ -1,6 +1,6 @@
 # Repository Layout
 
-What exists now, and the target layout areas are introduced into ([ADR-0008](../architecture/adr/0008-incremental-monorepo-layout.md), proposed).
+What exists now, and the target layout areas are introduced into ([ADR-0008](../architecture/adr/0008-incremental-monorepo-layout.md)).
 
 ## Current
 
@@ -14,27 +14,27 @@ amaru/
 ├── .agents/skills/         canonical Skills (SKILL.md per directory)
 ├── .claude/skills/         symlinks to .agents/skills/* for Claude Code
 ├── docs/
-│   ├── product/            PRD, glossary
-│   ├── architecture/       architecture, roadmap, decisions + adr/, open questions
+│   ├── product/            PRD, feature catalog, NFRs, glossary
+│   ├── architecture/       architecture hub + views, roadmap, work packages, decisions + adr/, open questions
 │   ├── engineering/        conventions, this file, agent instructions, validation
 │   ├── security/           security model
-│   └── migration/          Weave migration plan and inventory snapshot
+│   └── migration/          migration plan, repository assessment, inventory snapshots
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
-There is **no LICENSE file**: the license is undecided ([Q12](../architecture/OPEN_QUESTIONS.md#q12-licensing-and-commercial-boundaries)).
+There is **no LICENSE file** yet: the license is decided in [ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md) and the product owner adds the files after legal review (WP-M1-01).
 
 ## Target areas (not created)
 
 | Path | Purpose | Introduced when (evidence required) |
 |---|---|---|
-| `packages/contracts` | API, event, provider and Worker schemas + golden fixtures | Stage 3: API versioning ([Q11](../architecture/OPEN_QUESTIONS.md#q11-api-compatibility-and-versioning)) decided; first schema drafted. |
-| `services/platform` | Go Platform (API, domain, coordinator, local Worker) | Q1/Q3 decided, contracts exist; or a migration ADR moves Weave Runtime code here. |
-| `packages/sdk` | Client SDK generated from contracts (TS first) | First client needs it. |
-| `packages/plugin-sdk` | Plugin author SDK and manifest schema | Stage 4: Q6/Q7 decided. |
-| `packages/ui` | Shared React components | Second client (Desktop + Web) or a migrated component needs sharing. |
-| `apps/desktop` | Desktop native host + UI | Stage 5: Q5 decided by a spike. |
-| `apps/web` | Web client | Self-hosted/Cloud stage, or Web chosen as first client. |
+| `packages/contracts` | API, event, provider and Worker schemas + golden fixtures | [M2](../architecture/ROADMAP.md#m2-contracts-v0): versioning per [ADR-0025](../architecture/adr/0025-api-and-protocol-versioning-policy.md); migration ADR for Weave `protocol/`. |
+| `packages/sdk` | Client SDK generated from contracts (TS first) | M2: contracts exist; the Web client needs it. |
+| `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves Weave Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-weave-runtime.md)). |
+| `apps/web` | Web client served by the Platform | [M4](../architecture/ROADMAP.md#m4-local-mvp): Web is the MVP client ([ADR-0010](../architecture/adr/0010-local-mvp-client-is-a-web-ui.md)). |
+| `packages/plugin-sdk` | Plugin author SDK and manifest schema | M6: implements [ADR-0041](../architecture/adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)–[ADR-0021](../architecture/adr/0021-plugin-packaging-signing-permissions-and-compatibility.md). |
+| `packages/ui`, `packages/app` | Shared design system and product screens | When Desktop (M8) needs to share them; until then inside `apps/web`. |
+| `apps/desktop` | Desktop native host | M8: Tauri v2 per [ADR-0018](../architecture/adr/0018-desktop-shell-is-tauri-v2.md), after its validation spike. |
 | `.github/workflows/` | Hosted CI | Requested by the product owner; mirrors `make check`. |
 
 Rules for introducing an area:

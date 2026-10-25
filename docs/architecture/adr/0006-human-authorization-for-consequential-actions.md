@@ -18,7 +18,7 @@ deciders: Ricardo Lüders (product owner)
 
 ## Consequences
 - The Approval Step (PRD FR-13) and capability Policy (FR-24) are MVP requirements, not later features.
-- The exact list of consequential actions, Policy shape and approver roles are designed in Stage 2/3 (Weave carry-overs W1, W2 in [OPEN_QUESTIONS](../OPEN_QUESTIONS.md#carried-over-from-weave)); they refine but may not weaken this rule.
+- The exact list of consequential actions, Policy shape and approver roles are designed in Stage 2/3 (Weave carry-overs W1, W2 in [OPEN_QUESTIONS](../OPEN_QUESTIONS.md#carried-over-from-weave), later decided in [ADR-0036](0036-approvals-bind-to-evidence-and-gate-work.md) and [ADR-0037](0037-one-policy-evaluates-capabilities-grants-and-approvals.md)); they refine but may not weaken this rule.
 - Some fully automated flows will require a human to pre-grant Policy; that is intended.
 
 ## Alternatives considered

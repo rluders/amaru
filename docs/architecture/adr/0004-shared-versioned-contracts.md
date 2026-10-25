@@ -1,7 +1,8 @@
 ---
 title: Shared, versioned contracts across deployments and clients
-status: proposed
-date: 2026-10-24
+status: accepted
+date: 2026-10-25
+deciders: Ricardo Lüders
 ---
 
 # 0004. Shared, versioned contracts across deployments and clients
@@ -15,11 +16,11 @@ Amaru's public API, event schema, provider protocol and (future) Worker protocol
 ## Consequences
 - A contracts package is the first code package to introduce (Stage 3), before clients.
 - Breaking changes need a new major version and a migration note.
-- The exact versioning scheme and event transport are still [Q11](../OPEN_QUESTIONS.md#q11-api-compatibility-and-versioning).
+- The versioning scheme and event transport are set by [ADR-0025](0025-api-and-protocol-versioning-policy.md).
 
 ## Alternatives considered
 - *Code-first contracts generated from the Go server*: faster initially, but makes the server language the source of truth for TS clients and plugins.
-- *gRPC/protobuf*: strong tooling, but weaker browser story and a departure from Weave's working HTTP+JSON contracts; can be reconsidered for the Worker protocol.
+- *gRPC/protobuf*: strong tooling, but weaker browser story and a departure from Weave's working HTTP+JSON contracts; adopted for the Worker protocol only ([ADR-0029](0029-worker-protocol-over-websocket-and-protobuf.md)).
 
 ## Approval
-Proposed by Claude in the bootstrap. Awaiting product-owner decision.
+Proposed by: Claude (bootstrap, 2026-10-24) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session that resolved all open questions (explicit acceptance of every pending ADR).

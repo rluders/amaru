@@ -1,7 +1,8 @@
 ---
 title: One Platform, multiple deployment models
-status: proposed
-date: 2026-10-24
+status: accepted
+date: 2026-10-25
+deciders: Ricardo Lüders
 ---
 
 # 0002. One Platform, multiple deployment models
@@ -23,4 +24,4 @@ There is one Amaru Platform with one domain model and one set of public contract
 - *Cloud-only*: conflicts with local/self-hosted direction and with Weave's local-first users.
 
 ## Approval
-Proposed by Claude in the bootstrap. Awaiting product-owner decision (expected at Stage 2).
+Proposed by: Claude (bootstrap, 2026-10-24) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session that resolved all open questions (explicit acceptance of every pending ADR).

@@ -1,7 +1,8 @@
 ---
 title: Desktop is a client, not the owner of execution state
-status: proposed
-date: 2026-10-24
+status: accepted
+date: 2026-10-25
+deciders: Ricardo Lüders
 ---
 
 # 0003. Desktop is a client, not the owner of execution state
@@ -14,11 +15,11 @@ Amaru Desktop is a client of the Platform's public API, like Web and editor plug
 
 ## Consequences
 - Every Desktop feature is available to other clients through the same API.
-- The native host (Tauri v2 or another choice, [Q5](../OPEN_QUESTIONS.md#q5-desktop-framework)) stays thin: OS integration and process supervision only.
+- The native host (Tauri v2, [ADR-0018](0018-desktop-shell-is-tauri-v2.md)) stays thin: OS integration and process supervision only.
 - Desktop-only shortcuts into Platform storage are not allowed.
 
 ## Alternatives considered
 - *Desktop embeds the Platform as a library*: simpler local install, but couples execution lifetime to the UI and breaks the Web/Cloud parity.
 
 ## Approval
-Proposed by Claude in the bootstrap. Awaiting product-owner decision.
+Proposed by: Claude (bootstrap, 2026-10-24) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session that resolved all open questions (explicit acceptance of every pending ADR).

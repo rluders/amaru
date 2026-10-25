@@ -19,7 +19,7 @@ deciders: Ricardo Lüders (product owner)
 ## Consequences
 - Amaru has no executable product code for now; its docs label Weave evidence explicitly.
 - The Weave inventory must be refreshed before migration decisions.
-- Licensing (Weave is MIT; Amaru undecided, [Q12](../OPEN_QUESTIONS.md#q12-licensing-and-commercial-boundaries)) must be resolved before code moves.
+- Licensing (Weave is MIT; Amaru's license was later decided in [ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)) must be resolved before code moves.
 
 ## Alternatives considered
 - *Import Weave as the starting point now*: fastest path to running code, but locks in decisions the architecture study should test and interrupts Weave's cycles.

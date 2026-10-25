@@ -13,7 +13,7 @@ Every statement about behavior uses one of these, explicitly when it could be mi
 |---|---|
 | **Implemented and verified** | Code exists in this repo and a named check ran and passed. |
 | **Implemented, not validated** | Code exists; no test or recorded run proves the behavior. |
-| **Proposed** | Designed or recommended (doc, proposed ADR). Not built. |
+| **Proposed** | Designed, recommended or decided (doc, proposed or accepted ADR) but not built. An accepted ADR is a decision, not an implementation. |
 | **Exists in Weave** / **[Weave]** | Built in `rluders/weave-obsidian`, not in Amaru. |
 | **Open** | Unresolved; tracked in [OPEN_QUESTIONS](../architecture/OPEN_QUESTIONS.md). |
 | **Requires decision** | Waiting on a human. |
@@ -41,7 +41,7 @@ Never describe planned or Weave behavior as available in Amaru.
 - Standard library first. A new dependency needs a stated reason in the change description: what it does, why the standard library or existing code is not enough, maintenance and license status, and size.
 - Verify the dependency's API against its official documentation or source before use; never invent APIs.
 - Pin exact versions via the ecosystem's lockfile (`go.sum`, `pnpm-lock.yaml`, `Cargo.lock`). Upgrades are separate changes.
-- Infrastructure dependencies (workflow engines, brokers, databases, object storage) need an accepted ADR ([ADR-0008](../architecture/adr/0008-incremental-monorepo-layout.md), proposed).
+- Infrastructure dependencies (workflow engines, brokers, databases, object storage) need an accepted ADR ([ADR-0008](../architecture/adr/0008-incremental-monorepo-layout.md)).
 - Current third-party dependencies: **none**.
 
 ## Code
@@ -51,7 +51,7 @@ Never describe planned or Weave behavior as available in Amaru.
 - Go: `gofmt`, `go vet`. TypeScript (when introduced): `strict`, no `any`.
 
 ## Versioning
-- Contracts are versioned ([ADR-0004](../architecture/adr/0004-shared-versioned-contracts.md), proposed). Within a major version, additive changes only.
+- Contracts are versioned ([ADR-0004](../architecture/adr/0004-shared-versioned-contracts.md)). Within a major version, additive changes only.
 - No release versions or tags exist yet; release versioning is decided before the first release.
 
 ## Commits and changes
