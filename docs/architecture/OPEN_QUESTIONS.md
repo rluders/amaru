@@ -14,7 +14,7 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 - **Question:** [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) keys a Project by repository but does not say how the key is derived, and does not say whether Linked repositories are committed definitions. Also open: what happens to a Team slug that committed definitions still reference when the Team is renamed or deleted.
 - **Why it matters:** two clones, forks, renamed remotes and repositories without a remote must resolve to the right Project, and Executions must be attributable to it.
 - **Evidence required:** a second clone against one Platform and a Cloud fetch at a commit (M3 validation, [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)); a review of the options in [AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision).
-- **Recommendation (not a decision):** normalized remote URL plus root commit, with a committed Project id as the fallback; commit remote and delivery policy of Linked repositories, keep absolute paths in the Platform.
+- **Proposal:** [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) (`proposed`, awaiting the product owner). Recommendation: normalized remote URL plus root commit, with a committed Project id as the fallback; commit remote and delivery policy of Linked repositories, keep absolute paths in the Platform.
 - **Blocks:** `attach` and the importer in WP-M3-01/WP-M3-02. Closed by an ADR owned by the product owner.
 
 A new question is added here with **why it matters**, **evidence required** and **what it blocks**, and is closed by an ADR.
