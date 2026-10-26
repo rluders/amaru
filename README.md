@@ -10,8 +10,6 @@
 
 ---
 
-**Carry the work across every world. The engineer sets the course.**
-
 *Amaru is an engineering execution platform. In Andean tradition the amaru is the serpent that crosses the worlds and carries water between them; here it carries work between humans, AI agents, tools and environments, and the engineer decides where it flows.*
 
 Amaru coordinates humans, AI agents, tools, knowledge, workflows and execution environments across the software development lifecycle. Humans set intent, scope, quality criteria and approval boundaries; agents carry out delegated work inside explicit policies; workflows coordinate multi-step activities; and every result, decision and piece of evidence stays observable and auditable.
