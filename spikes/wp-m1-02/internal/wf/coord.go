@@ -96,7 +96,7 @@ func (c *Coord) dispatchTx(ctx context.Context, tx pgx.Tx) error {
 		if err != nil {
 			return err
 		}
-		now, err := c.Clock.Now(ctx)
+		now, err := c.Clock.Now(ctx, tx)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (c *Coord) event(ctx context.Context, tx pgx.Tx, execID, kind, stepID, data
 	if err := tx.QueryRow(ctx, `update executions set next_seq=next_seq+1 where id=$1 returning next_seq`, execID).Scan(&seq); err != nil {
 		return err
 	}
-	now, err := c.Clock.Now(ctx)
+	now, err := c.Clock.Now(ctx, tx)
 	if err != nil {
 		return err
 	}

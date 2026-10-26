@@ -12,7 +12,7 @@ import (
 // duplicated assignment is rejected by compare-and-set on the Step version, so
 // redelivery is harmless. It returns true if this call ran the Step.
 func (c *Coord) Execute(ctx context.Context, a Assignment) (bool, error) {
-	now, err := c.Clock.Now(ctx)
+	now, err := c.Clock.Now(ctx, c.Pool)
 	if err != nil {
 		return false, err
 	}
@@ -93,7 +93,7 @@ func (c *Coord) effect(ctx context.Context, step, key string) error {
 func (c *Coord) Complete(ctx context.Context, step string, version int, ok bool, reason string) (bool, error) {
 	applied := false
 	err := c.tx(ctx, "complete", func(tx pgx.Tx) error {
-		now, err := c.Clock.Now(ctx)
+		now, err := c.Clock.Now(ctx, tx)
 		if err != nil {
 			return err
 		}

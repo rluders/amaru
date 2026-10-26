@@ -29,7 +29,14 @@ func TestMain(m *testing.M) {
 		println("start postgres:", err.Error())
 		os.Exit(2)
 	}
-	pool, err = pgxpool.New(context.Background(), inst.URL)
+	// A small fixed pool makes pool exhaustion (16 concurrent transactions) the
+	// same on every machine; the default scales with CPU count and hid a
+	// nested-acquire deadlock on a 24-thread host.
+	pcfg, err := pgxpool.ParseConfig(inst.URL)
+	if err == nil {
+		pcfg.MaxConns = 4
+		pool, err = pgxpool.NewWithConfig(context.Background(), pcfg)
+	}
 	if err == nil {
 		for _, s := range []string{outbox.Schema, wf.Schema} {
 			if _, err = pool.Exec(context.Background(), s); err != nil {

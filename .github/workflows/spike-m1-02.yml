@@ -61,18 +61,22 @@ jobs:
           tar -czf bundle.tgz bundle && ls -l bundle.tgz | tee -a out/footprint.txt
 
       - name: PostgreSQL scenarios
-        run: ./spike pg -bundle ./bundle -state ./state-pg -out out/pg.jsonl
+        if: ${{ !cancelled() }}
+        run: ./spike pg -bundle ./bundle -state ./state-pg -out out/pg.jsonl ${{ runner.os == 'Windows' && '-allow-elevated' || '' }}
 
       - name: NATS JetStream
+        if: ${{ !cancelled() }}
         run: ./spike nats | tee out/nats.json
 
       - name: Crash matrix
+        if: ${{ !cancelled() }}
         run: ./spike matrix -bundle ./bundle -work ./mx -out out/matrix.jsonl -fuzz 10
 
       - name: Go tests
+        if: ${{ !cancelled() }}
         env:
           SPIKE_BUNDLE: ${{ github.workspace }}/spikes/wp-m1-02/bundle
-        run: go test -count=1 -v ./internal/... 2>&1 | tee out/gotest.log
+        run: go test -count=1 -timeout 8m -v ./internal/... 2>&1 | tee out/gotest.log
 
       - name: Upload evidence
         if: always()

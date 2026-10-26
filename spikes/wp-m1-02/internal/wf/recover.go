@@ -28,7 +28,7 @@ func (c *Coord) recoverStep(ctx context.Context, tx pgx.Tx, id, reason string) e
 	if err != nil {
 		return err
 	}
-	now, err := c.Clock.Now(ctx)
+	now, err := c.Clock.Now(ctx, tx)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (c *Coord) Reconcile(ctx context.Context) error {
 
 // ExpireLeases recovers every Step whose lease is past due (Worker lost).
 func (c *Coord) ExpireLeases(ctx context.Context) error {
-	now, err := c.Clock.Now(ctx)
+	now, err := c.Clock.Now(ctx, c.Pool)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (c *Coord) FireTimers(ctx context.Context) error {
 	for {
 		fired := false
 		err := c.tx(ctx, "timer", func(tx pgx.Tx) error {
-			now, err := c.Clock.Now(ctx)
+			now, err := c.Clock.Now(ctx, tx)
 			if err != nil {
 				return err
 			}

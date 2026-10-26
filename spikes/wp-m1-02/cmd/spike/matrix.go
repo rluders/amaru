@@ -367,8 +367,8 @@ func cases() []tcase {
 		runs: []run{{args: []string{"-flow", "flaky"}}, {args: []string{"-flow", "flaky", "-advance", "11"}}},
 		want: with(ok, func(e *exp) { e.events = []string{"step.retry_scheduled e1/work", "timer.retry e1/work"} })})
 	cs = append(cs, tcase{id: "flaky/retry-timer-survives-crash", what: "crash while the retry timer is pending; timer still fires after restart",
-		runs: []run{{args: []string{"-flow", "flaky"}, killAfter: 1500 * time.Millisecond}, {args: []string{"-flow", "flaky", "-advance", "11"}}},
-		want: with(ok, func(e *exp) { e.events = []string{"timer.retry e1/work"} })})
+		runs: []run{{args: []string{"-flow", "flaky", "-crash", "complete.after_commit#2"}, crash: true}, {args: []string{"-flow", "flaky", "-advance", "11"}}},
+		want: with(ok, func(e *exp) { e.events = []string{"step.retry_scheduled e1/work", "timer.retry e1/work"} })})
 
 	// Approval wait over several simulated days.
 	waiting := exp{exec: "running", steps: map[string]string{"prep": "succeeded", "gate": "waiting_approval", "deliver": "pending"},
