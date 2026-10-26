@@ -40,7 +40,7 @@ These dispositions are decided as the plan of record (2026-10-25). Under [ADR-00
 | Weave | `runtime/internal/provider/{claude,codex,opencode,gitrepo,github,remotejob,mcp}` | Worker providers | Adapt (confinement refusal, usage parsing) | M3–M4 | per provider |
 | Weave | Other `provider/*` (Blender, Meshy, Tripo, fal, Replicate, ElevenLabs, Pandoc, ffmpeg) | Plugins | Pandoc and ffmpeg: Adapt as M6 example `worker-adapter` plugins (they validate A6). Blender, Meshy, Tripo, fal, Replicate, ElevenLabs: Retire (no users); Reference only, re-built as plugins only on a user request | M6 | Plugin platform |
 | Weave | `runtime/internal/platform` (process, paths) | Worker OS layer | Reuse | M3 | Windows validation |
-| Weave | `runtime/internal/transport/{httpapi,webhook}` | Platform API | Adapt | M3 (API), M7 (webhooks) | Contracts |
+| Weave | `runtime/internal/transport/{httpapi,webhook}` | Platform API | Adapt | M3 (API, plus the egress check of `webhook/sender.go` used by FEAT-POL-004: private-host block and per-URL consent, under the `httpapi` migration ADR), M7 (webhooks) | Contracts |
 | Weave | `runtime/internal/{auth,discovery}` | Compact deployment adapter | Adapt (browser auth per ADR-0034) | M3 | ADR-0034 |
 | Weave | `runtime/internal/app/autoloop*` | Delivery loop | Adapt | M4 | F-39/F-40/F-41/F-27 acceptance tests, baseline ADR-0032 |
 | Weave | `plugin/src/ui/flow` (React Flow editor) | Workflow visual editor in `apps/web` | Reimplement (behavioral reference, [ADR-0031](../architecture/adr/0031-obsidian-plugin-is-retired.md)) | M7 | Web client |

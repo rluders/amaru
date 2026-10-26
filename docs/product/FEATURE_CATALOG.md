@@ -31,6 +31,8 @@ Priority is assigned by product need, not by whether a predecessor already has t
 
 **Evidence abbreviations**: `WO:` = `weave-obsidian` at `c8a2f6e` (paths under `runtime/internal/` unless stated) · `WP:` = `weave` (prototype) at `824af76` · `ADR-0nn` without a leading zero pair = Weave ADR; `ADR-00nn` = Amaru ADR.
 
+**Depends on**: features (and ADRs) that must exist before this feature can be built and accepted (a *hard* dependency). A dependency marked **(soft)** is a sequencing and integration need only: the feature is built and accepted against a port or contract that already exists, with fakes in tests, and the depended-on feature must exist before the feature's real-validation run (recorded run), which is scheduled where both exist. Soft dependencies are listed with their rationale in [WORK_PACKAGES §Cross-package feature dependencies](../architecture/WORK_PACKAGES.md#cross-package-feature-dependencies). The dependency graph has no cycles.
+
 **Detail**: every P0 and P1 feature has an entry in §3 with outcome, acceptance criteria, validation, extension involvement and risks. P2/P3 features carry only the summary row; their criteria are written when scheduled.
 
 ## 2. Catalog
@@ -49,10 +51,10 @@ Priority is assigned by product need, not by whether a predecessor already has t
 ### 2.2 Work (WRK)
 | ID | Feature | Actor | P | Milestone | Class | Avail | Depends on | Evidence |
 |---|---|---|---|---|---|---|---|---|
-| FEAT-WRK-001 | Work Packages and Work Items | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 | WO: `domain/work.go`, ADR-004 |
+| FEAT-WRK-001 | Work Packages and Work Items | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 (soft) | WO: `domain/work.go`, ADR-004 |
 | FEAT-WRK-002 | Work Item dependencies | Engineer | P0 | M3 | Reuse | L SH C | WRK-001 | WO: `DependsOn`, ADR-021, F-17 |
 | FEAT-WRK-003 | Change events for Work, Workflows, Agents | Client | P0 | M3 | Improve | L SH C | EXE-004 | WO: GAP-06; work files not watched (`cmd/weaved/main.go`) |
-| FEAT-WRK-004 | Supervised delivery loop | Engineer | P0 | M4 | Improve | L SH C | WFL-001, ENV-010, VAL-001, REV-004, REV-005, INT-001 | WO: `app/autoloop*.go`, ADR-021/026/028/029, Cycle 7 |
+| FEAT-WRK-004 | Supervised delivery loop | Engineer | P0 | M4 | Improve | L SH C | WFL-001, ENV-010, VAL-001 (soft), REV-004 (soft), REV-005 (soft), INT-001 (soft) | WO: `app/autoloop*.go`, ADR-021/026/028/029, Cycle 7 |
 | FEAT-WRK-005 | Attempt and budget accounting | Engineer | P0 | M4 | Improve | L SH C | WRK-004 | WO: F-39, F-40, F-32, F-25; `domain/autoloop.go` |
 | FEAT-WRK-006 | Signals and triage inbox | Lead | P2 | Backlog | Future | W D | WRK-001 | WP: `domain/signal.go` |
 | FEAT-WRK-007 | Work graph view | Engineer | P2 | Backlog | Future | W D | WRK-002 | WP: `features/work-graph` |
@@ -117,7 +119,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 | ID | Feature | Actor | P | Milestone | Class | Avail | Depends on | Evidence |
 |---|---|---|---|---|---|---|---|---|
 | FEAT-CAP-001 | Typed Capability catalog | Platform | P0 | M3 | Reuse | L SH C | — | WO: `domain/capabilities.go`, ADR-012 |
-| FEAT-CAP-002 | Built-in agent providers (Claude, Codex, OpenCode) | Engineer | P0 | M3 | Improve | L E | CAP-001, POL-006 | WO: `provider/{claude,codex,opencode}`; WP: `runtime/cli_driver.go` |
+| FEAT-CAP-002 | Built-in agent providers (Claude, Codex, OpenCode) | Engineer | P0 | M3 | Improve | L E | CAP-001 | WO: `provider/{claude,codex,opencode}`; WP: `runtime/cli_driver.go` |
 | FEAT-CAP-003 | External provider protocol | Provider author | P0 | M3 | Improve | L SH E | API-001 | WO: `protocol/provider.schema.json`, `weave.provider/v1` |
 | FEAT-CAP-004 | Remote-job providers (resumable, detachable) | Platform | P0 | M3 | Reuse | L SH C | EXE-002 | WO: `provider/remotejob`, `Resumable`, `Detachable` |
 | FEAT-CAP-005 | Provider health and discovery | Engineer | P0 | M3 | Reuse | L SH E | CAP-001 | WO: probes, toolbox page, tool cache (F-9) |
@@ -169,7 +171,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 |---|---|---|---|---|---|---|---|---|
 | FEAT-ART-001 | Artifacts with Platform-computed hashes | Auditor | P0 | M3 | Reuse | L SH C | EXE-001 | WO: ADR-012 output files with role and hash |
 | FEAT-ART-002 | Evidence bundle per Execution | Auditor | P0 | M3 | Improve | L SH C | ART-001, SKL-002 | WO: `context.md`, `events.jsonl`; WP: diff + verification |
-| FEAT-ART-003 | Retention and redaction | Operator | P0 | M3 | New | L SH C | ART-002 | WO: GAP-07 |
+| FEAT-ART-003 | Retention and redaction | Operator | P0 | M3 | New | L SH C | ART-002, REV-003 | WO: GAP-07 |
 | FEAT-ART-004 | Artifact store port and object storage | Operator | P1 | M5 | New | SH C | ADR-0017 | WP: local filesystem `ArtifactRoot` |
 | FEAT-ART-005 | Project note artifact index | Engineer | P2 | Backlog | Future | L | PRJ-007 | WO: ADR-005 (Obsidian notes) |
 | FEAT-ART-006 | Artifact viewers (3D, diagrams, media) | Engineer | P2 | Backlog | Future | W D | PLG-004 | WO: `plugin/src/ui/viewer` (three.js, mermaid) |
@@ -204,7 +206,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 | FEAT-POL-003 | Audit trail of approvals, grants and policy changes | Auditor | P0 | M3 | New | L SH C | EXE-004 | — |
 | FEAT-POL-004 | Egress consent | Engineer | P0 | M3 | Reuse | L SH C | POL-001 | WO: `transport/webhook/sender.go` private-host block, per-URL consent |
 | FEAT-POL-005 | Workspace command sandbox | Engineer | P0 | M3 | Reuse | L E | AGT-003 | WO: `ValidWorkspaceCommand`, denylist `domain/agent.go`, `ShellConfiner` |
-| FEAT-POL-006 | Provider confinement refusal | Platform | P0 | M3 | Improve | L E | CAP-002 | WO: Codex and OpenCode ignore `WorkspaceWrite` |
+| FEAT-POL-006 | Provider confinement refusal | Platform | P0 | M3 | Improve | L E | CAP-002, AGT-003 | WO: Codex and OpenCode ignore `WorkspaceWrite` |
 | FEAT-POL-007 | Secrets port and backends | Operator | P0 | M3 | Reuse | L SH C | — | WO: `userstore/credentials.json`, `WEAVE_SECRET_*` |
 | FEAT-POL-008 | Vulnerability disclosure process | Security researcher | P1 | M7 | New | — | — | SECURITY_MODEL "Reporting" |
 | FEAT-POL-009 | Tenant isolation | Cloud customer | P2 | M9 | Future | C | IAM-003, ADR-0022 | — |
@@ -328,7 +330,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-SKL-003** Tool-native Skill import. *Acceptance:* opt-in per Project; imported Skills go through the same trust. *Validation:* ported tests.
 - **FEAT-SKL-004** Context budget. *Acceptance:* each Step's context has a size budget and a recorded list of included items with sizes. *Default:* 8,000 tokens of Skills and Knowledge per Agent Step, configurable per Agent. *Validation:* tests; benefit measured as cost per accepted change from usage records ([ADR-0033](../architecture/adr/0033-usage-and-cost-telemetry-model.md)) on recorded runs with and without the budget.
 - **FEAT-CAP-001** Capability catalog. *Acceptance:* specs are data; adding a Capability changes no core interface. *Validation:* the PRD §12 Provider test.
-- **FEAT-CAP-002** Agent providers. *Acceptance:* each provider honors or refuses every confinement flag (see POL-006); usage parsed (OBS-002). *Validation:* captured-output tests + recorded real runs per provider. *Risks:* vendor CLI changes.
+- **FEAT-CAP-002** Agent providers. *Acceptance:* each provider declares, for every confinement flag, whether it enforces it, and enforces the ones it declares (refusing the Step when a requested flag is not enforceable is POL-006); usage parsed (OBS-002). *Validation:* captured-output tests + recorded real runs per provider. *Risks:* vendor CLI changes.
 - **FEAT-CAP-003** External provider protocol. *Acceptance:* `amaru.provider/v1`, adapted from `weave.provider/v1`; no compatibility shim (Weave Providers are ported); fixtures. *Validation:* a provider built outside the Platform passes the conformance fixtures.
 - **FEAT-CAP-004** Remote-job providers. *Acceptance:* a remote job survives a Platform restart and is reattached. *Validation:* ported resume tests.
 - **FEAT-CAP-005** Provider health. *Acceptance:* each provider reports availability and version; the UI shows why a provider is unavailable. *Validation:* tests.
@@ -365,7 +367,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-REV-007** Separation of duties. *Acceptance:* per gate ([ADR-0038](../architecture/adr/0038-roles-teams-and-separation-of-duties.md)): the approver differs from the initiator and from the human sponsor of the Agent that produced the Evidence; a gate may require a named reviewer Team; Agents never approve; disabled and recorded in single-user compact installs. *Validation:* tests.
 - **FEAT-ART-001** Hashed Artifacts. *Acceptance:* the Platform, not the Provider, computes hashes; outputs outside the output location are rejected. *Validation:* ported tests.
 - **FEAT-ART-002** Evidence bundle. *Acceptance:* one query returns context, snapshots, diffs, logs, checks, approvals and usage for an Execution. *Validation:* contract fixtures + audit walkthrough (PRD §12).
-- **FEAT-ART-003** Retention and redaction. *Acceptance:* configurable retention per data class; known secret patterns redacted from stored provider output. *Validation:* tests. *Risks:* redaction completeness.
+- **FEAT-ART-003** Retention and redaction. *Acceptance:* configurable retention per data class; known secret patterns redacted from stored provider output. *Note:* the retention classes keep Artifacts while an Approval or accepted Work Item references them ([DATA_ARCHITECTURE §5](../architecture/DATA_ARCHITECTURE.md#5-retention-and-redaction)), so the Evidence bundle (ART-002) and Approval-to-Evidence bindings (REV-003) come first. *Validation:* tests. *Risks:* redaction completeness.
 - **FEAT-ART-004** Artifact store port and object storage. *Acceptance:* an Artifact store port with a filesystem adapter by M5 (needed for Worker uploads) and an S3-compatible adapter by M7. *Validation:* adapter conformance tests. *Risks:* S3 compatibility of the reference backend RustFS ([ADR-0017](../architecture/adr/0017-content-addressed-artifact-store-filesystem-or-s3.md)).
 
 ### 3.7 Observability, identity, policy
@@ -387,7 +389,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-POL-003** Audit trail. *Acceptance:* every Approval, Grant and Policy change is an Event with actor and reason. *Validation:* tests.
 - **FEAT-POL-004** Egress consent. *Acceptance:* per-URL consent; private and loopback destinations blocked unless allowlisted. *Validation:* ported tests.
 - **FEAT-POL-005** Workspace command sandbox. *Acceptance:* allowlist format and denylist preserved; commands refused if the provider cannot confine them. *Validation:* ported tests.
-- **FEAT-POL-006** Confinement refusal. *Acceptance:* a provider that cannot enforce write or tool restrictions refuses the Step. *Validation:* tests for Codex and OpenCode.
+- **FEAT-POL-006** Confinement refusal. *Note:* refusal is implemented in the adapted providers ([MIGRATION_PLAN §3](../migration/MIGRATION_PLAN.md#3-components-and-likely-dispositions)), so it needs the providers' enforcement declarations (CAP-002) and the requested write and tool restrictions (AGT-003). *Acceptance:* a provider that cannot enforce write or tool restrictions refuses the Step. *Validation:* tests for Codex and OpenCode.
 - **FEAT-POL-007** Secrets port. *Acceptance:* secrets write-only from clients; visible at Organization or Project scope, encrypted with the per-Organization data key ([ADR-0022](../architecture/adr/0022-cloud-tenancy-row-level-isolation-by-organization.md)); never in events or logs. *Validation:* ported fixture tests.
 - **FEAT-POL-008** Disclosure process. *Acceptance:* `SECURITY.md` with a contact and response process before the first public release. *Validation:* review.
 

@@ -37,7 +37,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Trademark search for "Amaru".
   - Vulnerability disclosure policy (`SECURITY.md`).
 - **Depends on:** WP-M0-01.
-- **Done when:** the product owner adds the root `LICENSE` and Apache-2.0 license files for contract and SDK packages (agents never add license text).
+- **Done when:** the product owner adds the root `LICENSE` (agents never add license text). The Apache-2.0 `LICENSE` of each contract or SDK package is added by the product owner in the Work Package or epic that creates that package (WP-M2-01, WP-M2-02, E6.3, and E6.6 for the Go Worker SDK), because those directories do not exist in M1 ([repository layout](../engineering/repository-layout.md)).
 - **Validation:** legal review recorded.
 
 ### WP-M1-02 Storage and execution validation spike
@@ -116,7 +116,9 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Fix the drift (`/work-packages/{id}/autoloop`).
 - **Features:** API-001, API-002.
 - **Depends on:** WP-M1-01, WP-M1-03, WP-M1-04, WP-M1-06.
-- **Done when:** valid and invalid fixtures pass in Go and TypeScript in `make check`.
+- **Done when:**
+  - Valid and invalid fixtures pass in Go and TypeScript in `make check`.
+  - The product owner has added the Apache-2.0 `LICENSE` to `packages/contracts` ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md); agents never add license text).
 - **Validation:** fixture tests.
 
 ### WP-M2-02 Generated TypeScript SDK
@@ -128,6 +130,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Generation is reproducible.
   - The staleness check is in `make check`.
   - The reconnect logic is reimplemented with tests, using the Weave plugin's `connection.ts` as a behavioral reference only ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
+  - The product owner has added the Apache-2.0 `LICENSE` to `packages/sdk` ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Validation:** unit tests.
 
 ### WP-M2-03 Contract drift guard
@@ -151,7 +154,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Features:** EXE-001, WRK-001, WRK-002, AGT-001, AGT-004, CAP-001.
 - **Depends on:** M2; a migration ADR.
 - **Done when:** ported domain tests and the architecture test are green on three OSes.
-- **Validation:** `make check` (OS matrix run locally or in CI once enabled).
+- **Validation:** `make check` on Linux, macOS and Windows per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules (no hosted CI).
 
 ### WP-M3-02 Storage adapter
 - **Issue:** [#14](https://github.com/rluders/amaru/issues/14)
@@ -160,7 +163,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Schema versioning and migrations.
   - Start-up lock.
   - Importer for Weave definitions, Work Packages, Work Items and Teams (`amaru import weave`).
-- **Features:** PRJ-005, OPS-002, EXE-002 (persistence part), ART-003.
+- **Features:** PRJ-005, OPS-002, EXE-002 (persistence part).
 - **Depends on:** WP-M1-02, WP-M1-05, WP-M3-01.
 - **Done when:** adapter conformance tests and migration tests pass, and a Weave `.weave/` fixture imports.
 - **Validation:** tests.
@@ -177,7 +180,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Features:** EXE-002, EXE-003, EXE-005, EXE-006, WFL-001, WFL-002, WFL-003, WFL-004, ENV-001, CAP-004.
 - **Depends on:** WP-M3-01, WP-M3-02.
 - **Done when:** the crash-injection suite passes and a cancel on Windows kills the process tree.
-- **Validation:** tests on three OSes.
+- **Validation:** tests on Linux, macOS and Windows per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules; the Windows process-tree cancel is a native Windows run.
 
 ### WP-M3-04 Policy, Grants and Approval
 - **Issue:** [#16](https://github.com/rluders/amaru/issues/16)
@@ -228,8 +231,9 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Configuration resolution ([ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)).
   - Artifacts with Platform hashes.
   - Evidence query.
-- **Features:** ENV-010, OPS-003, ART-001, ART-002.
-- **Depends on:** WP-M3-03.
+  - Retention per data class and redaction of stored provider output (moved here from WP-M3-02; see [cross-package feature dependencies](#cross-package-feature-dependencies)).
+- **Features:** ENV-010, OPS-003, ART-001, ART-002, ART-003.
+- **Depends on:** WP-M3-03; for ART-003 also REV-003 from WP-M3-04 (feature-level link).
 - **Done when:** the audit query returns the full Evidence for a test Execution.
 - **Validation:** tests.
 
@@ -267,7 +271,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - F-39 and F-40 behavior.
 - **Features:** WRK-004, WRK-005.
 - **Depends on:** M3; a migration ADR.
-- **Done when:** ported Autoloop tests are green, and the F-39/F-40 regression tests pass.
+- **Done when:** ported Autoloop tests are green, and the F-39/F-40 regression tests pass. The loop is built against the M3 ports (forge port, Local Check runner, review Step) with fakes; its dependencies on VAL-001, REV-004, REV-005 and INT-001 are soft ([cross-package feature dependencies](#cross-package-feature-dependencies)), and its real-validation run belongs to WP-M4-07.
 - **Validation:** tests.
 
 ### WP-M4-04 Checks, CI and review
@@ -318,8 +322,31 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Efficiency check (≤1 implementation and ≤1 review per accepted change).
 - **Features:** OPS-001.
 - **Depends on:** WP-M4-01 … 06.
-- **Done when:** the [M4 exit criteria](ROADMAP.md#m4-local-mvp) are met and recorded in `docs/` validation records.
-- **Validation:** the recorded runs.
+- **Done when:** the [M4 exit criteria](ROADMAP.md#m4-local-mvp) are met and recorded in `docs/` validation records, including the WRK-004 recorded supervised run per OS (the first point where the loop, checks, review and forge delivery all exist).
+- **Validation:** the recorded runs, per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules.
+
+## Cross-package feature dependencies
+
+Status: **proposed** (2026-10-26), pending product-owner review. The Work Package order above stays the accepted baseline; this section records how catalog dependencies that cross it are resolved, and the changes it makes to that order (ART-003 only).
+
+Where a catalog dependency crosses Work Packages against their order, it is resolved here (backlog refinement, 2026-10-25). *Hard* means the dependent cannot be built or accepted without the other feature; *soft* means it is built against an existing port or contract with fakes, and the other feature is needed only for the real-validation run ([catalog §1](../product/FEATURE_CATALOG.md#1-how-to-read-this-catalog)).
+
+| Dependency | Work Packages | Resolution | Reason |
+|---|---|---|---|
+| CAP-002 ↔ POL-006 (cycle) | WP-M3-05 | **Corrected**: POL-006 depends on CAP-002 and AGT-003; CAP-002 no longer depends on POL-006. | Refusal is implemented in the adapted providers (MIGRATION_PLAN §3, PRD FR-24), so it needs the providers and the requested restrictions. CAP-002 now declares and enforces confinement flags; refusing unenforceable ones is POL-006. No requirement was dropped. |
+| ART-003 → ART-002 | WP-M3-02 → WP-M3-07 | **Hard; order changed**: ART-003 moves from WP-M3-02 to WP-M3-07, and also depends on REV-003. | Retention keeps Artifacts while an Approval or accepted Work Item references them, and redaction applies to provider output that is first stored by the coordinator and providers ([DATA_ARCHITECTURE §5](DATA_ARCHITECTURE.md#5-retention-and-redaction)). None of that exists when WP-M3-02 runs. WP-M3-02's *Done when* never covered ART-003, so it is unchanged. |
+| WRK-001 → PRJ-001 | WP-M3-01 → WP-M3-06 | **Soft; order kept.** | Work Items need the Project entity and key, which WP-M3-01 migrates with the domain; PRJ-001 is the attach flow (metadata location, stable ID across path spellings, API). WRK-001's acceptance is met by domain tests. |
+| WRK-004 → VAL-001 | WP-M4-03 → WP-M4-04 | **Soft; order kept.** | The loop calls Local Checks through the runner port ported in M3. Real check binding (head commit, config hash) is exercised in the WP-M4-07 recorded runs. |
+| WRK-004 → REV-004 | WP-M4-03 → WP-M4-04 | **Soft; order kept.** | The loop starts review Steps (a Step type from M3); the structured verdict and `{{validation}}` Evidence are completed in WP-M4-04, whose CI-observation and validation-Evidence code comes out of the Weave loop files that WP-M4-03 migrates first. |
+| WRK-004 → REV-005 | WP-M4-03 → WP-M4-05 | **Soft; order kept.** | Draft-only delivery is a call on the forge port (`OpenPR(..., draft)`), ported in WP-M3-01; tests use a fake forge. |
+| WRK-004 → INT-001 | WP-M4-03 → WP-M4-05 | **Soft; order kept.** | Same forge port; the GitHub adapter arrives in WP-M4-05. |
+
+Reversing WP-M4-03 and WP-M4-04/05 was considered and rejected: in the migration baseline ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)) the delivery loop's files (`runtime/internal/app/autoloop*`, [MIGRATION_PLAN §3](../migration/MIGRATION_PLAN.md#3-components-and-likely-dispositions)) hold CI observation and the validation-Evidence glue, so checks and review would need the loop's migration ADR anyway, and the loop's acceptance does not need real adapters. Reversing would also create a blocker cycle through sub-issues. The WRK-004 real run is part of WP-M4-07, which depends on all M4 Work Packages, so no issue waits on a later one.
+
+Rules for further resolutions (see also [delivery §4](../engineering/delivery.md#4-dependencies)):
+- Classify first, then sequence. A hard dependency against the order changes the order (as for ART-003); a soft one keeps it and names the Work Package that holds the real-validation run.
+- A dependency is soft only if the port or contract it is built against already exists in an earlier Work Package; otherwise it is hard.
+- A sub-issue inherits its parent's blockers: never link a Work Package to a sub-issue of a Work Package it blocks.
 
 ## Coverage check
 
