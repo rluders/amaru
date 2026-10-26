@@ -9,8 +9,8 @@ deciders: Ricardo Lüders
 
 ## Context
 - PRD FR-41 required one first-party client for the MVP and left the choice open between the Obsidian plugin, a Desktop app and a Web client.
-- Verified: the Weave prototype has a React 19 + TanStack Router/Query + Tailwind 4 + shadcn/ui dashboard with layout shells, theme tokens and about 70 route files, many without backend support and no tests (`weave` `dashboard/`, commit `824af76`).
-- Verified: the Weave Obsidian plugin couples about 16 files to Obsidian APIs; its client, state and type layers are host-independent (`weave-obsidian` `plugin/src/runtime`, `plugin/src/state`).
+- Verified: the earlier prototype has a React 19 + TanStack Router/Query + Tailwind 4 + shadcn/ui dashboard with layout shells, theme tokens and about 70 route files, many without backend support and no tests.
+- Verified: the prototype's Obsidian plugin couples about 16 files to Obsidian APIs; its client, state and type layers are host-independent.
 - Desktop (Tauri v2, [ADR-0018](0018-desktop-shell-is-tauri-v2.md)) ships at M8; putting it on the MVP critical path adds packaging, signing and webview risk.
 - The product owner chose this direction on 2026-10-25 during master-roadmap planning; this ADR records it for formal acceptance.
 
@@ -18,7 +18,7 @@ deciders: Ricardo Lüders
 - The Local MVP's first-party client is **Amaru Web**: a React + TypeScript single-page application **served by the local Platform** and opened in the user's browser.
 - It uses only the generated SDK over the public API.
 - The product UI lives in shared packages so the later Desktop (M8) wraps the same UI instead of rebuilding it.
-- The Weave prototype dashboard is the starting asset (design system, shells), adapted under the migration plan; pages without a backend are not carried over as if functional.
+- The earlier prototype dashboard is the starting asset (design system, shells), adapted under a migration ADR; pages without a backend are not carried over as if functional.
 - Local authentication of the browser client follows [ADR-0034](0034-local-web-client-authentication-with-launch-code-and-cookie.md) and is implemented before M4.
 
 ## Consequences

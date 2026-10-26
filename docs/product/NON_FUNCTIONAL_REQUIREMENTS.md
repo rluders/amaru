@@ -2,7 +2,7 @@
 
 Status: **accepted planning baseline** (2026-10-25, owner-reviewed with the planning package). The canonical quality baseline for Amaru. [PRD §8](PRD.md#8-non-functional-requirements) summarizes NFR-1 to NFR-8; their meaning is unchanged here and new IDs are added from NFR-9. Nothing is implemented in this repository.
 
-**Targets.** Every requirement has a concrete initial target. Where evidence does not yet exist, the number is an **initial target** chosen from Weave precedent and common practice, marked *(initial)*, and the named milestone validates it (validation register A14 in [OPEN_QUESTIONS](../architecture/OPEN_QUESTIONS.md#validation-register)). A failed validation changes the number here with its evidence; it does not reopen the requirement.
+**Targets.** Every requirement has a concrete initial target. Where evidence does not yet exist, the number is an **initial target** chosen from the prototype precedent and common practice, marked *(initial)*, and the named milestone validates it (validation register A14 in [OPEN_QUESTIONS](../architecture/OPEN_QUESTIONS.md#validation-register)). A failed validation changes the number here with its evidence; it does not reopen the requirement.
 
 **Columns.** *Compact* = local or single-host self-hosted install; *Server* = small-organization or distributed self-hosted; *Cloud* = managed service. "Same" means the requirement does not differ.
 

@@ -11,15 +11,15 @@ Status: **accepted** (2026-10-25). Nothing here is built. Extends [ARCHITECTURE 
 
 ## 2. Evidence from predecessors
 
-- **[Weave]** External Providers:
+- **[Prototype]** External Providers:
   - executables installed per user under `<stateDir>/providers/<id>/provider.yaml`
-  - speak the stdio protocol `weave.provider/v1` (`protocol/provider.schema.json`)
+  - speak the prototype's stdio provider protocol (`protocol/provider.schema.json`)
   - argv only, with an allowlisted environment
   - never installed per Project
-- **[Weave]** MCP:
+- **[Prototype]** MCP:
   - servers configured per user (ADR-016)
   - an audited MCP gateway was designed but not built (ADR-025)
-- **[Weave]** Grants:
+- **[Prototype]** Grants:
   - user-level, hash-bound grants (ADR-024)
   - Skills trusted by content hash (ADR-011/017)
 - **[Prototype]** Capability gateway: an allowlist-based gateway with an `Adapter` interface (`capability/gateway.go`), whose only adapter is `github.pull_request`.
@@ -30,7 +30,7 @@ Status: **accepted** (2026-10-25). Nothing here is built. Extends [ARCHITECTURE 
 | Form | Where it runs | Trust tier | Who may ship it | Typical use |
 |---|---|---|---|---|
 | **In-process module** | Inside the Platform or Desktop host | Full | First party only | Core Capabilities, storage adapters, Tauri framework plugins |
-| **Local process** | Child process of a Worker or the Platform, argv + env allowlist | Granted permissions only | Anyone | Providers, local adapters (Weave model) |
+| **Local process** | Child process of a Worker or the Platform, argv + env allowlist | Granted permissions only | Anyone | Providers, local adapters (prototype model) |
 | **Sandboxed logic** | Extension host (JS runtime without ambient I/O) | Granted API surface only | Anyone | Event reactions, automation, Capability handlers in TypeScript |
 | **UI extension** | Isolated frame in Web/Desktop | Public API via SDK bridge, granted scopes | Anyone | Panels, pages, Artifact viewers, Step forms |
 | **Self-hosted service** | Separate process/container next to the Platform, machine identity | Declared events and API scopes | Anyone, deployed by an operator | Integrations needing their own dependencies; Environment provisioners (FEAT-ENV-014) |
@@ -67,7 +67,7 @@ Manifest fields (draft, becomes a contract schema with fixtures in M6):
 **Rules**
 - A component is enabled only where its target exists and its permissions are granted. The UI shows which components are inactive and why.
 - A plugin is *usable* if all `required` components are enabled.
-- Capabilities contributed by a plugin are catalog entries, never new core interfaces (Weave rule).
+- Capabilities contributed by a plugin are catalog entries, never new core interfaces (prototype rule).
 - Permission growth on update requires new consent.
 
 ## 5. Execution models per target
@@ -77,7 +77,7 @@ Manifest fields (draft, becomes a contract schema with fixtures in M6):
 | `ui` | Web/Desktop UI extension host | Sandboxed iframe (no same-origin), CSP, message-RPC bridge | SDK over the bridge, with the user's session limited to the granted scopes | [Proposed] |
 | `logic` | `amaru plugin-host` process (one per Organization, supervised by the Platform) | TypeScript compiled with Javy + the Amaru Javy plugin to a QuickJS Wasm module with no WASI imports, run by wazero; only Amaru host calls; memory cap, CPU deadline and call quota ([ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md)). | Host functions mapped to SDK calls | [Proposed] |
 | `service` | Operator-deployed process/container | OS/container isolation, machine identity | Public API + event subscription with scoped token | [Proposed] |
-| `worker-adapter` | Worker | Child process, argv + env allowlist (Weave model); inside a per-Lease container when the Environment's sandbox class is `container` ([ADR-0041](adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)) | Provider protocol | [Weave] precedent |
+| `worker-adapter` | Worker | Child process, argv + env allowlist (prototype model); inside a per-Lease container when the Environment's sandbox class is `container` ([ADR-0041](adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)) | Provider protocol | [Prototype] precedent |
 | `local-adapter` | Worker on a user's machine (embedded or Desktop-supervised) | Child process; declared filesystem roots | Provider protocol | [Proposed] |
 
 TypeScript code never executes inside the privileged Desktop host or the Go Platform process.

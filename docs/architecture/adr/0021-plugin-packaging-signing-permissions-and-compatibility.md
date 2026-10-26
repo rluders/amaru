@@ -10,7 +10,7 @@ deciders: Ricardo Lüders
 ## Context
 - Question: [Q7](../OPEN_QUESTIONS.md#q7-plugin-distribution-signing-permissions-and-compatibility). Product-owner answer: "SDK + API versioning. Not sure, we need to investigate." The investigation is this ADR.
 - Verified 2026-10-25: cosign v3.1.4 supports keyless signing (OIDC identity) and offline verification of protobuf bundles with a trusted root; private PKI via `--certificate-chain`/`--ca-roots` (https://docs.sigstore.dev/cosign/verifying/verify/). ORAS v1.3.6 (Apache-2.0) pushes and pulls arbitrary OCI artifacts with custom media types (https://oras.land/docs/).
-- Weave installs Providers per user in `<stateDir>/providers/` with no signature and no compatibility check.
+- The prototype installs Providers per user in `<stateDir>/providers/` with no signature and no compatibility check.
 - Contract versioning: [ADR-0025](0025-api-and-protocol-versioning-policy.md).
 
 ## Decision

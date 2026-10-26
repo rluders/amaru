@@ -82,7 +82,7 @@ The Cloud runs the same Platform build with Cloud adapters. Customer-run Workers
 
 ## 4. Resolved deployment points
 
-- **Local operator subcommands** ship in the Platform binary from M3/M4: `amaru open` (launch code, [ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md)), `migrate`, `backup` (compact only), `import weave`, `admin check`, `worker` and `plugin-host` ([ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md)). The remote API client (FEAT-CLI-012) is M7.
+- **Local operator subcommands** ship in the Platform binary from M3/M4: `amaru open` (launch code, [ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md)), `migrate`, `backup` (compact only), `import legacy`, `admin check`, `worker` and `plugin-host` ([ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md)). The remote API client (FEAT-CLI-012) is M7.
 - **Compact PostgreSQL**: supervised with `embedded-postgres` v2 over the bundled binaries; Unix socket on Linux/macOS, random loopback port + generated SCRAM password on Windows ([DATA_ARCHITECTURE](DATA_ARCHITECTURE.md)). If the M1 spike shows a bundled server cannot run without admin rights on an OS, the fallback is an installer-managed PostgreSQL service (validation A2).
 - **One binary**: the Platform binary has a `worker` subcommand; Server and Cloud run the same image in both roles ([ADR-0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md)).
 - **Web UI in Cloud**: served by the Platform (same build as every deployment); a CDN may cache static assets in front of it. Contract compatibility rules apply either way.

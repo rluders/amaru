@@ -9,8 +9,8 @@ deciders: Ricardo Lüders
 
 ## Context
 - Remote Execution Environments (PRD UC-3, FR-43) include workstations behind NAT or corporate firewalls, Windows machines with proprietary tools, and customer machines connected to Amaru Cloud.
-- Verified: Weave has no Worker separation, no leases and no heartbeat; recovery relies on in-process restart semantics and `Resumable` remote jobs (`weave-obsidian` `app/manager.go`, `provider/remotejob`).
-- Verified: the Weave prototype's executor investigation proposes a local Unix-socket executor, not a networked one (`weave` `INVESTIGATION-EXECUTION-BOUNDARY.md`).
+- Verified: the prototype has no Worker separation, no leases and no heartbeat; recovery relies on in-process restart semantics and `Resumable` remote jobs.
+- Verified: the earlier prototype's executor investigation proposes a local Unix-socket executor, not a networked one.
 - Requirements: lost Workers must be detected (NFR-10); duplicated messages must not duplicate consequential actions (NFR-11).
 
 ## Decision
