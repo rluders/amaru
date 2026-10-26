@@ -75,12 +75,13 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0044](adr/0044-restart-semantics-clarifications-from-the-m1-spike.md) | Clarify ADR-0042 restart semantics for unstarted Steps, embedded Workers, timeouts, fenced results and attempts | accepted | 2026-10-26 |
 | [0045](adr/0045-compact-installs-have-a-bundled-and-a-slim-flavor-on-one-engine.md) | Compact installs come in a bundled and a slim flavor on one PostgreSQL engine; heavy work runs on remote Workers | accepted | 2026-10-26 |
 | [0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) | A Project is keyed by normalized remote URL plus root commit; Linked repositories are committed definitions; Team slugs are immutable | accepted | 2026-10-26 |
+| [0047](adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md) | Adapt the prototype protocol into packages/contracts by fresh import with provenance | proposed | 2026-10-26 |
 
 ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-25 in the planning session that closed every question in [OPEN_QUESTIONS](OPEN_QUESTIONS.md). Where the owner delegated a question ("you can decide"), the ADR's Approval section says so. ADRs 0040–0043 were accepted the same day under the owner's delegation in a second planning pass that closed the residual questions Q23–Q54; they supersede 0020, 0019, 0014 and 0027 respectively, which stay in the log as `superseded`. ADRs 0044 and 0045 were drafted by an agent from the WP-M1-02 spike and accepted by the product owner on 2026-10-26.
 
 ## ADR backlog
 
-No decision is pending. Expected future ADRs are **migration ADRs**, one per prototype component (M3–M4), each naming the baseline commit of [ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md), and **superseding ADRs** if a validation check in the [validation register](OPEN_QUESTIONS.md#validation-register) fails. Implementation work that follows from the accepted ADRs is tracked in the [ROADMAP](ROADMAP.md).
+One decision is awaiting the product owner: [ADR-0047](adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md) (migration of the prototype `protocol/`, `proposed`). Expected future ADRs are the remaining **migration ADRs**, one per prototype component (M3–M4), each naming the baseline commit of [ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md), and **superseding ADRs** if a validation check in the [validation register](OPEN_QUESTIONS.md#validation-register) fails. Implementation work that follows from the accepted ADRs is tracked in the [ROADMAP](ROADMAP.md).
 
 ## Relationship to the prototype ADRs
 
