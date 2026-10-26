@@ -16,7 +16,10 @@ Conditions that keep this from being "validated":
 | A12 `embedded-postgres` v2 as production supervisor with `LocalProvider` | **holds, with four required mitigations** | **holds** (same mitigations; Unix socket) | **holds** (loopback port, SCRAM; as administrator) | the Platform adopts the mitigations; fallback not needed on any OS |
 | A2 bundled PostgreSQL, no admin rights, survives crashes | holds for crashes (non-root user); **upgrades not validated** | holds for crashes; **signing and Gatekeeper not validated** | holds for crashes; **non-admin not validated** | owner decides how to close the conditions (e.g. a Windows 11 and a signed-macOS pass) |
 | A9 embedded JetStream fits compact installs | holds (footprint, restart, store loss) | holds (store removed cleanly) | holds; **no file-locking problem after stop** | footprint budget on macOS needs a decision |
-| ADR-0042 restart semantics | holds in 86/86 crash cases; **five rules need clarification** ([ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md), proposed) | holds in 86/86 | holds in 86/86 | owner accepts or changes ADR-0044 |
+| ADR-0042 restart semantics | holds in 86/86 crash cases; **five rules need clarification** ([ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md), accepted 2026-10-26) | holds in 86/86 | holds in 86/86 | none |
+
+## Owner decision
+On 2026-10-26 the product owner accepted ADR-0044 and ADR-0045 ([bundled and slim flavors](../adr/0045-compact-installs-have-a-bundled-and-a-slim-flavor-on-one-engine.md), prompted by the macOS bundle size), merged the integration PR and closed #3, #72, #73 and #74. The conditions above (Windows non-admin and Windows 10/11, macOS signing and notarization, upgrades, trimmed-bundle measurement) are carried as follow-ups, not closed by this result.
 
 ## Environment
 Linux: see [the record](../../validation/m1/2026-10-26-linux-wp-m1-02.md) (Fedora 43, x86_64, physical, non-root, go1.26.0, PostgreSQL 18.6, `embedded-postgres` v2.0.1, `nats-server` v2.15.1). macOS and Windows ran on GitHub-hosted runners (virtual machines), recorded before the run in [#3](https://github.com/rluders/amaru/issues/3): [macOS record](../../validation/m1/2026-10-26-macos-wp-m1-02.md) (macOS 15.7.9, arm64, `macos-15`), [Windows record](../../validation/m1/2026-10-26-windows-wp-m1-02.md) (Windows Server 2025, x86_64, `windows-2025`, administrator), and an additional hosted-Linux run described in the Linux record. Evidence level: **real-validated** on each OS for the PostgreSQL and NATS behavior and the crash matrix (real processes killed, real PostgreSQL and JetStream), within the limits in the records.
@@ -160,7 +163,7 @@ The spike had to choose; each choice is in `internal/wf` and listed for the owne
 5. **Attempts**: restart retry of an idempotent Step and interruptions do not consume an attempt; only reported failures and timeouts of the capability path do (FR-17 only names interruption).
 Also: a resumable Step that crashed **before** its job id was recorded ends `interrupted`, not resumed.
 
-The owner delegated the choice. The proposed answers are in [ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md), status `proposed`; only the product owner can accept it ([DECISIONS](../DECISIONS.md#convention)). It clarifies ADR-0042 and supersedes nothing.
+The owner delegated the choice and then accepted the answers on 2026-10-26: [ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md), status `accepted`. It clarifies ADR-0042 and supersedes nothing.
 
 ## Findings from the hosted runs
 The first runs on the hosted runners failed and exposed three problems that the physical Linux machine (long-lived, 24 threads, short paths) had hidden. Each is fixed in the spike and covered by a check:

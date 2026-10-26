@@ -1,8 +1,8 @@
 ---
 title: Compact installs come in a bundled and a slim flavor on one PostgreSQL engine; heavy work runs on remote Workers
-status: proposed
+status: accepted
 date: 2026-10-26
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0045. Compact installs come in a bundled and a slim flavor on one PostgreSQL engine; heavy work runs on remote Workers
@@ -38,4 +38,4 @@ deciders:
 - **PostgreSQL-in-WASM or another embedded engine:** not evaluated; would need its own spike and an ADR.
 
 ## Approval
-Proposed by: an AI agent, delegated by the product owner in the issue #3 session on 2026-10-26 · Approved by: _(pending; an agent never accepts an ADR)_
+Proposed by: an AI agent, delegated by the product owner in the issue #3 session on 2026-10-26 · Approved by: Ricardo Lüders on 2026-10-26, in the WP-M1-02 session ("Merge, accept 44 and 45, close. We are good.")
