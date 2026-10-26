@@ -27,13 +27,15 @@ License: Apache-2.0 for contract packages is decided in [ADR-0026](../../docs/ar
 - **No merge anywhere:** the delivery-loop policy has no merge switch and the ledger no merge phase (baseline rule 2).
 - **`buf breaking` baseline:** a committed Buf image, `baseline/worker-v1.binpb`, built with `buf build -o baseline/worker-v1.binpb` from the proto sources. It is the frozen state of the last released contract and is rebuilt only at a contracts release; until the first release it equals the current sources, so the gate is real (it fails on a breaking edit, shown below) but compares against the draft. This answers the open point in [CONTRACT_VERSIONING](../../docs/architecture/CONTRACT_VERSIONING.md#2-buf-breaking-for-protobuf-packages); the choice is proposed for review.
 
-### Pieces that depend on a proposed ADR
+### Pieces decided by ADR-0048
 
-[ADR-0048](../../docs/architecture/adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md) is **proposed, not accepted**; [Q56–Q58](../../docs/architecture/OPEN_QUESTIONS.md) stay open until the product owner decides. The contract carries its shapes so they are reviewable, and they may change:
+[ADR-0048](../../docs/architecture/adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md) was **accepted by the product owner on 2026-10-26**; Q56–Q58 are closed. The contract carries its shapes:
 
-- `Approval.occurrence` and `ApprovalOccurrence` (Q56);
-- reason codes `policy.explicit_deny` and `policy.uncovered`, and `Principal` kind `trigger` requiring a `sponsor` (Q57). The reason `code` is an open string pattern, so accepting or rejecting the ADR does not change the schema;
-- no merge Capability and `scm.pr.create` default (Q58) are defaults in configuration, not contract shapes.
+- `Approval.occurrence` and `ApprovalOccurrence`, `replaces`, and the use-time digest rule (Q56);
+- reason codes `policy.explicit_deny` and `policy.uncovered`, and `Principal` kind `trigger` requiring a `sponsor` (Q57). The reason `code` is an open string pattern;
+- no merge Capability and the `scm.pr.create` default (Q58) are defaults in configuration, not contract shapes. The delivery-loop policy has no merge switch.
+
+These shapes are decided but not implemented or fixture-validated (API-002, #117).
 
 ## Not in this package yet
 

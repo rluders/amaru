@@ -866,11 +866,10 @@ paths:
     post:
       operationId: decideApproval
       description: >-
-        A human principal approves or rejects a `requested` Approval. Only humans may decide; the decider is the
+        A human principal approves or rejects a `requested` Approval. Only humans may decide (ADR-0036); the decider is the
         authenticated principal, never a body field. Errors: `not_found`; `forbidden` when the role, Team or separation-of-duties
         rule is not met (recorded as an Event, the Approval is unchanged); `conflict` when the Approval is not `requested`
-        or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are PROPOSED by8
-        (not accepted).
+        or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are decided by ADR-0048 (accepted 2026-10-26).
       requestBody:
         required: true
         content:

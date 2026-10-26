@@ -1,14 +1,14 @@
 ---
 title: Approval reuse and validity, uncovered Capabilities and Triggers, and Policy defaults and tightening
-status: proposed
+status: accepted
 date: 2026-10-26
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0048. Approval reuse and validity, uncovered Capabilities and Triggers, and Policy defaults and tightening
 
 ## Context
-[POLICY_AND_APPROVAL_SHAPES](../POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04) found three points the accepted ADRs leave open and recorded them as [Q56](../OPEN_QUESTIONS.md#q56-what-happens-to-a-decided-approval-and-to-a-retried-step-when-evidence-changes), [Q57](../OPEN_QUESTIONS.md#q57-how-does-policy-treat-a-capability-no-rule-covers-and-who-is-the-requester-of-a-triggered-execution) and [Q58](../OPEN_QUESTIONS.md#q58-policy-defaults-versus-the-mvp-never-merges-rule-and-what-a-project-may-tighten). They block the Approval and Policy contracts of WP-M2-01 (#68). The product owner asked for them to be solved on 2026-10-26; this ADR is the proposed solution and takes effect only when the owner accepts it. The proposal adopts the recommendations already recorded with each question and adds one decision of its own (item 4).
+[POLICY_AND_APPROVAL_SHAPES](../POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04) found three points the accepted ADRs leave open and recorded them as [Q56](../OPEN_QUESTIONS.md#q56-what-happens-to-a-decided-approval-and-to-a-retried-step-when-evidence-changes), [Q57](../OPEN_QUESTIONS.md#q57-how-does-policy-treat-a-capability-no-rule-covers-and-who-is-the-requester-of-a-triggered-execution) and [Q58](../OPEN_QUESTIONS.md#q58-policy-defaults-versus-the-mvp-never-merges-rule-and-what-a-project-may-tighten). They block the Approval and Policy contracts of WP-M2-01 (#68). The product owner asked for them to be solved on 2026-10-26; this ADR was proposed by Claude and accepted by the owner on 2026-10-26. It adopts the recommendations already recorded with each question and adds one decision of its own (item 4).
 
 Verified in the repository: [ADR-0036](0036-approvals-bind-to-evidence-and-gate-work.md) (pending Approvals are invalidated, decided ones stay attached to what they saw), [ADR-0037](0037-one-policy-evaluates-capabilities-grants-and-approvals.md) (resolution order, `needs_grant`), [ADR-0038](0038-roles-teams-and-separation-of-duties.md), [ADR-0039](0039-configuration-scopes-and-resolution-order.md), [ADR-0042](0042-durable-execution-with-explicit-restart-semantics.md) and [ADR-0044](0044-restart-semantics-clarifications-from-the-m1-spike.md) (idempotent retry is a new Lease, no attempt spent), [baseline rules 2 and 12](../../security/SECURITY_MODEL.md#baseline-rules). Nothing below is implemented; M3 crash and property tests would validate it.
 
@@ -31,8 +31,8 @@ Verified in the repository: [ADR-0036](0036-approvals-bind-to-evidence-and-gate-
 
 ## Consequences
 - The Approval, Policy and configuration contracts can carry these rules without an open blocker: `occurrence`, `replaces`, reason codes `policy.explicit_deny` and `policy.uncovered`, and a `trigger` principal with a required `sponsor`.
-- After acceptance: close Q56–Q58 in OPEN_QUESTIONS, reword DOMAIN_MODEL §4, mark the resolved points in POLICY_AND_APPROVAL_SHAPES. None of that is done while this ADR is `proposed`.
-- Item 4 is the choice most worth the owner's review: it goes beyond the recorded recommendation. A stricter alternative (ask once per Execution) costs more prompts and can be adopted by a superseding ADR without changing the contract fields.
+- Q56–Q58 are closed in OPEN_QUESTIONS, DOMAIN_MODEL §4 is reworded and the resolved points are marked in POLICY_AND_APPROVAL_SHAPES.
+- Item 4 goes beyond the recorded recommendation and was accepted with the ADR. A stricter alternative (ask once per Execution) costs more prompts and can be adopted by a superseding ADR without changing the contract fields.
 - Revisit when a merge Capability is proposed, or when M3 crash tests show the retry reuse rule is unsound.
 
 ## Alternatives considered
@@ -43,4 +43,4 @@ Verified in the repository: [ADR-0036](0036-approvals-bind-to-evidence-and-gate-
 - **Let Projects loosen defaults:** breaks the security baseline; only Owner or Admin lower defaults, by Grant (rule 12).
 
 ## Approval
-Proposed by: Claude (resolution of Q56–Q58, 2026-10-26). Not yet approved: awaiting the product owner's explicit acceptance.
+Proposed by: Claude (resolution of Q56–Q58, 2026-10-26). Approved by: Ricardo Lüders (product owner) on 2026-10-26 ("ADR-0048 accepted"), including item 4 (secret first-use memory).

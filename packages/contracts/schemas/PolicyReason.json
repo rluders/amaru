@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://amaru.invalid/contracts/v1/schemas/PolicyReason.json",
   "title": "PolicyReason",
-  "description": "Why a decision was reached. `policy.explicit_deny` and `policy.uncovered` are PROPOSED by ADR-0048 (Q57); `default.*` codes come from POLICY_AND_APPROVAL_SHAPES. No secret values in `message`.",
+  "description": "Why a decision was reached. `policy.explicit_deny` and `policy.uncovered` are decided by ADR-0048 (accepted 2026-10-26, Q57); `default.*` codes come from POLICY_AND_APPROVAL_SHAPES. No secret values in `message`.",
   "type": "object",
   "required": [
     "code",

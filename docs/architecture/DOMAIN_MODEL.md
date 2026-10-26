@@ -82,7 +82,7 @@ erDiagram
 - A Work Item belongs to exactly one Work Package; dependencies are within a Project (prototype limits them to one Package; Amaru allows any Work Package of the same Project, never across Projects; see [§7](#7-resolved-domain-questions)).
 - An Execution runs exactly one Workflow version; resume after restart requires the same version **[Prototype `ResumeInterrupted`]**.
 - A Step Execution has at most one active Lease and at most one Approval at a time.
-- An Approval references the Evidence presented: commit SHA, diff Artifact, check results. If the subject changes (new commit), the Approval is void **[Proposed]**.
+- An Approval references the Evidence presented: commit SHA, diff Artifact, check results. If the subject changes (new commit) while the Approval is `requested`, it is voided and re-requested; a decided Approval is never edited and does not authorize the action when the evidence digest has changed ([ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md)) **[Proposed]**.
 - Grants authorize Capabilities for subjects (Agent, Workflow, Plugin component) in a scope (Organization, Project); Approvals authorize one occurrence (ADR-0006).
 - Providers are resolved per Step from the Agent's preference, Policy and the Environments that advertise the Capability.
 

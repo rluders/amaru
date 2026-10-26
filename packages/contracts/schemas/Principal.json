@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://amaru.invalid/contracts/v1/schemas/Principal.json",
   "title": "Principal",
-  "description": "Whoever or whatever a request or decision is attributed to (ADR-0038). Only `human` may decide an Approval. `agent` and `trigger` require a human `sponsor`: for `trigger` that is ADR-0048 (proposed, Q57); the `agent` rule is in POLICY_AND_APPROVAL_SHAPES section 2.",
+  "description": "Whoever or whatever a request or decision is attributed to (ADR-0038). Only `human` may decide an Approval. `agent` and `trigger` require a human `sponsor`: for `trigger` that is ADR-0048 (accepted 2026-10-26, Q57); the `agent` rule is in POLICY_AND_APPROVAL_SHAPES section 2.",
   "type": "object",
   "required": [
     "kind",
