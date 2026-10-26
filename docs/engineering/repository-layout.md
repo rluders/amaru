@@ -19,6 +19,7 @@ amaru/
 │   ├── engineering/        conventions, this file, agent instructions, validation
 │   ├── security/           security model
 │   └── migration/          migration plan, repository assessment, inventory snapshots
+├── spikes/wp-m1-02/        Go module: WP-M1-02 validation experiments (throwaway, not the Platform)
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
@@ -42,6 +43,9 @@ Rules for introducing an area:
 2. Language workspaces (`go.work`, `pnpm-workspace.yaml`, Cargo workspace) arrive with the second module of that language.
 3. It follows the [conventions](CONVENTIONS.md) and the boundaries in [ARCHITECTURE](../architecture/ARCHITECTURE.md).
 4. Use the `repository-bootstrap` Skill (`.agents/skills/repository-bootstrap/SKILL.md`).
+
+## Why `spikes/wp-m1-02` exists now
+WP-M1-02 ([#3](https://github.com/rluders/amaru/issues/3)) must validate bundled PostgreSQL, embedded JetStream and restart semantics by running them, and the evidence must be reproducible. The code is a separate Go module with its own pinned dependencies, [README](../../spikes/wp-m1-02/README.md) and `make spike-vet` / `make spike-m1-02` targets. It holds no Platform code and no Weave code; it is removed or replaced when `services/platform` is introduced (M3). Its third-party dependencies are scoped to the spike module and do not make the Platform depend on them.
 
 ## Why `tools/doccheck` exists now
 The bootstrap's deliverable is documentation whose value depends on staying consistent: links, ADR statuses and Skill adapters. Off-the-shelf link checkers (markdownlint, lychee) are not installed here and would not check the ADR index or the Skill symlink scheme. A stdlib-only Go tool adds no dependencies, matches the Platform's planned language, and has unit tests.
