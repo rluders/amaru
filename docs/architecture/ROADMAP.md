@@ -76,6 +76,11 @@ flowchart LR
 - **Unblocks:** API-001, EXE-002, PRJ-005, POL-001 and REV-001.
 - **Dependencies:** M0. No prototype-side work is required.
 - **Work Packages:** WP-M1-01 … WP-M1-07.
+- **Status (2026-10-26):** WP-M1-02 … WP-M1-07 are delivered; the design deliverables are **Proposed, not validated** ([#3](https://github.com/rluders/amaru/issues/3) spike report, [#4](https://github.com/rluders/amaru/issues/4) [CONTRACT_VERSIONING](CONTRACT_VERSIONING.md), [#5](https://github.com/rluders/amaru/issues/5) [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md), [#6](https://github.com/rluders/amaru/issues/6) [AMARU_DIRECTORY](AMARU_DIRECTORY.md) and [LEGACY_IMPORTER](LEGACY_IMPORTER.md), [#7](https://github.com/rluders/amaru/issues/7) [WORKER_PROTOCOL](WORKER_PROTOCOL.md), [#8](https://github.com/rluders/amaru/issues/8) inventory). **M1 is not closed:**
+  - The exit check "A2 and A9 pass" is not met as written: the spike report is *conditionally validated* on the three hosted runners and keeps A2 and A9 open for Windows non-admin, macOS signing and footprint, and upgrade and power-loss tests ([report](investigations/2026-10-26-wp-m1-02-storage-and-execution.md)). The product owner decides whether those conditions suffice ([#60](https://github.com/rluders/amaru/issues/60)).
+  - Migration readiness criteria 1, 2 and 7 for the first wave are not re-verified here ([#60](https://github.com/rluders/amaru/issues/60)).
+  - `LICENSE` files are a product-owner task ([#66](https://github.com/rluders/amaru/issues/66), AGENTS.md rule 9).
+  - [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) is `proposed`, and Q56–Q58 ([OPEN_QUESTIONS](OPEN_QUESTIONS.md)) await the product owner.
 - **Exit criteria:** spike reports in `docs/architecture/investigations/` show the validation checks A2 and A9 pass (or a superseding ADR is accepted); migration readiness criteria 1, 2 and 7 met for the first wave.
 - **Validation:** spike reports with crash-injection results and install footprint per OS.
 - **Risks:**
