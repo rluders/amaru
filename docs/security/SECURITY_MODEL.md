@@ -65,4 +65,4 @@ Status: **accepted planning baseline** (2026-10-25; every decision it relies on 
 - Tenant isolation: [ADR-0022](../architecture/adr/0022-cloud-tenancy-row-level-isolation-by-organization.md) (M9).
 
 ## Reporting
-No vulnerability disclosure process exists yet. Decision: a `SECURITY.md` policy with private reporting through GitHub Security Advisories and a contact address, a 90-day coordinated disclosure window, is published before the first public release (roadmap WP-M1-01; FEAT-POL-008).
+[SECURITY.md](../../SECURITY.md) exists since 2026-10-26 (owner-approved; the reporting channel is enabled when the repository goes public; the full process is FEAT-POL-008, not implemented). Decision: a `SECURITY.md` policy with private reporting through GitHub Security Advisories and a contact address, a 90-day coordinated disclosure window, is published before the first public release (roadmap WP-M1-01; FEAT-POL-008).

@@ -86,7 +86,7 @@ Some decisions belong only to the product owner (AGENTS.md hard rules 3 and 9). 
 | License legal review | `OWN-legal-review` | closed 2026-10-26: no separate legal review (owner decision, [WP-M1-01](../architecture/WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)) | — |
 | Root `LICENSE` in effect ([ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)) | `OWN-license-files` | the owner commits the root `LICENSE` | the first public release and the first external contribution; not migration (decided 2026-10-26) |
 | Apache-2.0 `LICENSE` per contract or SDK package | the issue that creates the package (WP-M2-01, WP-M2-02, E6.3; E6.6 for the Go Worker SDK) | the owner commits the file in that package | that issue |
-| CLA | `OWN-cla` | the owner approves the CLA text and the signing tooling | the first external contribution |
+| CLA | `OWN-cla` | closed 2026-10-26: the owner approved the CLA text and the manual signing process ([CLA](../../CLA.md), [CONTRIBUTING](../../CONTRIBUTING.md#contributor-license-agreement)) | the first external contribution |
 
 An issue of a gate is never closed because a PR merged, an issue was created, or a link is missing. Any new issue that moves Weave code gets a native link to its migration ADR issue (or sits under a parent that has one) when it is created.
 

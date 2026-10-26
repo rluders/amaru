@@ -86,7 +86,7 @@ That is everything that runs today. Start reading at the [PRD](docs/product/PRD.
 
 ## Contributing
 
-The project is at the foundation stage and is not yet accepting external contributions: the license and CLA are decided ([ADR-0026](docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)) but their texts are not yet published. For maintainers and agents: follow [AGENTS.md](AGENTS.md) and the [conventions](docs/engineering/CONVENTIONS.md), record significant decisions as ADRs, and run `make check` before proposing a change.
+The project is at the foundation stage and is not yet accepting external contributions. The CLA text ([CLA.md](CLA.md)) and signing process ([CONTRIBUTING](CONTRIBUTING.md#contributor-license-agreement)) are in place; the root license text is not yet in effect ([ADR-0026](docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)). For maintainers and agents: follow [AGENTS.md](AGENTS.md) and the [conventions](docs/engineering/CONVENTIONS.md), record significant decisions as ADRs, and run `make check` before proposing a change.
 
 ## License
 
