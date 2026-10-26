@@ -18,7 +18,6 @@ amaru/
 │   ├── architecture/       architecture hub + views, roadmap, work packages, decisions + adr/, open questions
 │   ├── engineering/        conventions, this file, agent instructions, validation
 │   ├── security/           security model
-│   └── migration/          migration plan, repository assessment, inventory snapshots
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
@@ -28,9 +27,9 @@ There is **no LICENSE file** yet: the license is decided in [ADR-0026](../archit
 
 | Path | Purpose | Introduced when (evidence required) |
 |---|---|---|
-| `packages/contracts` | API, event, provider and Worker schemas + golden fixtures | [M2](../architecture/ROADMAP.md#m2-contracts-v0): versioning per [ADR-0025](../architecture/adr/0025-api-and-protocol-versioning-policy.md); migration ADR for Weave `protocol/`. |
+| `packages/contracts` | API, event, provider and Worker schemas + golden fixtures | [M2](../architecture/ROADMAP.md#m2-contracts-v0): versioning per [ADR-0025](../architecture/adr/0025-api-and-protocol-versioning-policy.md); migration ADR for the prototype `protocol/`. |
 | `packages/sdk` | Client SDK generated from contracts (TS first) | M2: contracts exist; the Web client needs it. |
-| `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves Weave Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-weave-runtime.md)). |
+| `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves prototype Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-earlier-internal-runtime.md)). |
 | `apps/web` | Web client served by the Platform | [M4](../architecture/ROADMAP.md#m4-local-mvp): Web is the MVP client ([ADR-0010](../architecture/adr/0010-local-mvp-client-is-a-web-ui.md)). |
 | `packages/plugin-sdk` | Plugin author SDK and manifest schema | M6: implements [ADR-0041](../architecture/adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)–[ADR-0021](../architecture/adr/0021-plugin-packaging-signing-permissions-and-compatibility.md). |
 | `packages/ui`, `packages/app` | Shared design system and product screens | When Desktop (M8) needs to share them; until then inside `apps/web`. |

@@ -50,7 +50,7 @@ sequenceDiagram
 | Revision | The assignment names the repository and commit. The Worker fetches it with credentials scoped to that repository. No shared filesystem is assumed. |
 | Secrets | Delivered per assignment, scoped to the Capability and Step, never persisted by the Worker beyond the Step; redacted from Events. |
 | Artifacts | Uploaded to the Platform's artifact store with hashes. Large outputs use resumable chunked HTTP uploads or presigned S3 URLs ([ADR-0017](adr/0017-content-addressed-artifact-store-filesystem-or-s3.md)). |
-| Cancellation | Cancel messages and lease revocation; the Worker terminates the process tree (Weave `platform` package precedent; Windows uses Job Objects, validated in the M5 spike — Weave GAP-05 never validated it). |
+| Cancellation | Cancel messages and lease revocation; the Worker terminates the process tree (prototype `platform` package precedent; Windows uses Job Objects, validated in the M5 spike — prototype GAP-05 never validated it). |
 | Disconnection | Running Steps continue for the lease period. On reconnect the Worker reports progress. Duplicate completions are ignored by attempt ID. |
 | Authorization | A Worker may run only Capabilities its Environment's Policy allows. Consequential Capabilities still need Platform-side Grants or Approvals before assignment. |
 | Upgrade | Workers report their version; the Platform refuses assignments to incompatible Workers (NFR-29). |
@@ -78,7 +78,7 @@ flowchart LR
 
 - The Worker manifest lists **MCP servers** with their tools, next to Capabilities. They are discovered from configuration or from plugin `worker-adapter` components.
 - **The agent runs on the Worker beside the tools** ([ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md)). Low latency, and MCP traffic stays on the VM. Agent credentials reach the VM for that Lease only.
-- The Worker runs the **MCP gateway** (the Weave ADR-025 design, moved to the Worker). Every tool call is Policy-checked per tool and audited as an Event; the agent reaches the editor's MCP server only through it.
+- The Worker runs the **MCP gateway** (the prototype ADR-025 design, moved to the Worker). Every tool call is Policy-checked per tool and audited as an Event; the agent reaches the editor's MCP server only through it.
 - There is no Platform-side MCP gateway and no remote agent placement. Epic's Unreal MCP plugin (UE 5.8, experimental) listens on loopback only, without authentication, which rules out remote access anyway.
 - Consequential editor actions (saving assets, source-control submits) are Capabilities subject to Grants or Approvals.
 - **MCP server choice** (FEAT-ENV-009): the Environment template uses Epic's Unreal MCP plugin for engine versions that ship it (UE 5.8+). A community MCP server is supported only for older engine versions; it goes through the same gateway and Policy.
@@ -97,14 +97,14 @@ flowchart LR
 
 ## 6. Embedded Worker
 
-In compact mode the Worker runs inside the Platform process (Weave's model) but uses the same assignment, lease and completion interfaces in memory. The test suite runs assignment scenarios against both the embedded and a separate Worker, to keep the remote path honest (ADR-0009).
+In compact mode the Worker runs inside the Platform process (the prototype's model) but uses the same assignment, lease and completion interfaces in memory. The test suite runs assignment scenarios against both the embedded and a separate Worker, to keep the remote path honest (ADR-0009).
 
 ## 7. Sandboxing
 
-- **Local processes:** argv arrays, explicit cwd, environment allowlist, prompts via stdin, process groups. Claude Code's OS sandbox is used for workspace commands where available **[Weave]**.
-- **Container sandbox Environment:** single-level rootless containers with dropped capabilities and resource limits. This follows the Weave prototype's `PodmanRuntime.Run` flags. Its investigation shows nested rootless containers inside a container fail (`newuidmap`), so the sandbox Worker runs on the host or VM, never nested (`weave` `INVESTIGATION.md`, `INVESTIGATION-EXECUTION-BOUNDARY.md`).
+- **Local processes:** argv arrays, explicit cwd, environment allowlist, prompts via stdin, process groups. Claude Code's OS sandbox is used for workspace commands where available **[Prototype]**.
+- **Container sandbox Environment:** single-level rootless containers with dropped capabilities and resource limits. This follows the earlier prototype's `PodmanRuntime.Run` flags. Its investigation shows nested rootless containers inside a container fail (`newuidmap`), so the sandbox Worker runs on the host or VM, never nested.
 - **Environment sandbox class** ([ADR-0041](adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)) is set by an Owner or Admin: `container` (default for server and Cloud Environments; one rootless container per Lease) or `none` (default for workstations and the compact embedded Worker). Policy can require `container` for a Capability.
-- **Local Checks:** currently unsandboxed in Weave (documented residual risk). Sandboxed in a `container`-class Environment (FEAT-VAL-004).
+- **Local Checks:** currently unsandboxed in the prototype (documented residual risk). Sandboxed in a `container`-class Environment (FEAT-VAL-004).
 
 ## 8. Remote development environments
 

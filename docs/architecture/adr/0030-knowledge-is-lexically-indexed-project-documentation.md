@@ -9,13 +9,13 @@ deciders: Ricardo Lüders
 
 ## Context
 - Question: [Q17](../OPEN_QUESTIONS.md#q17-knowledge-scope-and-retrieval). Product-owner answer: "Your choice."
-- Weave ADR-022 (accepted, not built) defines Knowledge as a read-only indexed view returning cards (path, title, aliases, tags, headings) and single sections, explicitly "not semantic indexing". Weave `store/fsscan` indexes Markdown frontmatter up to 1 MiB.
+- Prototype ADR-022 (accepted, not built) defines Knowledge as a read-only indexed view returning cards (path, title, aliases, tags, headings) and single sections, explicitly "not semantic indexing". Prototype `store/fsscan` indexes Markdown frontmatter up to 1 MiB.
 - Embeddings require sending content to a model provider (privacy, cost) and a vector store; pgvector is available under the PostgreSQL license.
 - Agents already read source code directly through their tools; Knowledge is about context selection ("least context necessary").
 
 ## Decision
 - **Scope**: committed Markdown in the Project — documentation, ADRs, Skills, Playbooks, Artifact notes — plus Amaru definitions under `.amaru/`. **Not** source code, binaries, ignored or secret files. Projects can add include/exclude globs in `.amaru/config.yaml`.
-- **Retrieval**: lexical, using PostgreSQL full-text search over title, headings, frontmatter and section text, returning cards and sections (Weave ADR-022 shape).
+- **Retrieval**: lexical, using PostgreSQL full-text search over title, headings, frontmatter and section text, returning cards and sections (prototype ADR-022 shape).
 - **Index location**: Platform PostgreSQL, per Project and Organization-scoped; rebuilt from Git at a commit; never written into the Project.
 - **Semantic retrieval** (pgvector) is not part of the product until an evaluation on recorded runs shows lexical retrieval missing relevant context; it would then be opt-in per Organization with a declared embedding provider.
 

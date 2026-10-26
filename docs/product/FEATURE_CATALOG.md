@@ -2,11 +2,11 @@
 
 Status: **accepted planning baseline** (2026-10-25, owner-reviewed with the planning package). The catalog of Amaru product capabilities with stable IDs, priorities, planned milestones and acceptance criteria. **No feature is implemented in this repository.** The *Evidence* column points at predecessor code, which is evidence for the design, not Amaru behavior.
 
-Related: [PRD](PRD.md) (requirements FR/NFR) · [non-functional requirements](NON_FUNCTIONAL_REQUIREMENTS.md) · [roadmap](../architecture/ROADMAP.md) (milestones M0–M10) · [work packages](../architecture/WORK_PACKAGES.md) · [repository assessment](../migration/REPOSITORY_ASSESSMENT.md).
+Related: [PRD](PRD.md) (requirements FR/NFR) · [non-functional requirements](NON_FUNCTIONAL_REQUIREMENTS.md) · [roadmap](../architecture/ROADMAP.md) (milestones M0–M10) · [work packages](../architecture/WORK_PACKAGES.md).
 
 ## 1. How to read this catalog
 
-**IDs**: `FEAT-<AREA>-NNN`, never renumbered or reused. A retired feature keeps its row with class *Out of scope*. The `FEAT-` prefix avoids collisions with Weave findings (`F-nn`) and PRD requirement IDs.
+**IDs**: `FEAT-<AREA>-NNN`, never renumbered or reused. A retired feature keeps its row with class *Out of scope*. The `FEAT-` prefix avoids collisions with prototype findings (`F-nn`) and PRD requirement IDs.
 
 **Priority**
 | Priority | Meaning |
@@ -29,7 +29,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 
 **Availability**: `L` local/compact install · `SH` self-hosted server · `C` Cloud · `W` Web client · `D` Desktop client · `E` environment-specific (depends on what a Worker's machine offers).
 
-**Evidence abbreviations**: `WO:` = `weave-obsidian` at `c8a2f6e` (paths under `runtime/internal/` unless stated) · `WP:` = `weave` (prototype) at `824af76` · `ADR-0nn` without a leading zero pair = Weave ADR; `ADR-00nn` = Amaru ADR.
+**Evidence abbreviations**: `WO:` = the earlier internal Runtime at the pinned baseline (paths under `runtime/internal/` unless stated) · `WP:` = the earlier prototype · `ADR-0nn` without a leading zero pair = prototype ADR; `ADR-00nn` = Amaru ADR.
 
 **Depends on**: features (and ADRs) that must exist before this feature can be built and accepted (a *hard* dependency). A dependency marked **(soft)** is a sequencing and integration need only: the feature is built and accepted against a port or contract that already exists, with fakes in tests, and the depended-on feature must exist before the feature's real-validation run (recorded run), which is scheduled where both exist. Soft dependencies are listed with their rationale in [WORK_PACKAGES §Cross-package feature dependencies](../architecture/WORK_PACKAGES.md#cross-package-feature-dependencies). The dependency graph has no cycles.
 
@@ -42,9 +42,9 @@ Priority is assigned by product need, not by whether a predecessor already has t
 |---|---|---|---|---|---|---|---|---|
 | FEAT-PRJ-001 | Attach a Project without moving its files | Engineer | P0 | M3 | Reuse | L SH C | — | WO: `project/project.go` (`ID`, `Load`), `POST /v1/projects` |
 | FEAT-PRJ-002 | Many Projects per Instance | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 | WO: ADR-009 (multi-project), `app/projects.go` |
-| FEAT-PRJ-003 | Project trust | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 | WO: `.weave/trust.json`, ADR-024 |
+| FEAT-PRJ-003 | Project trust | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 | WO: per-project `trust.json`, ADR-024 |
 | FEAT-PRJ-004 | Linked repositories | Engineer | P0 | M4 | Reuse | L SH C | PRJ-003 | WO: ADR-026, `domain/project.go` `Repositories` |
-| FEAT-PRJ-005 | Project metadata store | Platform | P0 | M3 | Improve | L SH C | ADR-0043 | WO: `.weave/` files; WP: Postgres `projects` |
+| FEAT-PRJ-005 | Project metadata store | Platform | P0 | M3 | Improve | L SH C | ADR-0043 | WO: per-project definition files; WP: Postgres `projects` |
 | FEAT-PRJ-006 | Detach and archive a Project | Engineer | P1 | M7 | New | L SH C | PRJ-001 | WO: no detach (`app/projects.go`) |
 | FEAT-PRJ-007 | Knowledge index (read-only) | Engineer, Agent | P2 | Backlog | Future | L SH | ADR-0030 | WO: `store/fsscan`, ADR-022 |
 
@@ -53,7 +53,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 |---|---|---|---|---|---|---|---|---|
 | FEAT-WRK-001 | Work Packages and Work Items | Engineer | P0 | M3 | Reuse | L SH C | PRJ-001 (soft) | WO: `domain/work.go`, ADR-004 |
 | FEAT-WRK-002 | Work Item dependencies | Engineer | P0 | M3 | Reuse | L SH C | WRK-001 | WO: `DependsOn`, ADR-021, F-17 |
-| FEAT-WRK-003 | Change events for Work, Workflows, Agents | Client | P0 | M3 | Improve | L SH C | EXE-004 | WO: GAP-06; work files not watched (`cmd/weaved/main.go`) |
+| FEAT-WRK-003 | Change events for Work, Workflows, Agents | Client | P0 | M3 | Improve | L SH C | EXE-004 | WO: GAP-06; work files not watched by the daemon |
 | FEAT-WRK-004 | Supervised delivery loop | Engineer | P0 | M4 | Improve | L SH C | WFL-001, ENV-010, VAL-001 (soft), REV-004 (soft), REV-005 (soft), INT-001 (soft) | WO: `app/autoloop*.go`, ADR-021/026/028/029, Cycle 7 |
 | FEAT-WRK-005 | Attempt and budget accounting | Engineer | P0 | M4 | Improve | L SH C | WRK-004 | WO: F-39, F-40, F-32, F-25; `domain/autoloop.go` |
 | FEAT-WRK-006 | Signals and triage inbox | Lead | P2 | Backlog | Future | W D | WRK-001 | WP: `domain/signal.go` |
@@ -62,7 +62,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 ### 2.3 Workflows (WFL)
 | ID | Feature | Actor | P | Milestone | Class | Avail | Depends on | Evidence |
 |---|---|---|---|---|---|---|---|---|
-| FEAT-WFL-001 | Workflow definitions as text graphs | Engineer | P0 | M3 | Reuse | L SH C | — | WO: `domain/workflow.go`, `.weave/workflows/*.yaml`, ADR-013 |
+| FEAT-WFL-001 | Workflow definitions as text graphs | Engineer | P0 | M3 | Reuse | L SH C | — | WO: `domain/workflow.go`, per-project `workflows/*.yaml`, ADR-013 |
 | FEAT-WFL-002 | Definition versioning and run pinning | Engineer, Auditor | P0 | M3 | Improve | L SH C | WFL-001 | WO: resume refuses changed steps (`ResumeInterrupted`) |
 | FEAT-WFL-003 | Workflow variables | Engineer | P0 | M3 | Reuse | L SH C | WFL-001 | WO: `{{var}}`; F-15 truncation fixed |
 | FEAT-WFL-004 | Per-Step timeouts | Platform | P0 | M3 | New | L SH C | EXE-001 | WO: no wall-clock timeout on agent runs (`app/manager.go`) |
@@ -93,7 +93,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 | FEAT-API-001 | Versioned public API contract | Client, Plugin author | P0 | M2 | Improve | L SH C | ADR-0025 | WO: `protocol/openapi.yaml`, `schema.json`, 271 fixtures; drift on `/work-packages/{id}/autoloop` |
 | FEAT-API-002 | Contract fixtures validated in Go and TypeScript | Engineer | P0 | M2 | Reuse | — | API-001 | WO: `internal/protocol/fixtures_test.go`, `plugin/test/protocol.test.ts` |
 | FEAT-API-003 | Generated TypeScript SDK | Client, Plugin author | P0 | M2 | New | W D | API-001 | WO: hand-typed `plugin/src/runtime/types.ts`; WP: raw fetch hooks |
-| FEAT-API-004 | Worker protocol | Worker | P1 | M5 | New | SH C E | ADR-0029, API-001 | WO: `Resumable`/`Detachable`, `weave.provider/v1` as precedent |
+| FEAT-API-004 | Worker protocol | Worker | P1 | M5 | New | SH C E | ADR-0029, API-001 | WO: `Resumable`/`Detachable`, the stdio provider protocol as precedent |
 | FEAT-API-005 | Compatibility negotiation between clients and Instances | Client | P0 | M3 | Reuse | L SH C | API-001 | WO: `protocolVersion` in discovery, `/v1/health` |
 
 ### 2.6 Agents (AGT)
@@ -120,7 +120,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 |---|---|---|---|---|---|---|---|---|
 | FEAT-CAP-001 | Typed Capability catalog | Platform | P0 | M3 | Reuse | L SH C | — | WO: `domain/capabilities.go`, ADR-012 |
 | FEAT-CAP-002 | Built-in agent providers (Claude, Codex, OpenCode) | Engineer | P0 | M3 | Improve | L E | CAP-001 | WO: `provider/{claude,codex,opencode}`; WP: `runtime/cli_driver.go` |
-| FEAT-CAP-003 | External provider protocol | Provider author | P0 | M3 | Improve | L SH E | API-001 | WO: `protocol/provider.schema.json`, `weave.provider/v1` |
+| FEAT-CAP-003 | External provider protocol | Provider author | P0 | M3 | Improve | L SH E | API-001 | WO: `protocol/provider.schema.json` |
 | FEAT-CAP-004 | Remote-job providers (resumable, detachable) | Platform | P0 | M3 | Reuse | L SH C | EXE-002 | WO: `provider/remotejob`, `Resumable`, `Detachable` |
 | FEAT-CAP-005 | Provider health and discovery | Engineer | P0 | M3 | Reuse | L SH E | CAP-001 | WO: probes, toolbox page, tool cache (F-9) |
 | FEAT-CAP-006 | MCP client provider behind a gateway | Engineer | P1 | M5 | Improve | L SH E | POL-001 | WO: ADR-016 (built), ADR-025 gateway (not built) |
@@ -207,7 +207,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 | FEAT-POL-004 | Egress consent | Engineer | P0 | M3 | Reuse | L SH C | POL-001 | WO: `transport/webhook/sender.go` private-host block, per-URL consent |
 | FEAT-POL-005 | Workspace command sandbox | Engineer | P0 | M3 | Reuse | L E | AGT-003 | WO: `ValidWorkspaceCommand`, denylist `domain/agent.go`, `ShellConfiner` |
 | FEAT-POL-006 | Provider confinement refusal | Platform | P0 | M3 | Improve | L E | CAP-002, AGT-003 | WO: Codex and OpenCode ignore `WorkspaceWrite` |
-| FEAT-POL-007 | Secrets port and backends | Operator | P0 | M3 | Reuse | L SH C | — | WO: `userstore/credentials.json`, `WEAVE_SECRET_*` |
+| FEAT-POL-007 | Secrets port and backends | Operator | P0 | M3 | Reuse | L SH C | — | WO: `userstore/credentials.json`, secret environment variables |
 | FEAT-POL-008 | Vulnerability disclosure process | Security researcher | P1 | M7 | New | — | — | SECURITY_MODEL "Reporting" |
 | FEAT-POL-009 | Tenant isolation | Cloud customer | P2 | M9 | Future | C | IAM-003, ADR-0022 | — |
 
@@ -261,7 +261,7 @@ Priority is assigned by product need, not by whether a predecessor already has t
 |---|---|---|---|---|---|---|---|---|
 | FEAT-OPS-001 | Local install on Windows, macOS, Linux | Engineer | P0 | M4 | Improve | L | ENV-001 | WO: CI matrix (`.github/workflows/ci.yml`), GAP-05 |
 | FEAT-OPS-002 | Persisted schema versioning and migrations | Operator | P0 | M3 | New | L SH C | ADR-0023 | WO: GAP-07, tolerant loaders; WP: `store/migrations.go` |
-| FEAT-OPS-003 | Configuration scopes | Engineer | P0 | M3 | Improve | L SH C | ADR-0039 | WO: `.weave/config.yaml`, `settings.json`, user state dir |
+| FEAT-OPS-003 | Configuration scopes | Engineer | P0 | M3 | Improve | L SH C | ADR-0039 | WO: per-project `config.yaml`, `settings.json`, user state dir |
 | FEAT-OPS-004 | Compact self-hosted server | Operator | P1 | M7 | New | SH | OPS-002, IAM-002 | WP: `docker-compose.dev.yml` (dev only) |
 | FEAT-OPS-005 | Backup and restore | Operator | P1 | M7 | New | L SH | OPS-002 | — |
 | FEAT-OPS-006 | Upgrade with compatibility checks | Operator | P1 | M7 | New | L SH | OPS-002, API-005 | — |
@@ -281,17 +281,17 @@ Priority is assigned by product need, not by whether a predecessor already has t
 Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** · **Extension** (plugin involvement) · **Risks/open**.
 
 ### 3.1 Projects and work
-- **FEAT-PRJ-001** Attach a Project. *Outcome:* an engineer points Amaru at an existing folder and gets a stable Project ID without any user file moving. *Acceptance:* attaching writes only to the metadata location; the ID is stable across restarts and path spelling; attaching an untrusted path never executes project content. *Validation:* unit + integration tests ported from Weave `project` package; manual attach on each OS. *Extension:* none. *Risks:* none beyond the metadata split of [ADR-0043](../architecture/adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) (attach writes nothing into the Project; `.amaru/` holds only committed definitions).
+- **FEAT-PRJ-001** Attach a Project. *Outcome:* an engineer points Amaru at an existing folder and gets a stable Project ID without any user file moving. *Acceptance:* attaching writes only to the metadata location; the ID is stable across restarts and path spelling; attaching an untrusted path never executes project content. *Validation:* unit + integration tests ported from the prototype `project` package; manual attach on each OS. *Extension:* none. *Risks:* none beyond the metadata split of [ADR-0043](../architecture/adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) (attach writes nothing into the Project; `.amaru/` holds only committed definitions).
 - **FEAT-PRJ-002** Many Projects per Instance. *Outcome:* one Instance serves all of a user's Projects. *Acceptance:* per-Project event streams, Executions and settings are isolated; one Project's failure does not stop others. *Validation:* integration test with two Projects; F-10 regression (secrets not shared across Projects). *Risks:* none known.
 - **FEAT-PRJ-003** Project trust. *Outcome:* Amaru does nothing with project-supplied Skills, repositories or commands until the user trusts the Project. *Acceptance:* trust is content-bound; changes to trusted content require re-trust; untrusted Projects are read-only to Agents. *Validation:* ported tests for `trust.json` semantics. *Risks:* UX friction (F-1).
 - **FEAT-PRJ-004** Linked repositories. *Outcome:* a Project can deliver to repositories outside its folder. *Acceptance:* only trusted Projects can link; each repository has a base branch and delivery Policy. *Validation:* integration test with a local bare repository. *Decision:* each linked repository gets its own scoped credential (a GitHub App installation token limited to that repository, or a per-repository deploy key), delivered per Lease and never stored on the Worker ([ADR-0024](../architecture/adr/0024-remote-worker-registration-identity-and-delivery.md)). *Risks:* hosts without per-repository tokens fall back to a user token, which is flagged in Evidence.
-- **FEAT-PRJ-005** Project metadata store. *Outcome:* a decided, documented place for Amaru's per-Project state that separates knowledge in Git from operational state. *Acceptance:* the [data architecture](../architecture/DATA_ARCHITECTURE.md) classes are honored; operational state is not committed to user repositories by default. *Validation:* review against the data architecture. *Risks:* migration of existing `.weave/` data ([migration plan](../migration/MIGRATION_PLAN.md#8-persistence-and-state-migration)).
+- **FEAT-PRJ-005** Project metadata store. *Outcome:* a decided, documented place for Amaru's per-Project state that separates knowledge in Git from operational state. *Acceptance:* the [data architecture](../architecture/DATA_ARCHITECTURE.md) classes are honored; operational state is not committed to user repositories by default. *Validation:* review against the data architecture. *Risks:* migration of existing prototype project data.
 - **FEAT-PRJ-006** Detach and archive. *Outcome:* remove a Project from an Instance without touching its files. *Acceptance:* running Executions must be cancelled or finished first; history is retained per retention policy. *Validation:* integration test. *Risks:* none.
 - **FEAT-WRK-001** Work Packages and Work Items. *Outcome:* human-owned units of intended work linked to Executions. *Acceptance:* item status is set only by humans or by an explicit Policy-governed delivery loop transition; package progress is derived; IDs are stable: a ULID internally and a display key `<PROJECTKEY>-<n>` unique per Instance; references across Instances use the Instance URL + ULID. *Validation:* ported domain tests. *Risks:* importing WO `WI-001` numbers needs a key mapping (kept as an alias).
 - **FEAT-WRK-002** Dependencies. *Outcome:* an item does not start until its dependencies are done. *Acceptance:* cycles rejected; blocked state explains the dependency; external issue dependencies supported via INT-003 later. *Validation:* ported F-17 tests.
-- **FEAT-WRK-003** Change events. *Outcome:* every client sees Work, Workflow and Agent edits without reloading. *Acceptance:* each mutation emits a typed event with a cursor; edits by other clients or by files on disk are detected. *Validation:* contract fixtures + integration test with two clients. *Risks:* closes Weave GAP-06 and F-7 (lost update).
-- **FEAT-WRK-004** Supervised delivery loop. *Outcome:* the UC-1 flow runs with the human only approving and merging. *Acceptance:* opt-in per Work Package; every side effect is recorded before the next; never merges; draft PR only; a missing human decision parks one item, not the loop; restart-safe. *Validation:* ported Autoloop tests; a recorded supervised run on a real Go repository on each OS (Weave Cycle 7 shape). *Extension:* reviewers and checks are Capabilities, so plugins can supply them. *Risks:* Weave verdict "not ready for unattended engineering"; MVP scope is supervised only.
-- **FEAT-WRK-005** Attempt and budget accounting. *Outcome:* runs are spent only on real attempts. *Acceptance:* a no-op implementation does not consume an attempt (F-39); unblocking resumes review when a commit exists (F-40); restart recoveries do not consume attempts (ADR-029). *Validation:* tests reproducing F-39/F-40; recorded run meeting "≤1 implementation and ≤1 review per accepted change". *Risks:* F-39/F-40 are Amaru acceptance tests, not Weave prerequisites ([ADR-0032](../architecture/adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)).
+- **FEAT-WRK-003** Change events. *Outcome:* every client sees Work, Workflow and Agent edits without reloading. *Acceptance:* each mutation emits a typed event with a cursor; edits by other clients or by files on disk are detected. *Validation:* contract fixtures + integration test with two clients. *Risks:* closes prototype GAP-06 and F-7 (lost update).
+- **FEAT-WRK-004** Supervised delivery loop. *Outcome:* the UC-1 flow runs with the human only approving and merging. *Acceptance:* opt-in per Work Package; every side effect is recorded before the next; never merges; draft PR only; a missing human decision parks one item, not the loop; restart-safe. *Validation:* ported Autoloop tests; a recorded supervised run on a real Go repository on each OS (prototype Cycle 7 shape). *Extension:* reviewers and checks are Capabilities, so plugins can supply them. *Risks:* prototype verdict "not ready for unattended engineering"; MVP scope is supervised only.
+- **FEAT-WRK-005** Attempt and budget accounting. *Outcome:* runs are spent only on real attempts. *Acceptance:* a no-op implementation does not consume an attempt (F-39); unblocking resumes review when a commit exists (F-40); restart recoveries do not consume attempts (ADR-029). *Validation:* tests reproducing F-39/F-40; recorded run meeting "≤1 implementation and ≤1 review per accepted change". *Risks:* F-39/F-40 are Amaru acceptance tests, not prototype prerequisites ([ADR-0032](../architecture/adr/0032-migration-baseline-is-a-pinned-commit.md)).
 
 ### 3.2 Workflows and execution
 - **FEAT-WFL-001** Text Workflow definitions. *Outcome:* Workflows are reviewable YAML graphs. *Acceptance:* schema-validated; limits enforced (steps, edges, prompt size); legacy formats loaded only by an explicit migration. *Validation:* fixture tests. *Risks:* none.
@@ -301,7 +301,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-WFL-005** Retries with backoff. *Acceptance:* per-Step retry policy only for Steps declared idempotent; attempts recorded as Events. *Validation:* tests. *Risks:* retry timers are PostgreSQL rows ([ADR-0042](../architecture/adr/0042-durable-execution-with-explicit-restart-semantics.md)).
 - **FEAT-WFL-006** Parallel branches. *Acceptance:* independent DAG branches run concurrently within concurrency limits; join waits for all; cancellation propagates. *Decision:* Evidence is ordered by the Platform-assigned per-Execution Event `seq`, never by Worker clocks. *Validation:* tests.
 - **FEAT-WFL-007** Workflow templates. *Acceptance:* a template instantiates into a Project with parameters; missing referenced Teams/Agents produce warnings (F-44). *Validation:* tests.
-- **FEAT-WFL-008** Visual workflow editor. *Acceptance:* round-trips to the text format without loss; validation errors shown inline. *Validation:* component tests + manual. *Extension:* plugins can contribute Step types' forms. *Risks:* the editor is reimplemented in Amaru Web, using the Weave React Flow editor only as a behavioral reference ([ADR-0031](../architecture/adr/0031-obsidian-plugin-is-retired.md)).
+- **FEAT-WFL-008** Visual workflow editor. *Acceptance:* round-trips to the text format without loss; validation errors shown inline. *Validation:* component tests + manual. *Extension:* plugins can contribute Step types' forms. *Risks:* the editor is reimplemented in Amaru Web, using the prototype React Flow editor only as a behavioral reference ([ADR-0031](../architecture/adr/0031-obsidian-plugin-is-retired.md)).
 - **FEAT-WFL-009** Inbound webhook trigger. *Acceptance:* HMAC with replay protection; only starts Workflows through Policy; rate-limited. *Validation:* ported hook tests.
 - **FEAT-EXE-001** State machines. *Acceptance:* only documented transitions are possible ([domain model](../architecture/DOMAIN_MODEL.md#5-lifecycles)); invalid transitions error. *Validation:* ported domain tests.
 - **FEAT-EXE-002** Durable state and recovery. *Outcome:* restarts never silently lose or duplicate work. *Acceptance:* each transition persisted before acknowledgement; on restart, waiting Steps keep waiting, resumable Steps resume, idempotent Steps retry as a new Lease and others end `interrupted` with a reason [ADR-0042](../architecture/adr/0042-durable-execution-with-explicit-restart-semantics.md); Approval waits survive. *Validation:* crash-injection suite killing the process in every Step state ([resilience](../architecture/RESILIENCE.md)). *Risks:* Amaru owns engine correctness ([ADR-0042](../architecture/adr/0042-durable-execution-with-explicit-restart-semantics.md)); the crash suite is mandatory.
@@ -331,10 +331,10 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-SKL-004** Context budget. *Acceptance:* each Step's context has a size budget and a recorded list of included items with sizes. *Default:* 8,000 tokens of Skills and Knowledge per Agent Step, configurable per Agent. *Validation:* tests; benefit measured as cost per accepted change from usage records ([ADR-0033](../architecture/adr/0033-usage-and-cost-telemetry-model.md)) on recorded runs with and without the budget.
 - **FEAT-CAP-001** Capability catalog. *Acceptance:* specs are data; adding a Capability changes no core interface. *Validation:* the PRD §12 Provider test.
 - **FEAT-CAP-002** Agent providers. *Acceptance:* each provider declares, for every confinement flag, whether it enforces it, and enforces the ones it declares (refusing the Step when a requested flag is not enforceable is POL-006); usage parsed (OBS-002). *Validation:* captured-output tests + recorded real runs per provider. *Risks:* vendor CLI changes.
-- **FEAT-CAP-003** External provider protocol. *Acceptance:* `amaru.provider/v1`, adapted from `weave.provider/v1`; no compatibility shim (Weave Providers are ported); fixtures. *Validation:* a provider built outside the Platform passes the conformance fixtures.
+- **FEAT-CAP-003** External provider protocol. *Acceptance:* `amaru.provider/v1`, adapted from the prototype provider protocol; no compatibility shim (prototype Providers are ported); fixtures. *Validation:* a provider built outside the Platform passes the conformance fixtures.
 - **FEAT-CAP-004** Remote-job providers. *Acceptance:* a remote job survives a Platform restart and is reattached. *Validation:* ported resume tests.
 - **FEAT-CAP-005** Provider health. *Acceptance:* each provider reports availability and version; the UI shows why a provider is unavailable. *Validation:* tests.
-- **FEAT-CAP-006** MCP behind a gateway (M5, needed by FEAT-ENV-013). *Acceptance:* agents reach MCP servers only through the audited Worker-side MCP gateway ([ADR-0035](../architecture/adr/0035-agents-run-beside-environment-hosted-tools.md)); secrets never passed to agents. *Validation:* tests + recorded run. *Extension:* MCP servers can be plugin components. *Risks:* the Weave ADR-025 design is not built; Amaru builds it on the Worker.
+- **FEAT-CAP-006** MCP behind a gateway (M5, needed by FEAT-ENV-013). *Acceptance:* agents reach MCP servers only through the audited Worker-side MCP gateway ([ADR-0035](../architecture/adr/0035-agents-run-beside-environment-hosted-tools.md)); secrets never passed to agents. *Validation:* tests + recorded run. *Extension:* MCP servers can be plugin components. *Risks:* the prototype ADR-025 design is not built; Amaru builds it on the Worker.
 
 ### 3.5 Environments and validation
 - **FEAT-ENV-001** Embedded Worker. *Acceptance:* in compact mode the Worker runs in the Platform process but talks to the coordinator only through the Worker interface used by remote Workers. *Validation:* the same assignment tests run against embedded and separate Workers.
@@ -344,7 +344,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-ENV-005** Routing. *Acceptance:* Steps route by required Capability and labels; no eligible Worker yields a visible waiting state. *Validation:* tests.
 - **FEAT-ENV-006** Revision delivery. *Acceptance:* a Worker checks out the exact commit the Step targets; it never pushes except through granted Capabilities. *Validation:* integration test.
 - **FEAT-ENV-007** Artifact upload. *Acceptance:* outputs uploaded with hashes verified by the Platform; partial uploads resumed or discarded. *Validation:* tests.
-- **FEAT-ENV-008** Container sandbox. *Acceptance:* single-level rootless containers with dropped capabilities and resource limits; no nested containers required. *Validation:* integration test on Linux. *Risks:* Weave prototype `INVESTIGATION.md` shows nested Podman blocked.
+- **FEAT-ENV-008** Container sandbox. *Acceptance:* single-level rootless containers with dropped capabilities and resource limits; no nested containers required. *Validation:* integration test on Linux. *Risks:* earlier prototype `INVESTIGATION.md` shows nested Podman blocked.
 - **FEAT-ENV-009** Windows Worker, UE5 + MCP pilot. *Outcome:* a Windows VM or workstation with Unreal Engine 5 and an Unreal MCP server does UE-related work for a Work Item. *Acceptance:* the Worker advertises `engine.*` Capabilities and its MCP servers; an agent Step routed by label (e.g. `ue5`) uses the editor's MCP tools under Policy; build/test Steps run with cancellation and process-tree kill; outputs (assets, logs, screenshots) return as hashed Artifacts. *Validation:* recorded manual run on a Windows VM. *Risks:* editor stability, license seats, GPU availability; the agent runs on the Worker beside the editor behind a Worker-side MCP gateway ([ADR-0035](../architecture/adr/0035-agents-run-beside-environment-hosted-tools.md)); the pilot uses Epic's Unreal MCP plugin (UE 5.8, experimental) for engine versions that ship it; a community MCP server is used only for older engine versions.
 - **FEAT-ENV-011** Interactive desktop-session tools. *Outcome:* tools that need a logged-in desktop session (the Unreal Editor, Blender UI) can be driven by Steps. *Acceptance:* a Worker can run inside an interactive user session, report session and editor health (running, responsive, project loaded), start or attach to the editor before a Step and refuse Steps when the session is unavailable. *Validation:* recorded run with a locked and unlocked session. *Risks:* OS session policies; editor crashes mid-Step.
 - **FEAT-ENV-013** Environment-hosted MCP servers. *Outcome:* MCP servers that live on a remote Environment (e.g. inside the Unreal Editor) are usable by agents. *Acceptance:* the Worker manifest lists MCP servers with their tools; agents running on that Worker reach them through the Worker-side MCP gateway ([ADR-0035](../architecture/adr/0035-agents-run-beside-environment-hosted-tools.md)); every tool call is Policy-checked per tool and recorded as an Event; MCP credentials never leave the Environment. *Validation:* integration test with a fake MCP server on a remote Worker; recorded UE5 run. *Extension:* MCP servers may be shipped as plugin `worker-adapter` components. *Risks:* MCP protocol versions.
@@ -389,7 +389,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-POL-003** Audit trail. *Acceptance:* every Approval, Grant and Policy change is an Event with actor and reason. *Validation:* tests.
 - **FEAT-POL-004** Egress consent. *Acceptance:* per-URL consent; private and loopback destinations blocked unless allowlisted. *Validation:* ported tests.
 - **FEAT-POL-005** Workspace command sandbox. *Acceptance:* allowlist format and denylist preserved; commands refused if the provider cannot confine them. *Validation:* ported tests.
-- **FEAT-POL-006** Confinement refusal. *Note:* refusal is implemented in the adapted providers ([MIGRATION_PLAN §3](../migration/MIGRATION_PLAN.md#3-components-and-likely-dispositions)), so it needs the providers' enforcement declarations (CAP-002) and the requested write and tool restrictions (AGT-003). *Acceptance:* a provider that cannot enforce write or tool restrictions refuses the Step. *Validation:* tests for Codex and OpenCode.
+- **FEAT-POL-006** Confinement refusal. *Note:* refusal is implemented in the adapted providers, so it needs the providers' enforcement declarations (CAP-002) and the requested write and tool restrictions (AGT-003). *Acceptance:* a provider that cannot enforce write or tool restrictions refuses the Step. *Validation:* tests for Codex and OpenCode.
 - **FEAT-POL-007** Secrets port. *Acceptance:* secrets write-only from clients; visible at Organization or Project scope, encrypted with the per-Organization data key ([ADR-0022](../architecture/adr/0022-cloud-tenancy-row-level-isolation-by-organization.md)); never in events or logs. *Validation:* ported fixture tests.
 - **FEAT-POL-008** Disclosure process. *Acceptance:* `SECURITY.md` with a contact and response process before the first public release. *Validation:* review.
 
@@ -405,7 +405,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-PLG-009** Service plugins. *Acceptance:* an operator deploys a plugin service next to the Platform; it authenticates with a machine identity and receives only declared events. *Validation:* integration test.
 
 ### 3.9 Clients
-- **FEAT-CLI-001** Web client. *Outcome:* the MVP UI, opened from the local Platform. *Acceptance:* every action goes through the generated SDK; no page shows data without a backend (no placeholders presented as real); works in current Chromium, Firefox and Safari/WebKit. *Validation:* component tests + end-to-end browser tests + recorded manual runs. *Risks:* prototype pages built without backend need pruning ([prototype inventory](../migration/weave-prototype-inventory.md)).
+- **FEAT-CLI-001** Web client. *Outcome:* the MVP UI, opened from the local Platform. *Acceptance:* every action goes through the generated SDK; no page shows data without a backend (no placeholders presented as real); works in current Chromium, Firefox and Safari/WebKit. *Validation:* component tests + end-to-end browser tests + recorded manual runs. *Risks:* prototype pages built without backend need pruning.
 - **FEAT-CLI-002** Design system. *Acceptance:* `packages/ui` with tokens, light/dark themes and shadcn components used by Web and Desktop. *Validation:* visual review + component tests.
 - **FEAT-CLI-003** Live updates. *Acceptance:* UI reflects events within one round trip; reconnects resume from cursor. *Validation:* tests ported from `connection.ts`.
 - **FEAT-CLI-004** Navigation. *Acceptance:* scopes (Instance → Project → Work) are unambiguous, per `IA_REVIEW.md` findings. *Validation:* review + usability walkthrough.
@@ -416,7 +416,7 @@ Format per feature: **Outcome** · **Acceptance** (testable) · **Validation** �
 - **FEAT-CLI-009** Local supervision. *Acceptance:* Desktop can start, stop and update a local Platform and still talks to it only through the public API. *Validation:* tests + manual.
 - **FEAT-CLI-010** Native host API. *Acceptance:* notifications, file pickers, OS keychain exposed through a declared, permission-checked API. *Validation:* tests.
 - **FEAT-CLI-011** Updates and compatibility. *Acceptance:* clients refuse to operate against incompatible Instances with an explanation. *Validation:* tests.
-- **FEAT-CLI-012** Command-line client. *Acceptance:* the remote CLI covers Work, Executions, Approvals and administration via the SDK contract. Local operator subcommands of the Platform binary (`open`, `migrate`, `backup`, `import weave`, `admin check`, `worker`) are not this feature; they ship with the Platform from M3/M4. *Validation:* tests.
+- **FEAT-CLI-012** Command-line client. *Acceptance:* the remote CLI covers Work, Executions, Approvals and administration via the SDK contract. Local operator subcommands of the Platform binary (`open`, `migrate`, `backup`, `import legacy`, `admin check`, `worker`) are not this feature; they ship with the Platform from M3/M4. *Validation:* tests.
 
 ### 3.10 Integrations, operations, administration
 - **FEAT-INT-001** GitHub integration. *Acceptance:* PRs, checks, logs, issues via a forge port; credentials only to forge processes. *Validation:* ported tests with fakes; recorded run.
@@ -485,8 +485,8 @@ Feature-to-milestone traceability and the reverse mapping are in the [roadmap](.
 | Item | Reason | Revisit when |
 |---|---|---|
 | Replacing Git, GitHub, IDEs, CI or issue trackers | Not the product (PRD §1). | Never. |
-| Automatic merging of pull requests | Human authority ([ADR-0006](../architecture/adr/0006-human-authorization-for-consequential-actions.md)); Weave Cycle 7 verdict. | A Policy-governed merge is proposed with evidence from supervised runs. |
-| Autonomous creation of Agents, Skills or Workflows by agents | Human authority; Weave ADR-020 declined agent write access. | Evidence and an ADR. |
+| Automatic merging of pull requests | Human authority ([ADR-0006](../architecture/adr/0006-human-authorization-for-consequential-actions.md)); prototype Cycle 7 verdict. | A Policy-governed merge is proposed with evidence from supervised runs. |
+| Autonomous creation of Agents, Skills or Workflows by agents | Human authority; prototype ADR-020 declined agent write access. | Evidence and an ADR. |
 | In-process third-party plugins in the Platform or Desktop host | Isolation ([ADR-0005](../architecture/adr/0005-plugin-extensibility-independent-of-desktop.md)). | Never for third parties; first-party only. |
 | Third-party native Desktop extensions (FEAT-PLG-012) | Trust and portability; Tauri plugins are framework-level. | A use case the host API cannot serve. |
 | Docker or Podman as a requirement for local installs | NFR-1. | Never for local; allowed for self-hosted. |

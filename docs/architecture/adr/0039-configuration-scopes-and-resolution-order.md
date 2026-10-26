@@ -8,8 +8,8 @@ deciders: Ricardo Lüders
 # 0039. Configuration resolves deployment, Organization, Project and user scopes in a fixed order
 
 ## Context
-- Question: [W4](../OPEN_QUESTIONS.md#w4-configuration-scopes) (Weave Q8). Resolved under the session's delegation.
-- Weave: `.weave/config.yaml` holds only `schemaVersion: 1`; provider connections and MCP servers are per user; there is no resolution order.
+- Question: [W4](../OPEN_QUESTIONS.md#w4-configuration-scopes) (prototype Q8). Resolved under the session's delegation.
+- the prototype: the project `config.yaml` holds only `schemaVersion: 1`; provider connections and MCP servers are per user; there is no resolution order.
 
 ## Decision
 - Scopes, lowest to highest precedence:
