@@ -2,7 +2,10 @@
 
 **Date:** 2026-10-26 · **Task:** [#70](https://github.com/rluders/amaru/issues/70), OWN-trademark, [WP-M1-01](../WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect) · **Validates:** assumption A11 ([OPEN_QUESTIONS](../OPEN_QUESTIONS.md), [Q34](../OPEN_QUESTIONS.md#q34-product-name-and-trademark)) · **Run by:** an AI agent, public web and package-registry sources only.
 
-## Result in one paragraph
+## Owner decision (2026-10-26)
+The product owner reviewed this report and decided the name has no issues: **Amaru is kept**, no rename. The register searches listed as not done below were not performed; the decision accepts that residual uncertainty. Recorded in this session; no ADR is needed because nothing changes.
+
+## Result in one paragraph (agent findings, before the owner decision)
 **A11 is not confirmed.** No trademark register could be searched, so no registration or application for AMARU was found or ruled out. Public sources do show other software that uses the name "Amaru", including one product in the same area (developer tooling for AI coding agents). This is a decision input for the product owner, not legal advice and not a clearance. Whether the name is available is **unknown**.
 
 ## What was searched, and what could not be
