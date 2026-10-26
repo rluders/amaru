@@ -12,3 +12,6 @@ How to sign (tooling decided 2026-10-26: manual record, no automation until exte
 
 The signature applies to your later contributions under the same CLA version. A new CLA version requires a new signature.
 
+
+## Security issues
+Do not open a public issue. See [SECURITY.md](SECURITY.md).
