@@ -1,8 +1,8 @@
 ---
 title: Adapt the prototype protocol into packages/contracts by fresh import with provenance
-status: proposed
+status: accepted
 date: 2026-10-26
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0047. Adapt the prototype protocol into packages/contracts by fresh import with provenance
@@ -46,7 +46,7 @@ deciders:
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 6 above; becomes evidence in API-002 |
 | 6 | Verified execution | **Gap, listed** | Schemas are data; the prototype validated them by fixtures, not by a recorded click-through. The delivery-loop route has no recorded run. Accepting this ADR accepts that gap |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing (ADR-0026, migration plan §4). The package `LICENSE` (Apache-2.0) is added only by the product owner and gates #9, not the migration |
-| 8 | Explicit product-owner approval | **Not met** | This ADR is `proposed` |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-26 (see Approval) |
 
 ## Consequences
 - **Easier:** one reviewed, versioned contract with a single fixture corpus before the Platform exists; later migrations (httpapi, SDK) depend on it.
@@ -61,4 +61,4 @@ deciders:
 - **Keep the prototype `protocol/` as the contract and generate Amaru types from it:** keeps prototype names and the known drift, and makes a frozen repository the authority.
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #67, 2026-10-26). Not yet approved: awaiting the product owner. A migration ADR is accepted only by the product owner ([delivery §8](../../engineering/delivery.md#8-human-approval-gates)); "changes requested" keeps #67 open.
+Proposed by: Claude (migration ADR draft for #67, 2026-10-26). Approved by: Ricardo Lüders (product owner) on 2026-10-26, in the WP-M2-01 session after reviewing PR #249 ("ADR-0047 accepted"; the source repository stays unnamed in public docs). Criterion 6 gap accepted with it.
