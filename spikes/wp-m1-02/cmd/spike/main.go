@@ -8,13 +8,15 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: spike bundle|pg|platform ...")
+		fmt.Fprintln(os.Stderr, "usage: spike bundle|pg|nats ...")
 		os.Exit(2)
 	}
 	var err error
 	switch os.Args[1] {
 	case "bundle":
 		err = cmdBundle(os.Args[2:])
+	case "nats":
+		err = cmdNATS(os.Args[2:])
 	case "pg":
 		err = cmdPG(os.Args[2:])
 	default:
