@@ -46,7 +46,7 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then sw_vers | tee -a out/env.txt; fi
           if [ "$RUNNER_OS" = "Windows" ]; then
             powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem | Select Caption,Version,OSArchitecture | Format-List | Out-String)" | tee -a out/env.txt
-            whoami /groups | tee -a out/env.txt
+            powershell -NoProfile -Command "whoami /groups" | tee -a out/env.txt
           fi
 
       - name: Build

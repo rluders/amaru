@@ -39,6 +39,9 @@ type Instance struct {
 	// WaitedPrevious is how long Start waited for a postmaster of a previous
 	// owner (killed or crashed) to exit before it could use the data directory.
 	WaitedPrevious time.Duration
+
+	sockDir string
+	sockTmp bool
 }
 
 // Start runs PostgreSQL with a persistent data directory in stateDir. On
@@ -70,9 +73,12 @@ func Start(ctx context.Context, b Bundle, stateDir string) (*Instance, error) {
 		CachePath(filepath.Join(stateDir, "cache")).
 		Logger(logf)
 	sock := runtime.GOOS != "windows"
+	var sd string
+	var tmp bool
 	if sock {
-		sd := filepath.Join(stateDir, "s")
-		if err := os.MkdirAll(sd, 0o700); err != nil {
+		var err error
+		sd, tmp, err = socketDir(stateDir)
+		if err != nil {
 			return nil, err
 		}
 		cfg = cfg.UnixSocket(sd)
@@ -103,10 +109,37 @@ func Start(ctx context.Context, b Bundle, stateDir string) (*Instance, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Instance{DB: db, URL: db.ConnectionURL(), StartedIn: time.Since(t0), Socket: sock, WaitedPrevious: waited}, nil
+	return &Instance{DB: db, URL: db.ConnectionURL(), StartedIn: time.Since(t0), Socket: sock, WaitedPrevious: waited, sockDir: sd, sockTmp: tmp}, nil
 }
 
-func (i *Instance) Close() error { return i.DB.Close() }
+func (i *Instance) Close() error {
+	err := i.DB.Close()
+	if i.sockTmp {
+		os.RemoveAll(i.sockDir)
+	}
+	return err
+}
+
+// maxSocketPath is below the smallest sun_path limit (104 bytes on macOS;
+// Linux allows 107). PostgreSQL appends "/ep-<10 digits>/.s.PGSQL.<port>" (about
+// 30 bytes) to the directory it is given.
+const maxSocketPath = 100
+
+// socketDir returns the directory for the Unix socket. It lives under stateDir
+// unless that path is too long for sun_path (observed: a CI checkout 4 levels
+// deep made PostgreSQL fail with "Unix-domain socket path ... is too long"), in
+// which case a short private directory under /tmp is used and removed on Close.
+func socketDir(stateDir string) (dir string, tmp bool, err error) {
+	dir = filepath.Join(stateDir, "s")
+	if len(dir)+32 <= maxSocketPath {
+		return dir, false, os.MkdirAll(dir, 0o700)
+	}
+	d, err := os.MkdirTemp("/tmp", "ap")
+	if err != nil {
+		return "", false, err
+	}
+	return d, true, nil
+}
 
 func password(path string) (string, error) {
 	if b, err := os.ReadFile(path); err == nil {
