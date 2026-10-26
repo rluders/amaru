@@ -10,7 +10,7 @@ Every issue carries exactly one planning ID, in a hidden first-line marker `<!--
 | `WP-M<m>-<nn>` | WORK_PACKAGES | Work Package (milestones M0–M4) |
 | `E<m>.<n>` | ROADMAP epic list | Epic (milestones M5–M9) |
 | `<AREA>-<nnn>` | FEATURE_CATALOG (`FEAT-` prefix dropped) | Feature |
-| `MADR-<component>` | MIGRATION_PLAN §3 | Migration ADR to draft before code moves ([ADR-0007](../architecture/adr/0007-weave-migration-is-a-separate-activity.md)) |
+| `MADR-<component>` | migration plan | Migration ADR to draft before code moves ([ADR-0007](../architecture/adr/0007-reuse-of-earlier-internal-code-is-a-separate-activity.md)) |
 | `SPK-<topic>`, `SEC-<topic>` | ROADMAP critical path, validation register | Spike or review with a hypothesis and follow-up decision |
 | `OWN-<topic>` | ROADMAP M1 license tasks | Product-owner task |
 | `EXIT-M<m>` | ROADMAP exit criteria | Milestone exit record (M4 uses WP-M4-07) |
@@ -82,11 +82,11 @@ Some decisions belong only to the product owner (AGENTS.md hard rules 3 and 9). 
 
 | Gate | Issues | Closes when | Blocks |
 |---|---|---|---|
-| Migration ADR accepted ([ADR-0007](../architecture/adr/0007-weave-migration-is-a-separate-activity.md), [MIGRATION_PLAN §5](../migration/MIGRATION_PLAN.md#5-readiness-criteria) criterion 8) | every `MADR-*` issue (see [backlog map](backlog-map.md)) | the ADR is merged with status `accepted` and a recorded approval. "Changes requested" keeps the issue open. | every issue that moves code of that component (native link, or through a parent) |
+| Migration ADR accepted ([ADR-0007](../architecture/adr/0007-reuse-of-earlier-internal-code-is-a-separate-activity.md), readiness criteria) | every `MADR-*` issue (see [backlog map](backlog-map.md)) | the ADR is merged with status `accepted` and a recorded approval. "Changes requested" keeps the issue open. | every issue that moves code of that component (native link, or through a parent) |
 | License legal review | `OWN-legal-review` | closed 2026-10-26: no separate legal review (owner decision, [WP-M1-01](../architecture/WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)) | — |
 | Root `LICENSE` in effect ([ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)) | `OWN-license-files` | the owner commits the root `LICENSE` | the first public release and the first external contribution; not migration (decided 2026-10-26) |
 | Apache-2.0 `LICENSE` per contract or SDK package | the issue that creates the package (WP-M2-01, WP-M2-02, E6.3; E6.6 for the Go Worker SDK) | the owner commits the file in that package | that issue |
 | CLA | `OWN-cla` | closed 2026-10-26: the owner approved the CLA text and the manual signing process ([CLA](../../CLA.md), [CONTRIBUTING](../../CONTRIBUTING.md#contributor-license-agreement)) | the first external contribution |
 
-An issue of a gate is never closed because a PR merged, an issue was created, or a link is missing. Any new issue that moves Weave code gets a native link to its migration ADR issue (or sits under a parent that has one) when it is created.
+An issue of a gate is never closed because a PR merged, an issue was created, or a link is missing. Any new issue that moves prototype code gets a native link to its migration ADR issue (or sits under a parent that has one) when it is created.
 

@@ -11,7 +11,7 @@ superseded-by: 0041
 ## Context
 - Question: [Q6](../OPEN_QUESTIONS.md#q6-plugin-sandboxing-and-execution-isolation). Product-owner answer: "WebAssembly is a good stuff, and server deployments could be even better."
 - Plugins run next to users' code and secrets; Cloud must isolate tenants. [ADR-0012](0012-plugin-package-with-targeted-components.md) defines component targets `ui`, `logic`, `service`, `worker-adapter`, `local-adapter`.
-- Weave runs external Providers as separate processes speaking JSON Lines over stdio; nothing runs in-process.
+- The prototype runs external Providers as separate processes speaking JSON Lines over stdio; nothing runs in-process.
 - OS sandboxes without admin rights differ widely across Windows, macOS and Linux; containers are not available in compact installs (NFR-1).
 
 ## Decision

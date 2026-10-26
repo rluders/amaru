@@ -10,7 +10,7 @@ deciders: Ricardo Lüders
 ## Context
 - [ADR-0005](0005-plugin-extensibility-independent-of-desktop.md) makes plugins independent of the Desktop framework and out of process by default, but does not define the package shape.
 - One extension often spans environments: a UI panel, logic reacting to events, a Provider on a remote Worker, an adapter on the user's machine, a backend service (PRD UC-7).
-- Verified: Weave's only extension mechanism is external Providers installed per user (`<stateDir>/providers/<id>/provider.yaml`, `weave.provider/v1`); MCP servers are configured per user (Weave ADR-016).
+- Verified: the prototype's only extension mechanism is external Providers installed per user (`<stateDir>/providers/<id>/provider.yaml`, stdio provider protocol); MCP servers are configured per user (prototype ADR-016).
 - Deployments differ: Cloud cannot reach a user's filesystem; Desktop is not always online.
 
 ## Decision

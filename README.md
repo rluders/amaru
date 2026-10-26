@@ -1,12 +1,22 @@
-# Amaru
+<p align="center">
+  <img src=".github/logo.png" alt="Amaru" width="160">
+</p>
 
-**An engineering execution platform where the engineer stays the maestro.**
+<h1 align="center">Amaru</h1>
+
+<p align="center"><strong>Carry the work across every world. The engineer sets the course.</strong></p>
+
+<p align="center">Status: product foundation · Source-available (fair-code) · No release yet</p>
+
+---
+
+*Amaru is an engineering execution platform. In Andean tradition the amaru is the serpent that crosses the worlds and carries water between them; here it carries work between humans, AI agents, tools and environments, and the engineer decides where it flows.*
 
 Amaru coordinates humans, AI agents, tools, knowledge, workflows and execution environments across the software development lifecycle. Humans set intent, scope, quality criteria and approval boundaries; agents carry out delegated work inside explicit policies; workflows coordinate multi-step activities; and every result, decision and piece of evidence stays observable and auditable.
 
 Amaru does not replace Git, GitHub, issue trackers, IDEs, CI or specialized engineering tools. It integrates with them and orchestrates work across them.
 
-> **Status: product foundation.** This repository contains product scope, a feature catalog, an accepted (not yet implemented) architecture, a decision log, a master roadmap, engineering governance and a documentation checker. **No part of the Amaru Platform, Desktop, Web client, Cloud or Self-hosted offering is implemented here yet.** The working predecessor — a Go Runtime and an Obsidian plugin — lives in [`rluders/weave-obsidian`](https://github.com/rluders/weave-obsidian) and continues independently; selected parts may be migrated later under an [explicit plan](docs/migration/MIGRATION_PLAN.md).
+> **Status: product foundation.** This repository contains product scope, a feature catalog, an accepted (not yet implemented) architecture, a decision log, a master roadmap, engineering governance and a documentation checker. **No part of the Amaru Platform, Desktop, Web client, Cloud or Self-hosted offering is implemented here yet.** Nothing here is ready to install or use.
 
 ## The problem
 
@@ -49,7 +59,7 @@ flowchart LR
     providers --> project[(Your repositories<br/>and tools)]
 ```
 
-Full proposal, with what exists only in Weave and what is not built: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md).
+Full proposal and what is not built: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md).
 
 ## Repository layout
 
@@ -59,7 +69,6 @@ docs/product/       PRD, feature catalog, non-functional requirements, glossary
 docs/architecture/  architecture hub and views, roadmap, work packages, decisions (adr/), open questions
 docs/engineering/   conventions, repository layout, validation, agent instructions
 docs/security/      security model
-docs/migration/     migration plan, repository assessment, inventory snapshots
 tools/doccheck/     offline documentation checker (Go, standard library only)
 ```
 
@@ -67,7 +76,7 @@ Application, service and package directories are added only when they have real 
 
 ## Getting started
 
-Requirements: Git and Go 1.27 or newer (Go 1.21+ with the default `GOTOOLCHAIN=auto` downloads 1.27 automatically; verified here with Go 1.24.7). On Windows, clone with symlinks enabled: `git clone -c core.symlinks=true …` ([why](docs/engineering/agent-instructions.md#why-symlinks-and-the-windows-caveat)).
+Requirements: Git and Go 1.27 or newer (Go 1.21+ with the default `GOTOOLCHAIN=auto` downloads 1.27 automatically). On Windows, clone with symlinks enabled: `git clone -c core.symlinks=true …` ([why](docs/engineering/agent-instructions.md#why-symlinks-and-the-windows-caveat)).
 
 ```sh
 make check        # gofmt, go vet, unit tests and documentation checks
@@ -82,7 +91,6 @@ That is everything that runs today. Start reading at the [PRD](docs/product/PRD.
 - Architecture: [Architecture](docs/architecture/ARCHITECTURE.md) · [Roadmap](docs/architecture/ROADMAP.md) · [Work Packages](docs/architecture/WORK_PACKAGES.md) · [Decisions](docs/architecture/DECISIONS.md) · [Open questions](docs/architecture/OPEN_QUESTIONS.md) · [all documents](docs/README.md)
 - Engineering: [Conventions](docs/engineering/CONVENTIONS.md) · [Validation](docs/engineering/validation.md) · [Agent instructions](docs/engineering/agent-instructions.md)
 - Security: [Security model](docs/security/SECURITY_MODEL.md)
-- Migration: [Plan](docs/migration/MIGRATION_PLAN.md) · [Repository assessment](docs/migration/REPOSITORY_ASSESSMENT.md) · [Weave inventory](docs/migration/weave-inventory.md) · [Weave prototype inventory](docs/migration/weave-prototype-inventory.md)
 
 ## Contributing
 

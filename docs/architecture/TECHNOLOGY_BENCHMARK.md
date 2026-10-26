@@ -26,8 +26,8 @@ From the [PRD](../product/PRD.md), [NFRs](../product/NON_FUNCTIONAL_REQUIREMENTS
 |---|---|
 | Temporal | Separate server cluster in every install; deterministic-code workflows clash with declarative YAML graphs. The product owner judged it too heavy. |
 | Restate | A second server process; license not verified from a primary source [Reported]. |
-| Hatchet | Postgres-based, but imposes its own engine, schema and gRPC worker model on top of the domain Weave already models. |
-| DBOS Transact | Library model fits R4/R6, but its checkpoint schema and workflow-as-code model duplicate the Weave state machine. |
+| Hatchet | Postgres-based, but imposes its own engine, schema and gRPC worker model on top of the domain prototype already models. |
+| DBOS Transact | Library model fits R4/R6, but its checkpoint schema and workflow-as-code model duplicate the prototype state machine. |
 | Conductor | JVM server, database and queue; too heavy for R1. |
 
 **Validation (M1):** representative Workflow with an agent Step, Local Check, multi-day Approval wait under clock control, remote job and forced crashes in every state, on bundled PostgreSQL on three OSes.
@@ -38,7 +38,7 @@ From the [PRD](../product/PRD.md), [NFRs](../product/NON_FUNCTIONAL_REQUIREMENTS
 
 | Candidate | Facts | Outcome |
 |---|---|---|
-| Files (Weave) | [Verified] Atomic temp+rename, no migrations (`weave-obsidian` `store/fsstore`) | Kept only for committed definitions under `.amaru/` ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)). |
+| Files (the prototype) | [Verified] Atomic temp+rename, no migrations | Kept only for committed definitions under `.amaru/` ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)). |
 | SQLite (`modernc.org/sqlite`) | [Verified] BSD-3-Clause, pure Go, Windows support (pkg.go.dev, v1.61.0) | Rejected: a second adapter and dialect next to PostgreSQL. |
 | PostgreSQL | [Verified] Prototype store with 30 migrations; RLS, FTS, `SKIP LOCKED` | **Selected.** |
 | `fergusstrange/embedded-postgres` | [Verified 2026-10-25, README] MIT, v2 stable (v2.0.1, 2026-10-19), zero third-party dependencies in production packages, PG 15–18, native CI on Linux/macOS amd64+arm64 and Windows amd64/arm64; downloads binaries by default, but a `LocalProvider` / custom `BinaryProvider` uses preinstalled binaries; persistent `DataDir`; an independent supervisor closes PostgreSQL when the owner process dies (owner pipe). The README positions it mainly for tests. | **Selected** as the compact supervisor, with `LocalProvider` over the installer-bundled pinned binaries (nothing downloaded at runtime). Its test focus is the main risk; the M1 spike validates production use (A12). Fallback: an in-house supervisor of the same bundled binaries. |
@@ -87,7 +87,7 @@ From the [PRD](../product/PRD.md), [NFRs](../product/NON_FUNCTIONAL_REQUIREMENTS
 
 **Selected:** own Worker protocol, Protobuf over WebSocket with `github.com/coder/websocket` ([ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md)); enrollment and key identity ([ADR-0024](adr/0024-remote-worker-registration-identity-and-delivery.md)); agents beside Environment tools ([ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md)).
 
-- [Verified] `coder/websocket` ISC, v1.8.15 (2026-06-15), maintained, already used by Weave. `gorilla/websocket` low-activity (v1.5.3, 2024-06); excluded.
+- [Verified] `coder/websocket` ISC, v1.8.15 (2026-06-15), maintained, already used by the prototype. `gorilla/websocket` low-activity (v1.5.3, 2024-06); excluded.
 - Rejected: HTTP long-poll (latency for cancel/lease traffic); gRPC bidi (HTTP/2 through proxies); engine-native worker protocols (no engine is used).
 - [Verified] Epic's Unreal MCP plugin: UE 5.8, experimental, loopback-only `127.0.0.1:8000/mcp`, no authentication, sequential on the game thread. Community servers (e.g. `chongdashu/unreal-mcp`, `flopperam/unreal-engine-mcp`, `runreal/unreal-mcp`) are early-stage. The M5 pilot uses Epic's plugin.
 - Reference patterns studied, not adopted: GitHub Actions runners, Buildkite agents, Temporal task queues, Hatchet workers.

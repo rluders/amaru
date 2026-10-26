@@ -9,7 +9,7 @@ deciders: Ricardo Lüders
 
 ## Context
 - Question: [Q21](../OPEN_QUESTIONS.md#q21-local-web-client-authentication). Product-owner answer: "You can decide."
-- Weave binds `127.0.0.1:0`, writes a per-start bearer token to a 0600 `runtime.json`, allows only `Origin: app://obsidian.md`, accepts `?token=` on the WebSocket, and has **no Host-header check** (DNS rebinding relies on the token). A browser tab cannot read a 0600 file.
+- The prototype binds `127.0.0.1:0`, writes a per-start bearer token to a 0600 `runtime.json`, allows only `Origin: app://obsidian.md`, accepts `?token=` on the WebSocket, and has **no Host-header check** (DNS rebinding relies on the token). A browser tab cannot read a 0600 file.
 - Threats: other local web pages (CSRF, DNS rebinding), other OS users on the same machine, token leakage through URLs or logs.
 
 ## Decision
@@ -24,7 +24,7 @@ deciders: Ricardo Lüders
 ## Consequences
 - Other local pages cannot drive the API; other OS users cannot obtain a session without reading the user's files.
 - Opening a bookmarked URL without a session shows "run `amaru open`".
-- Validation (M4): security review and tests for rebinding, cross-origin requests, code replay; Windows ACL verified (Weave GAP-05).
+- Validation (M4): security review and tests for rebinding, cross-origin requests, code replay; Windows ACL verified (prototype GAP-05).
 
 ## Alternatives considered
 - **Token embedded in the served page**: any page that can load it gets the token.

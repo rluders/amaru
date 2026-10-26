@@ -35,11 +35,11 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0004](adr/0004-shared-versioned-contracts.md) | Shared, versioned contracts across deployments and clients | accepted | 2026-10-25 |
 | [0005](adr/0005-plugin-extensibility-independent-of-desktop.md) | Plugin extensibility independent of the desktop framework | accepted | 2026-10-25 |
 | [0006](adr/0006-human-authorization-for-consequential-actions.md) | Explicit human authorization for consequential actions | accepted | 2026-10-24 |
-| [0007](adr/0007-weave-migration-is-a-separate-activity.md) | Migration of the Weave implementation is a separate, approval-gated activity | accepted | 2026-10-24 |
+| [0007](adr/0007-reuse-of-earlier-internal-code-is-a-separate-activity.md) | Migration of the prototype implementation is a separate, approval-gated activity | accepted | 2026-10-24 |
 | [0008](adr/0008-incremental-monorepo-layout.md) | Monorepo layout introduced incrementally, by evidence | accepted | 2026-10-25 |
 | [0009](adr/0009-modular-monolith-platform-with-separate-worker-role.md) | The Platform is a modular monolith with a separate Worker role | accepted | 2026-10-25 |
 | [0010](adr/0010-local-mvp-client-is-a-web-ui.md) | The Local MVP client is a Web UI served by the Platform | accepted | 2026-10-25 |
-| [0011](adr/0011-platform-adapted-from-weave-runtime.md) | The Platform core is adapted from the Weave Runtime | accepted | 2026-10-25 |
+| [0011](adr/0011-platform-adapted-from-earlier-internal-runtime.md) | The Platform core is adapted from the prototype Runtime | accepted | 2026-10-25 |
 | [0012](adr/0012-plugin-package-with-targeted-components.md) | A plugin is one package of components with declared targets | accepted | 2026-10-25 |
 | [0013](adr/0013-outbound-pull-based-workers-with-leases.md) | Workers connect outbound, pull assignments and hold leases | accepted | 2026-10-25 |
 | [0014](adr/0014-durable-execution-on-own-state-machine-over-postgres.md) | Durable execution is Amaru's own state machine persisted in PostgreSQL | superseded | 2026-10-25 |
@@ -59,8 +59,8 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0028](adr/0028-identity-local-accounts-oidc-and-opaque-tokens.md) | Identity uses local accounts and OIDC, server-side sessions and revocable opaque tokens | accepted | 2026-10-25 |
 | [0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md) | The Worker protocol is Protobuf over WebSocket using coder/websocket | accepted | 2026-10-25 |
 | [0030](adr/0030-knowledge-is-lexically-indexed-project-documentation.md) | Knowledge is project documentation indexed lexically in PostgreSQL | accepted | 2026-10-25 |
-| [0031](adr/0031-obsidian-plugin-is-retired.md) | The Weave Obsidian plugin is retired, with no Amaru Obsidian client | accepted | 2026-10-25 |
-| [0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md) | The Weave migration baseline is feat/orkestra-dogfood at c8a2f6e | accepted | 2026-10-25 |
+| [0031](adr/0031-obsidian-plugin-is-retired.md) | The prototype Obsidian plugin is retired, with no Amaru Obsidian client | accepted | 2026-10-25 |
+| [0032](adr/0032-migration-baseline-is-a-pinned-commit.md) | The migration baseline is a pinned commit of the earlier internal implementation | accepted | 2026-10-25 |
 | [0033](adr/0033-usage-and-cost-telemetry-model.md) | Usage and cost are recorded per Step Execution with explicit provenance | accepted | 2026-10-25 |
 | [0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md) | The local Web client authenticates with a one-time launch code and a loopback session cookie | accepted | 2026-10-25 |
 | [0035](adr/0035-agents-run-beside-environment-hosted-tools.md) | Agents run on the Worker beside Environment-hosted tools, behind a Worker-side MCP gateway | accepted | 2026-10-25 |
@@ -78,8 +78,8 @@ ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-2
 
 ## ADR backlog
 
-No decision is pending. Expected future ADRs are **migration ADRs**, one per Weave component ([MIGRATION_PLAN](../migration/MIGRATION_PLAN.md), M3–M4), each naming the baseline commit of [ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md), and **superseding ADRs** if a validation check in the [validation register](OPEN_QUESTIONS.md#validation-register) fails. Implementation work that follows from the accepted ADRs is tracked in the [ROADMAP](ROADMAP.md).
+No decision is pending. Expected future ADRs are **migration ADRs**, one per prototype component (M3–M4), each naming the baseline commit of [ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md), and **superseding ADRs** if a validation check in the [validation register](OPEN_QUESTIONS.md#validation-register) fails. Implementation work that follows from the accepted ADRs is tracked in the [ROADMAP](ROADMAP.md).
 
-## Relationship to Weave ADRs
+## Relationship to the prototype ADRs
 
-The predecessor project has its own ADR-001…029 (two files numbered 009) in [`weave-obsidian` `docs/decisions/`](https://github.com/rluders/weave-obsidian/tree/main/docs/decisions). They govern that codebase and are **not** Amaru decisions. They are evidence: an Amaru ADR that keeps, changes or drops a Weave decision cites it. Their status at the snapshot is in the [Weave inventory](../migration/weave-inventory.md#architecture-decisions).
+The earlier internal implementation has its own ADR-001…029 (two files numbered 009). They govern that codebase and are **not** Amaru decisions. They are evidence: an Amaru ADR that keeps, changes or drops a prototype decision cites it.

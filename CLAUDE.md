@@ -16,6 +16,6 @@ This file only adds Claude-specific operation. If anything here conflicts with `
   - after changing behavior, decisions or terminology → `documentation-maintenance`
 - **Plan first** for anything beyond a small edit: inspect the repo state, then propose. Stop and ask at architecture decisions; use the question tool for real choices, not for confirmation.
 - **Verify, then claim.** Check Claude Code, library and platform behavior in official docs (WebFetch) or source before relying on it; cite the source and date in docs that depend on it.
-- **Weave reference**: when `weave-obsidian` is available alongside this repo, read it as evidence only. Never write to it from an Amaru task.
+- **Prototype reference**: when a prototype checkout is available alongside this repo, read it as evidence only. Never write to it from an Amaru task.
 - **Final reports** use the split: implemented and locally verified · documented and proposed · not implemented · not validated · requires human decision.
 - **Commands**: `make check` (all), `make docs-check`, `make test`. Nothing else exists yet; do not suggest commands for components that are not in the repo.

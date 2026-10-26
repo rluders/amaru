@@ -11,8 +11,8 @@ Status: **accepted** (2026-10-25). This is the decomposition of milestones M0–
   - **Depends on**
   - **Done when** (acceptance)
   - **Validation**
-- *Weave* means `weave-obsidian`. *Prototype* means `weave`.
-- WPs that move code require a migration ADR first ([MIGRATION_PLAN §5](../migration/MIGRATION_PLAN.md#5-readiness-criteria), [ADR-0007](adr/0007-weave-migration-is-a-separate-activity.md)).
+- *prototype* means the earlier internal Runtime; *earlier prototype* means a second, earlier internal prototype.
+- WPs that move code require a migration ADR first (migration readiness criteria, [ADR-0007](adr/0007-reuse-of-earlier-internal-code-is-a-separate-activity.md)).
 
 ## M0 Foundation reconciled
 
@@ -37,7 +37,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Trademark search for "Amaru".
   - Vulnerability disclosure policy (`SECURITY.md`).
 - **Depends on:** WP-M0-01.
-- **Done when:** the license state is recorded as above and the remaining sub-issues are done. The root `LICENSE` ([#66](https://github.com/rluders/amaru/issues/66), product owner; agents never add license text) is not part of this Work Package and does not gate migration: ADR-0026 already resolves the relicensing of Weave code (sole copyright holder), and until the file is added all rights stay reserved (README). It must exist before the first public release or the first external contribution. The Apache-2.0 `LICENSE` of each contract or SDK package is added by the product owner in the Work Package or epic that creates that package (WP-M2-01, WP-M2-02, E6.3, and E6.6 for the Go Worker SDK), because those directories do not exist in M1 ([repository layout](../engineering/repository-layout.md)).
+- **Done when:** the license state is recorded as above and the remaining sub-issues are done. The root `LICENSE` ([#66](https://github.com/rluders/amaru/issues/66), product owner; agents never add license text) is not part of this Work Package and does not gate migration: ADR-0026 already resolves the relicensing of the prototype code (sole copyright holder), and until the file is added all rights stay reserved (README). It must exist before the first public release or the first external contribution. The Apache-2.0 `LICENSE` of each contract or SDK package is added by the product owner in the Work Package or epic that creates that package (WP-M2-01, WP-M2-02, E6.3, and E6.6 for the Go Worker SDK), because those directories do not exist in M1 ([repository layout](../engineering/repository-layout.md)).
 - **Validation:** owner decision recorded (this entry and the closing comment of #65).
 - **Status (2026-10-26):** sub-issues done. CLA ([CLA.md](../../CLA.md), manual signing record), `SECURITY.md` (reporting channel enabled when the repository goes public) and the name decision ([name search](investigations/2026-10-26-amaru-name-search.md); official registers not searched) were approved by the product owner. The root `LICENSE` (#66) and package licenses remain owner actions.
 
@@ -58,7 +58,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Scope:** fixture conventions for additive changes; `buf breaking` configuration for Protobuf packages; deprecation headers; contract package `0.x` until the Local MVP release (1.0.0 at M4), URL major `/v1` from M2; TypeScript generation with `openapi-typescript` + `openapi-fetch` (pinned at M2).
 - **Depends on:** WP-M0-01.
 - **Done when:** the conventions are in `packages/contracts` docs when that package is created (M2) and the generator pipeline is configured.
-- **Validation:** review against the Weave protocol history.
+- **Validation:** review against the prototype protocol history.
 
 ### WP-M1-04 Approval, Policy, roles and configuration shapes
 - **Issue:** [#5](https://github.com/rluders/amaru/issues/5)
@@ -79,7 +79,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - File layout and schemas under `.amaru/`.
   - Two-clone and Cloud behavior as decided in [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md): a Project is keyed by repository; each Execution records which clone, the commit SHA, the content hash and a definition snapshot; Cloud fetches at a commit.
   - Team references by slug and their validation.
-  - Design of the one-shot `amaru import weave` (definitions and Work Items).
+  - Design of the one-shot `amaru import legacy` (definitions and Work Items).
 - **Depends on:** WP-M1-02.
 - **Done when:** layout and importer design are documented.
 - **Validation:** data-class review against [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md).
@@ -97,19 +97,19 @@ Decisions are made; these Work Packages validate them and put them into effect.
 
 ### WP-M1-07 Inventory refresh at the baseline
 - **Issue:** [#8](https://github.com/rluders/amaru/issues/8)
-- **Goal:** a refreshed Amaru inventory at `feat/orkestra-dogfood` @ `c8a2f6e` ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)).
+- **Goal:** a refreshed Amaru inventory at the pinned baseline ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)).
 - **Scope:**
-  - Refresh [weave-inventory](../migration/weave-inventory.md) to the baseline commit.
-  - Write Weave findings F-27, F-39, F-40, F-41 as Amaru acceptance tests (specifications for M3/M4).
+  - Refresh the prototype evidence inventory to the baseline commit.
+  - Write prototype findings F-27, F-39, F-40, F-41 as Amaru acceptance tests (specifications for M3/M4).
 - **Depends on:** —
 - **Done when:** the inventory names the baseline commit and test counts were obtained by running `make check` there.
-- **Validation:** Weave test run output at the baseline.
+- **Validation:** prototype test run output at the baseline.
 
 ## M2 Contracts v0
 
-### WP-M2-01 Contracts package from the Weave protocol
+### WP-M2-01 Contracts package from the prototype protocol
 - **Issue:** [#9](https://github.com/rluders/amaru/issues/9)
-- **Goal:** `packages/contracts` adapted from Weave `protocol/`.
+- **Goal:** `packages/contracts` adapted from the prototype `protocol/`.
 - **Scope:**
   - Migration ADR.
   - Rename namespaces per the glossary.
@@ -130,7 +130,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Done when:**
   - Generation is reproducible.
   - The staleness check is in `make check`.
-  - The reconnect logic is reimplemented with tests, using the Weave plugin's `connection.ts` as a behavioral reference only ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
+  - The reconnect logic is reimplemented with tests, using the prototype's plugin's `connection.ts` as a behavioral reference only ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
   - The product owner has added the Apache-2.0 `LICENSE` to `packages/sdk` ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Validation:** unit tests.
 
@@ -147,7 +147,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 
 ### WP-M3-01 Domain and ports migration
 - **Issue:** [#13](https://github.com/rluders/amaru/issues/13)
-- **Goal:** Weave `runtime/internal/domain` and `ports` adapted into `services/platform`, with the architecture test.
+- **Goal:** prototype `runtime/internal/domain` and `ports` adapted into `services/platform`, with the architecture test.
 - **Scope:**
   - Rename identifiers.
   - New states from [DOMAIN_MODEL §5](DOMAIN_MODEL.md#5-lifecycles): Execution `waiting`; Step `refused`, `leased`, `awaiting_approval`, `interrupted`; Approval `expired`, `voided`; restart rule of [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md).
@@ -163,15 +163,15 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Scope:**
   - Schema versioning and migrations.
   - Start-up lock.
-  - Importer for Weave definitions, Work Packages, Work Items and Teams (`amaru import weave`).
+  - Importer for the prototype definitions, Work Packages, Work Items and Teams (`amaru import legacy`).
 - **Features:** PRJ-005, OPS-002, EXE-002 (persistence part).
 - **Depends on:** WP-M1-02, WP-M1-05, WP-M3-01.
-- **Done when:** adapter conformance tests and migration tests pass, and a Weave `.weave/` fixture imports.
+- **Done when:** adapter conformance tests and migration tests pass, and a prototype project-definition fixture imports.
 - **Validation:** tests.
 
 ### WP-M3-03 Execution coordinator with embedded Worker
 - **Issue:** [#15](https://github.com/rluders/amaru/issues/15)
-- **Goal:** Weave `app` manager, steps and recovery adapted behind the Worker interface.
+- **Goal:** prototype `app` manager, steps and recovery adapted behind the Worker interface.
 - **Scope:**
   - Per-Step timeouts.
   - Idempotency.
@@ -264,7 +264,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 
 ### WP-M4-03 Delivery loop migration
 - **Issue:** [#23](https://github.com/rluders/amaru/issues/23)
-- **Goal:** the Weave Autoloop adapted as the supervised delivery loop on the Amaru coordinator.
+- **Goal:** the prototype Autoloop adapted as the supervised delivery loop on the Amaru coordinator.
 - **Scope:**
   - Budgets moved into Policy.
   - Base refresh (merge, never rebase).
@@ -334,15 +334,15 @@ Where a catalog dependency crosses Work Packages against their order, it is reso
 
 | Dependency | Work Packages | Resolution | Reason |
 |---|---|---|---|
-| CAP-002 ↔ POL-006 (cycle) | WP-M3-05 | **Corrected**: POL-006 depends on CAP-002 and AGT-003; CAP-002 no longer depends on POL-006. | Refusal is implemented in the adapted providers (MIGRATION_PLAN §3, PRD FR-24), so it needs the providers and the requested restrictions. CAP-002 now declares and enforces confinement flags; refusing unenforceable ones is POL-006. No requirement was dropped. |
+| CAP-002 ↔ POL-006 (cycle) | WP-M3-05 | **Corrected**: POL-006 depends on CAP-002 and AGT-003; CAP-002 no longer depends on POL-006. | Refusal is implemented in the adapted providers (PRD FR-24), so it needs the providers and the requested restrictions. CAP-002 now declares and enforces confinement flags; refusing unenforceable ones is POL-006. No requirement was dropped. |
 | ART-003 → ART-002 | WP-M3-02 → WP-M3-07 | **Hard; order changed**: ART-003 moves from WP-M3-02 to WP-M3-07, and also depends on REV-003. | Retention keeps Artifacts while an Approval or accepted Work Item references them, and redaction applies to provider output that is first stored by the coordinator and providers ([DATA_ARCHITECTURE §5](DATA_ARCHITECTURE.md#5-retention-and-redaction)). None of that exists when WP-M3-02 runs. WP-M3-02's *Done when* never covered ART-003, so it is unchanged. |
 | WRK-001 → PRJ-001 | WP-M3-01 → WP-M3-06 | **Soft; order kept.** | Work Items need the Project entity and key, which WP-M3-01 migrates with the domain; PRJ-001 is the attach flow (metadata location, stable ID across path spellings, API). WRK-001's acceptance is met by domain tests. |
 | WRK-004 → VAL-001 | WP-M4-03 → WP-M4-04 | **Soft; order kept.** | The loop calls Local Checks through the runner port ported in M3. Real check binding (head commit, config hash) is exercised in the WP-M4-07 recorded runs. |
-| WRK-004 → REV-004 | WP-M4-03 → WP-M4-04 | **Soft; order kept.** | The loop starts review Steps (a Step type from M3); the structured verdict and `{{validation}}` Evidence are completed in WP-M4-04, whose CI-observation and validation-Evidence code comes out of the Weave loop files that WP-M4-03 migrates first. |
+| WRK-004 → REV-004 | WP-M4-03 → WP-M4-04 | **Soft; order kept.** | The loop starts review Steps (a Step type from M3); the structured verdict and `{{validation}}` Evidence are completed in WP-M4-04, whose CI-observation and validation-Evidence code comes out of the prototype loop files that WP-M4-03 migrates first. |
 | WRK-004 → REV-005 | WP-M4-03 → WP-M4-05 | **Soft; order kept.** | Draft-only delivery is a call on the forge port (`OpenPR(..., draft)`), ported in WP-M3-01; tests use a fake forge. |
 | WRK-004 → INT-001 | WP-M4-03 → WP-M4-05 | **Soft; order kept.** | Same forge port; the GitHub adapter arrives in WP-M4-05. |
 
-Reversing WP-M4-03 and WP-M4-04/05 was considered and rejected: in the migration baseline ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)) the delivery loop's files (`runtime/internal/app/autoloop*`, [MIGRATION_PLAN §3](../migration/MIGRATION_PLAN.md#3-components-and-likely-dispositions)) hold CI observation and the validation-Evidence glue, so checks and review would need the loop's migration ADR anyway, and the loop's acceptance does not need real adapters. Reversing would also create a blocker cycle through sub-issues. The WRK-004 real run is part of WP-M4-07, which depends on all M4 Work Packages, so no issue waits on a later one.
+Reversing WP-M4-03 and WP-M4-04/05 was considered and rejected: in the migration baseline ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)) the delivery loop's files (`runtime/internal/app/autoloop*`) hold CI observation and the validation-Evidence glue, so checks and review would need the loop's migration ADR anyway, and the loop's acceptance does not need real adapters. Reversing would also create a blocker cycle through sub-issues. The WRK-004 real run is part of WP-M4-07, which depends on all M4 Work Packages, so no issue waits on a later one.
 
 Rules for further resolutions (see also [delivery §4](../engineering/delivery.md#4-dependencies)):
 - Classify first, then sequence. A hard dependency against the order changes the order (as for ART-003); a soft one keeps it and names the Work Package that holds the real-validation run.

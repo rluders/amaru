@@ -2,7 +2,7 @@
 
 Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](ARCHITECTURE.md#11-workflow-durability-and-recovery) and [§17](ARCHITECTURE.md#17-failure-modes-and-recovery-expectations). The engine that implements this model is Amaru's own state machine on PostgreSQL with a transactional outbox to NATS ([ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md), [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md)). This document states the requirements it must meet.
 
-## 1. Evidence from Weave (verified at `weave-obsidian` `c8a2f6e`)
+## 1. Evidence from the prototype (verified)
 
 - **Restart handling.**
   - `Manager.Restore` fails unfinished Executions with `runtime_restarted`.
@@ -17,7 +17,7 @@ Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](
   - Autoloop: attempt, repair and review budgets.
   - Outbound webhooks: up to 5 retries.
   - Remote APIs: `Retry-After` is honored.
-- **Provider quota.** A quota error pauses the provider for a fixed 30 minutes without spending attempts. Weave finding F-27 (stated reset time ignored) is an Amaru acceptance test: the pause honors the provider's stated reset time ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)).
+- **Provider quota.** A quota error pauses the provider for a fixed 30 minutes without spending attempts. Prototype finding F-27 (stated reset time ignored) is an Amaru acceptance test: the pause honors the provider's stated reset time ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)).
 - **Gaps.**
   - No per-Step wall-clock timeout.
   - No leases.
@@ -56,7 +56,7 @@ Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](
 | Review without evidence | Review prompt validation | Review refused until validation Evidence exists (F-38) | Unit test |
 | Approval never given | Approval age | Remains `waiting`, visible in the inbox; the engine expires it when a deadline is set (configurable expiry Policy: FEAT-REV-008) | Clock-controlled test |
 | Approval subject changed | New commit on the branch | Approval voided; re-request | Integration test |
-| Forge webhook missed | Periodic reconcile | State corrected within the reconcile interval, 30 s by default (Weave ADR-027) | Fake forge |
+| Forge webhook missed | Periodic reconcile | State corrected within the reconcile interval, 30 s by default (prototype ADR-027) | Fake forge |
 | CI unavailable (billing, outage) | CI classification | Item blocked with the cause shown (F-36); no repair attempts spent | Fake CI |
 | Storage write failure | Write error | Transition not acknowledged; operation retried or failed visibly | Fault-injecting storage adapter |
 | Corrupt or future-version record | Loader | Refuse that Project with a clear error; never guess | Fixture tests |
@@ -67,4 +67,4 @@ Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](
 
 - A **crash-injection suite** runs the representative Workflow ([ARCHITECTURE §15](ARCHITECTURE.md#15-representative-workflow-execution)) and kills the Platform at every Step state transition. It asserts there is no lost or duplicated consequential action. It runs in `make check` with fakes.
 - A **partition suite** for Workers runs from M5.
-- **Recorded manual runs** on each OS for cancellation and restart. Weave never validated Windows (GAP-05).
+- **Recorded manual runs** on each OS for cancellation and restart. The prototype never validated Windows (GAP-05).

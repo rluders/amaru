@@ -20,7 +20,7 @@ Not for: reversible implementation details; unresolved questions without evidenc
 2. **Number.** Next free `NNNN` (look at `docs/architecture/adr/`). Never reuse a number.
 3. **Copy** `docs/architecture/adr/0000-template.md` to `NNNN-lowercase-title.md`.
 4. **Frontmatter**: `title`, `status: proposed` (or `under-investigation`), `date: YYYY-MM-DD`. Leave `deciders` empty until approval. Single-line values only.
-5. **Context**: forces and evidence with links. Separate verified facts from assumptions. Cite Weave ADRs or tests when they are the evidence.
+5. **Context**: forces and evidence with links. Separate verified facts from assumptions. Cite prototype ADRs or tests when they are the evidence.
 6. **Decision**: active voice, checkable ("The Platform owns…", "Clients must not…").
 7. **Consequences**: what gets easier/harder, follow-up work, revisit triggers.
 8. **Alternatives**: real options with the reason each lost.
