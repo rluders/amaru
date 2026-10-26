@@ -1,0 +1,209 @@
+# Amaru Community License 1.0
+
+Copyright (c) 2026 LUDERS TECNOLOGIA LTDA.
+
+This license applies only to the portions of the Software for which the Rights Holder has the legal authority to grant the rights described herein.
+
+## 1. Purpose and License Model
+
+The Amaru Community License makes the Amaru source code available for inspection, learning, modification, self-hosting, and community collaboration.
+
+The license permits personal use and internal commercial use while reserving commercial distribution, resale, commercial sublicensing, and the provision of the Software as a commercial hosted service to LUDERS TECNOLOGIA LTDA, subject to the rights of third-party copyright holders and applicable law.
+
+This is a source-available, Fair-Code license. It is not an OSI-approved Open Source license, and no claim of OSI approval is made.
+
+## 2. Definitions
+
+**"Software"** means the source code, object code, documentation, and associated materials distributed under this license by or with authorization from the Rights Holder.
+
+**"Rights Holder"** means LUDERS TECNOLOGIA LTDA, CNPJ 63.631.031/0001-60, acting only within the scope of rights it owns or is authorized to license.
+
+**"Modification"** means any change, extension, adaptation, or derivative work based on the Software.
+
+**"Internal Use"** means use of the Software by an individual or organization for its own activities, including commercial business operations, provided that the Software is not itself commercially distributed, resold, sublicensed, or offered as a Hosted Service to third parties in violation of this license.
+
+**"Hosted Service"** means a product or service through which a third party can access, interact with, or use material functionality of the Software over a network, including a SaaS platform, managed runtime, hosted agent execution platform, or remotely operated service.
+
+A service is not excluded from this definition merely because it is based on a fork, Modification, renamed product, modified user interface, or additional components.
+
+A business does not violate the Hosted Service restriction merely by using the Software internally to conduct its own business, develop its own products, or support its own employees, provided it does not make the Software's material functionality available to third parties as a service.
+
+**"Commercial Distribution"** means selling, reselling, commercially licensing, sublicensing, or otherwise supplying the Software or a Modification to third parties as a commercial offering.
+
+**"Contribution"** means code, documentation, designs, or other material intentionally submitted by a contributor for inclusion in, or integration with, the Software.
+
+**"Contributor License Agreement" or "CLA"** means a separate written agreement accepted by a contributor and the Rights Holder that establishes the rights granted over Contributions.
+
+## 3. Grant of Rights
+
+Subject to compliance with this license, the Rights Holder grants you a worldwide, non-exclusive, royalty-free license to:
+
+- View, study, inspect, and reproduce the Software.
+- Download and modify the Software.
+- Run the Software for personal, educational, research, and Internal Use.
+- Deploy and self-host the Software for personal use or Internal Use, including within commercial organizations.
+- Create and maintain forks of the Software.
+- Distribute the Software and Modifications for permitted non-commercial purposes, subject to Section 4.
+
+This grant does not transfer copyright ownership or any other intellectual property ownership.
+
+No commercial distribution, commercial sublicensing, resale, or Hosted Service rights are granted except under a separate written commercial license authorized by the Rights Holder and subject to the rights of applicable copyright holders.
+
+## 4. Conditions for Distribution and Forks
+
+You may distribute the Software or a Modification only if all the following conditions are met:
+
+1. The distribution is governed by this Amaru Community License, including the same version or a later version expressly designated by the Rights Holder as compatible with this requirement.
+2. A complete copy of the applicable license accompanies the distribution.
+3. Existing copyright, attribution, and license notices are preserved.
+4. Material modifications are identified where reasonably practicable.
+5. No additional restrictions are imposed that prevent recipients from exercising the rights granted by this license.
+6. All third-party license obligations are respected.
+7. The distribution does not constitute Commercial Distribution or provision of a Hosted Service prohibited by Section 5.
+
+Forks may be published, maintained, modified, and shared for permitted non-commercial purposes under these conditions.
+
+The requirement to use the same license does not independently transfer copyright ownership in a fork or its Modifications to the Rights Holder. Rights over third-party Contributions are governed by Section 7 and the applicable CLA.
+
+## 5. Commercial Distribution and Hosted Services
+
+Unless expressly authorized by a separate written commercial license granted by the Rights Holder, you may not:
+
+- Sell or resell the Software or a Modification.
+- Grant commercial sublicenses to the Software or a Modification.
+- Offer the Software or a Modification as a commercial Hosted Service.
+- Operate a SaaS, managed service, or remotely accessible execution platform that provides third parties with material functionality of the Software.
+- Commercially distribute a product that incorporates the Software or a Modification.
+- Circumvent these restrictions by forking, renaming, rebranding, wrapping, or modifying the Software.
+
+These restrictions apply regardless of whether the Software or a fork is offered under the Amaru name.
+
+They do not prohibit Internal Use or self-hosting for personal use or Internal Use. They also do not prohibit the use of the Software as an internal engineering tool to build or operate unrelated commercial products, provided that the Software itself is not supplied to third parties in a manner prohibited by this license.
+
+A separate written commercial license is required for activities reserved under this section.
+
+## 6. Exclusive Commercial Licensing Authority
+
+LUDERS TECNOLOGIA LTDA is the sole party authorized by the Amaru project to grant commercial licenses for resale, Commercial Distribution, commercial sublicensing, or Hosted Services, to the extent that it owns or is authorized to license the relevant rights.
+
+No right to conduct such activities is granted by implication, estoppel, or otherwise.
+
+Any commercial authorization must be expressly documented in a separate written agreement issued by LUDERS TECNOLOGIA LTDA or by a party it has expressly authorized in writing.
+
+This section does not override rights belonging to third-party copyright holders or rights that cannot lawfully be restricted.
+
+## 7. Contributions and Contributor License Agreement
+
+### 7.1 Acceptance of Contributions
+
+External Contributions will be accepted for integration into the official Amaru project only after the contributor has executed a Contributor License Agreement (CLA) approved by the Rights Holder.
+
+The project should link to the applicable CLA from its contribution guidelines and contribution workflow.
+
+Submitting a pull request, opening an issue, or otherwise communicating with the project does not, by itself, transfer copyright ownership or grant the Rights Holder commercial licensing rights.
+
+Contributions must not be merged as accepted project Contributions until the applicable CLA has been recorded as executed, unless the Rights Holder has established a documented alternative agreement that grants equivalent rights.
+
+### 7.2 Rights Granted by the CLA
+
+The CLA must expressly grant the Rights Holder a worldwide, perpetual, irrevocable, non-exclusive, royalty-free license, with the right to sublicense and transfer the licensed rights, to:
+
+- Use, reproduce, modify, adapt, and create derivative works from the Contribution.
+- Incorporate the Contribution into the Software and related products.
+- Distribute, publicly display, perform, and make the Contribution available.
+- Commercially exploit the Contribution.
+- Include the Contribution in proprietary or commercially licensed versions of the Software.
+- License and sublicense the Contribution under terms different from this community license, including commercial terms.
+
+The CLA must also establish the contributor's authority to grant these rights and address applicable third-party rights.
+
+### 7.3 Ownership of Contributions
+
+Unless a separate written agreement expressly provides otherwise, contributors retain ownership of the copyright in their Contributions to the extent that they own those rights.
+
+The CLA grants the Rights Holder the rights specified in that agreement but does not automatically transfer ownership of a Contribution.
+
+Contributors must not submit material they do not have the legal authority to license under the applicable CLA.
+
+### 7.4 Contributions Without a CLA
+
+Contributions for which the required rights have not been established must not be merged into the official project as accepted Contributions.
+
+The project may request a signed CLA, an alternative written agreement granting equivalent rights, or a replacement implementation created by authorized contributors.
+
+## 8. Copyright Ownership and Provenance
+
+The copyright notice identifying LUDERS TECNOLOGIA LTDA applies only to material for which the company owns the relevant copyright or has the legal authority to apply that notice.
+
+The existence of this license, the inclusion of a copyright notice, or publication of source code does not independently establish ownership of all material in the repository.
+
+The Rights Holder is responsible for maintaining an appropriate record of the legal basis for its rights, including, as applicable:
+
+- Code created by personnel or contractors under agreements that establish the relevant rights.
+- Written assignments or licenses covering existing code.
+- Contributor License Agreements for accepted external Contributions.
+- Applicable third-party licenses and notices.
+
+Files or components containing independently owned third-party material remain subject to their applicable rights and licenses.
+
+Nothing in this license purports to transfer copyright ownership from a contributor or third party without a valid legal basis.
+
+## 9. Third-Party Components
+
+The Software may include or depend on third-party components governed by separate licenses.
+
+Those components remain subject to their respective license terms. This license does not replace, expand, or override the rights granted by a third-party license.
+
+You are responsible for complying with applicable third-party obligations when using, modifying, or distributing the Software.
+
+## 10. Trademarks and Branding
+
+This license does not grant permission to use the Amaru name, logo, or other trademarks to imply endorsement, affiliation, or authorization.
+
+You may accurately identify the Software and describe compatibility or derivation, provided that you do not misrepresent the origin of your work or imply official endorsement.
+
+Trademark rights are separate from copyright and software licensing rights.
+
+## 11. Termination
+
+The rights granted under this license terminate automatically if you materially violate its terms, to the extent permitted by applicable law.
+
+Upon termination, you must cease activities that are no longer authorized by this license.
+
+Termination does not revoke rights that cannot lawfully be terminated or rights already granted under a separate agreement to the extent that agreement provides otherwise.
+
+The Rights Holder may reinstate rights through written authorization.
+
+## 12. Disclaimer of Warranty
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+YOU ASSUME ALL RISKS ASSOCIATED WITH THE USE, MODIFICATION, AND DISTRIBUTION OF THE SOFTWARE.
+
+## 13. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE RIGHTS HOLDER AND CONTRIBUTORS SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, OR FOR LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS, ARISING OUT OF OR RELATED TO THE SOFTWARE OR THIS LICENSE.
+
+Nothing in this license excludes or limits liability to the extent such exclusion or limitation is prohibited by applicable law.
+
+## 14. General Provisions
+
+If any provision of this license is held unenforceable, the remaining provisions shall remain effective to the extent permitted by law.
+
+This license does not restrict rights that cannot lawfully be restricted.
+
+For permissions beyond those granted by this license, contact LUDERS TECNOLOGIA LTDA through the official Amaru project channels.
+
+---
+
+**License:** Amaru Community License 1.0
+**Rights Holder:** LUDERS TECNOLOGIA LTDA.
+**CNPJ:** 63.631.031/0001-60
+**License model:** Fair-Code / source-available
+**Personal use:** Permitted
+**Internal commercial use:** Permitted
+**Self-hosting:** Permitted for personal use and Internal Use
+**Non-commercial forks:** Permitted under this license
+**Commercial resale, sublicensing, and Hosted Services:** Require a separate written commercial license
+**External Contributions:** CLA required before integration
+**OSI approval:** Not claimed
