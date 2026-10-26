@@ -1,15 +1,15 @@
 ---
 title: A Project is keyed by normalized remote URL plus root commit; Linked repositories are committed definitions; Team slugs are immutable
-status: proposed
+status: accepted
 date: 2026-10-26
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0046. A Project is keyed by normalized remote URL plus root commit; Linked repositories are committed definitions; Team slugs are immutable
 
 ## Context
 - [ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) keys a Project by repository, records the clone, commit SHA, content hash and definition snapshot per Execution, and validates Team slugs. It does not say how the repository key is derived, whether Linked repositories are committed, or what happens to a Team slug that committed definitions still reference.
-- The options and trade-offs are in [AMARU_DIRECTORY §5.1](../AMARU_DIRECTORY.md#51-project-key--requires-decision); the question is [Q55](../OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
+- The options and trade-offs are in [AMARU_DIRECTORY §5.1](../AMARU_DIRECTORY.md#51-project-key); the question is [Q55](../OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
 - Verified: nothing here is implemented. The decision is checked at M3 with two clones against one Platform ([ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)).
 
 ## Decision
@@ -22,7 +22,7 @@ deciders:
 ## Consequences
 - Clone location, path spelling and credentials do not change a Project's identity; two clones share operational state.
 - A transferred or renamed remote yields a new key until the user links the alias; this is manual by design.
-- The importer ([LEGACY_IMPORTER](../LEGACY_IMPORTER.md)) maps prototype repository entries to `.amaru/repositories.yaml` once this is accepted.
+- The importer ([LEGACY_IMPORTER](../LEGACY_IMPORTER.md)) maps prototype repository entries to `.amaru/repositories.yaml`.
 - Revisit if root-commit disambiguation proves unreliable (for example rewritten history) at the M3 two-clone validation.
 
 ## Alternatives considered
@@ -31,4 +31,4 @@ deciders:
 - **Linked repositories only in the Platform:** hides delivery policy from review; only absolute paths are truly per clone.
 
 ## Approval
-Proposed by: Claude (WP-M1-05, 2026-10-26). Awaiting the product owner; the owner's general delegation in chat is not recorded here as approval (AGENTS.md rule 3).
+Proposed by: Claude (WP-M1-05, 2026-10-26) · Approved by: Ricardo Lüders on 2026-10-26, in the session that delivered WP-M1-05 (explicit acceptance after the proposal in PR #240).
