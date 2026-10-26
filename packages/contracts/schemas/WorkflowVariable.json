@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkflowVariable.json",
+  "title": "WorkflowVariable",
+  "type": "object",
+  "required": [
+    "name",
+    "value"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[^{}\\s]+$"
+    },
+    "value": {
+      "type": "string",
+      "maxLength": 10000
+    }
+  }
+}

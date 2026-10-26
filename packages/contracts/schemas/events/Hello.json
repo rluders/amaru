@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/Hello.json",
+  "title": "Hello",
+  "description": "First frame on every stream connection. Not part of the seq stream. `lastSeq` is the highest seq emitted so far (0 if none); a client whose cursor is above it must resync.",
+  "type": "object",
+  "required": [
+    "type",
+    "protocolVersion",
+    "platformVersion",
+    "lastSeq"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "hello"
+    },
+    "protocolVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "platformVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lastSeq": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

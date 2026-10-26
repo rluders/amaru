@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/TeamMember.json",
+  "title": "TeamMember",
+  "type": "object",
+  "required": [
+    "agentId",
+    "role"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "agentId": {
+      "$ref": "AgentId.json"
+    },
+    "role": {
+      "$ref": "TeamRole.json"
+    }
+  }
+}

@@ -1,0 +1,925 @@
+openapi: 3.1.0
+info:
+  title: Amaru Public API
+  version: 0.1.0
+  description: >-
+    Commands and queries over HTTP; events over WebSocket (`/v1/projects/{projectId}/events`, frames in `../schemas/events/`).
+    Major version `v1` is in the URL path; `info.version` is the contract package version (0.x until the Local MVP,
+    CONTRACT_VERSIONING section 4). Additive changes only within v1; clients ignore unknown fields and unknown event
+    types. Shapes are JSON Schema 2020-12 files under `../schemas/`. Status: PROPOSED, nothing is served yet; the
+    Platform (M3) must register exactly these routes (route-drift guard).
+servers:
+- url: http://127.0.0.1:{port}/v1
+  variables:
+    port:
+      default: '0'
+      description: Dynamic; published by the local Platform
+security:
+- bearer: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness + versions. The only route reachable without a token.
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Health.json
+  /projects:
+    get:
+      operationId: listProjects
+      summary: Projects attached to this Platform.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ProjectList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: attachProject
+      summary: Attach a project root (idempotent). 400 invalid_request when root is not an absolute existing directory.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/AttachProject.json
+      responses:
+        '200':
+          description: The attached project
+          freshly inspected.: null
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Project.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getProject
+      description: >-
+        `git.remote` is the origin URL read from `.git/config` with credentials removed. It is read from the file
+        system only (no git process, no network) and is untrusted text.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Project.json
+        default:
+          $ref: '#/components/responses/Error'
+  /providers:
+    get:
+      operationId: listProviders
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ProviderList.json
+        default:
+          $ref: '#/components/responses/Error'
+  /capabilities:
+    get:
+      operationId: listCapabilities
+      description: >-
+        Capabilities usable in workflow tool/system steps - the built-in vendor-neutral catalog plus every capability
+        a provider offers, each with its canonical spec (inputs, output roles) and the providers offering it.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/CapabilityList.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/executions:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listExecutions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ExecutionList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createExecution
+      description: |
+        Resolves `capability` (and optional `providerId`) to a provider and starts the execution.
+        `idempotencyKey` makes retries safe. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateExecution.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Execution.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/executions/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getExecution
+      parameters:
+      - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Execution.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/executions/{id}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    post:
+      operationId: cancelExecution
+      description: Idempotent. Cancelling a terminal execution returns it unchanged.
+      parameters:
+      - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Execution.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/executions/{id}/events:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listExecutionEvents
+      description: >-
+        Persisted events of one Execution, oldest first, up to `limit` (default 1000, max 5000) after the cursor
+        `after` (a `seq`). Unlike the live stream this survives Platform restarts and buffer eviction. Page with
+        `nextCursor`.
+      parameters:
+      - $ref: '#/components/parameters/ExecutionId'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5000
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/events/EventList.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/events:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: events
+      description: >-
+        WebSocket upgrade, one stream per Project. The first frame is `Hello`, then `Event` frames with strictly
+        increasing `seq` (the per-Project cursor; every event carries `id`, `projectId`, `resource` and optional
+        `correlationId`). `since=<seq>` replays retained events with seq > since. When the cursor cannot be served
+        the server sends one `ResyncRequired` frame and the client reloads state through the HTTP queries, then
+        resumes from `resumeFrom`. The token is sent as an `Authorization: Bearer` header or `?token=` (browsers
+        cannot set WebSocket headers).
+      parameters:
+      - name: since
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: executionId
+        in: query
+        schema:
+          type: string
+      responses:
+        '101':
+          description: Switching Protocols
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/work-packages:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listWorkPackages
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkPackageList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createWorkPackage
+      description: The Platform assigns the id (WP-001, WP-002, …). New packages start as `planned`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateWorkPackage.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkPackage.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/work-packages/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getWorkPackage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkPackage.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateWorkPackage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateWorkPackage.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkPackage.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/work-items:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listWorkItems
+      parameters:
+      - name: packageId
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkItemList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createWorkItem
+      description: >-
+        The Platform assigns the id (WI-001, … global in the project). Errors - invalid_request, not_found (unknown
+        package).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateWorkItem.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkItem.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/work-items/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getWorkItem
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkItem.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateWorkItem
+      description: >-
+        Status is set by the user and never derived from executions. `blockedReason` is only kept while status is
+        `blocked`.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateWorkItem.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkItem.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/workflows:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listWorkflows
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/WorkflowList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createWorkflow
+      description: The Platform assigns the id (WF-001, …). Persisted under `.Amaru/workflows/`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateWorkflow.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Workflow.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/workflows/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getWorkflow
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Workflow.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateWorkflow
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateWorkflow.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Workflow.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/workflows/{id}/source:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getWorkflowSource
+      description: The workflow file exactly as stored (`.Amaru/workflows/<id>.yaml`). Read-only preview.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/yaml:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/workflows/{id}/run:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    post:
+      operationId: runWorkflow
+      description: >-
+        Starts one Execution through the normal execution path, carrying a Step Execution per workflow step (`steps`).
+        Executable steps run sequentially, one provider run each; the first failure stops later steps. Trigger steps
+        are skipped and tool/system steps without an available capability provider are unsupported - never reported
+        as successful. The Execution carries `workflowId`. `workItemId` is linked only when given, never inferred.
+        Errors - not_found (workflow or work item), conflict (workflow not active, or a step's Agent is disabled),
+        invalid_request (no executable steps, or a step's Agent does not exist), provider_unavailable. A step with
+        an `agentId` runs on its Agent's resolved provider and records an Agent snapshot on its Step Execution;
+        the run-level `providerId` applies only to agent steps without an `agentId`.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/RunWorkflow.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Execution.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/agents:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listAgents
+      description: The project's Agent catalog, ordered by id.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/AgentList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createAgent
+      description: >-
+        Persisted at `.Amaru/agents/<id>.json`. Errors - invalid_request, conflict (id already exists). Retire an
+        Agent in use with status `disabled`; an Agent no Workflow refers to can be deleted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateAgent.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Agent.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/agents/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getAgent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Agent.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateAgent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateAgent.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Agent.json
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      operationId: deleteAgent
+      description: >-
+        Removes `.Amaru/agents/<id>.json`. Errors - not_found, conflict (a Workflow step still refers to the Agent;
+        disable it instead).
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Deleted
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/teams:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listTeams
+      description: The project's Teams, ordered by id.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/TeamList.json
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createTeam
+      description: Persisted at `.Amaru/teams/<id>.json`. Errors - invalid_request, conflict (id exists).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CreateTeam.json
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Team.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/teams/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getTeam
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Team.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateTeam
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateTeam.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Team.json
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      operationId: deleteTeam
+      description: Errors - not_found, conflict (a workflow step still uses the team).
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Deleted
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/settings:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getSettings
+      description: The project's Amaru switches (`.Amaru/settings.json`); all off by default.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ProjectSettings.json
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/UpdateSettings.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ProjectSettings.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/artifacts:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listArtifacts
+      description: Markdown notes with a `type` frontmatter key, scanned read-only from the project. Filters combine
+        with AND.
+      parameters:
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: workItemId
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ArtifactList.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/artifacts/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: getArtifact
+      description: The id is the project-relative note path (slashes are not escaped), e.g. `/artifacts/Assets/Player.md`.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Artifact.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/work-packages/{id}/delivery-loop:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - name: id
+      in: path
+      required: true
+      schema:
+        $ref: ../schemas/WorkPackageId.json
+    get:
+      operationId: getDeliveryLoop
+      description: >-
+        The delivery loop ledger of a Work Package: per-Work-Item phase, attempts, runs, pull request and decisions.
+        Platform state; Work Items and Executions stay authoritative. Replaces the prototype route `/work-packages/{id}/delivery
+        loop`, which was registered by the server but missing from the contract. 404 `not_found` for an unknown
+        package or one without a delivery loop.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/DeliveryLoopLedger.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/approvals:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listApprovals
+      description: >-
+        Approvals of the Project, newest request first. Filter by `state` (default `requested`). Read-only; deciding
+        stays on the decision route.
+      parameters:
+      - name: state
+        in: query
+        required: false
+        schema:
+          $ref: ../schemas/Approval.json#/properties/state
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ApprovalList.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/approvals/{approvalId}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - name: approvalId
+      in: path
+      required: true
+      schema:
+        $ref: ../schemas/Ulid.json
+    get:
+      operationId: getApproval
+      description: One Approval with the Evidence it binds.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Approval.json
+        default:
+          $ref: '#/components/responses/Error'
+  /projects/{projectId}/approvals/{approvalId}/decision:
+    parameters:
+    - $ref: '#/components/parameters/ProjectId'
+    - name: approvalId
+      in: path
+      required: true
+      schema:
+        $ref: ../schemas/Ulid.json
+    post:
+      operationId: decideApproval
+      description: >-
+        A human principal approves or rejects a `requested` Approval. Only humans may decide; the decider is the
+        authenticated principal, never a body field. Errors: `not_found`; `forbidden` when the role, Team or separation-of-duties
+        rule is not met (recorded as an Event, the Approval is unchanged); `conflict` when the Approval is not `requested`
+        or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are PROPOSED by8
+        (not accepted).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/DecideApproval.json
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/Approval.json
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Id returned by POST /projects.
+    ExecutionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Error:
+      description: >-
+        Error. Status mapping: invalid_request 400, unauthorized 401, forbidden_origin 403, forbidden 403, not_found
+        404, conflict 409, rate_limited 429, needs_grant 403 (the action needs a Grant7), provider_unavailable 422,
+        protocol_mismatch 426, internal 500.
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/Error.json
+x-api-major: 1
+x-protocol:
+  version: 1
+  headers:
+    X-Amaru-Protocol: Set on every response; integer major version.
+  origin-policy: >-
+    Requests with an Origin header are accepted only from an explicit allowlist; CORS preflight is answered for
+    that allowlist only, never `*`. Requests without Origin require a valid token.

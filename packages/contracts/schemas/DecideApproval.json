@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DecideApproval.json",
+  "title": "DecideApproval",
+  "description": "Body of the decision endpoint. Only a human principal may decide (ADR-0036); the decider is the authenticated principal, never a body field.",
+  "type": "object",
+  "required": [
+    "outcome",
+    "evidenceDigest"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "enum": [
+        "approved",
+        "rejected"
+      ]
+    },
+    "evidenceDigest": {
+      "$ref": "Digest.json",
+      "description": "The digest the approver was shown; a mismatch with the Approval is `conflict`."
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 4000
+    }
+  }
+}

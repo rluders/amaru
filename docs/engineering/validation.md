@@ -7,9 +7,11 @@ What can be checked locally today, and how to report it.
 | Command | What it does | Needs |
 |---|---|---|
 | `make check` | Runs all of the below. | Go ≥ 1.27, or Go ≥ 1.21 with `GOTOOLCHAIN=auto` (downloads 1.27) |
-| `make fmt` | Fails if any Go file under `tools/doccheck` is not `gofmt`-formatted. | Go |
+| `make fmt` | Fails if any Go file under `tools/doccheck`, the spike or `packages/contracts` is not `gofmt`-formatted. | Go |
 | `make vet` | `go vet` on `tools/doccheck`. | Go |
 | `make test` | Unit tests of `tools/doccheck` (`-count=1`). | Go |
+| `make contracts-test` | `go vet` and tests in `packages/contracts`: every schema parses and has a unique `$id`, every `$ref` resolves, `operationId`s are unique, no prototype names remain, and the route-drift guard (`routeguard`). Does not validate payloads against schemas (API-002). | Go |
+| `make contracts-proto` | In `packages/contracts`: `buf lint`, `buf format -d --exit-code`, and `buf breaking` against `baseline/worker-v1.binpb`. | `buf` (verified with 1.69.0) |
 | `make docs-check` | Runs `doccheck` on the repository: relative links and anchors, unclosed fences and empty Mermaid blocks, ADR names/frontmatter/numbering and the DECISIONS index, Skill frontmatter and `.claude/skills` symlinks. | Go |
 
 `doccheck` is offline: it does **not** check external URLs, Mermaid syntax (only that blocks are non-empty and closed), spelling, or whether prose is true. Those need review (`documentation-maintenance` Skill).

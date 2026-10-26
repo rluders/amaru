@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkOwner.json",
+  "title": "WorkOwner",
+  "type": "object",
+  "required": [
+    "kind"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "human",
+        "agent"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 120
+    }
+  }
+}

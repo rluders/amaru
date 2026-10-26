@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PullRequest.json",
+  "title": "PullRequest",
+  "type": "object",
+  "required": [
+    "number",
+    "url",
+    "branch",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "url": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "open",
+        "merged",
+        "closed"
+      ]
+    },
+    "commit": {
+      "type": "string"
+    },
+    "draft": {
+      "type": "boolean"
+    }
+  }
+}

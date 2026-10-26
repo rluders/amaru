@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/provider/DescribeRequest.json",
+  "title": "DescribeRequest",
+  "type": "object",
+  "required": [
+    "protocol",
+    "method"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "const": "amaru.provider/v1"
+    },
+    "method": {
+      "const": "describe"
+    }
+  }
+}

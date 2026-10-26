@@ -3,14 +3,15 @@
 
 DOCCHECK := tools/doccheck
 SPIKE    := spikes/wp-m1-02
+CONTRACTS := packages/contracts
 
-.PHONY: check fmt vet test docs-check spike-vet spike-m1-02
+.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto spike-m1-02
 
-check: fmt vet test docs-check spike-vet
+check: fmt vet test docs-check spike-vet contracts-test contracts-proto
 
 # Fails if any Go file is not gofmt-formatted.
 fmt:
-	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
+	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE) $(CONTRACTS))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
 
 vet:
 	cd $(DOCCHECK) && go vet ./...
@@ -26,6 +27,15 @@ docs-check:
 # not evidence for them). Needs the pinned modules in the Go module cache.
 spike-vet:
 	cd $(SPIKE) && go vet ./... && GOOS=windows go vet ./... && GOOS=darwin GOARCH=arm64 go vet ./...
+
+# Contracts package: structural checks on schemas and OpenAPI, and the route-drift guard (Go, stdlib + yaml.v3).
+contracts-test:
+	cd $(CONTRACTS) && go vet ./... && go test -count=1 ./...
+
+# Worker protocol (Protobuf): lint, formatting, and breaking-change check against the committed baseline image.
+# Needs the `buf` CLI (verified with 1.69.0). See packages/contracts/README.md.
+contracts-proto:
+	cd $(CONTRACTS) && buf lint && buf format -d --exit-code && buf breaking --against baseline/worker-v1.binpb
 
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:

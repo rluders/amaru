@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Artifact.json",
+  "title": "Artifact",
+  "description": "A user-owned Markdown note with frontmatter, indexed read-only by the Platform.",
+  "type": "object",
+  "required": [
+    "id",
+    "path",
+    "title",
+    "type",
+    "tags",
+    "engines",
+    "files",
+    "workItems",
+    "modifiedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "ArtifactId.json"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "engines": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "format": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "workItems": {
+      "type": "array",
+      "items": {
+        "$ref": "WorkItemId.json"
+      }
+    },
+    "modifiedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

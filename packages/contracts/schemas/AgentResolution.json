@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/AgentResolution.json",
+  "title": "AgentResolution",
+  "enum": [
+    "preference",
+    "fallback",
+    "default"
+  ],
+  "description": "preference: a providerPreference entry; fallback: preference set but unmet, first available used; default: no preference, first available used."
+}

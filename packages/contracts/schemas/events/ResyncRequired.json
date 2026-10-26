@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ResyncRequired.json",
+  "title": "ResyncRequired",
+  "description": "Sent instead of replay when the requested cursor cannot be served (older than retained history, or ahead of `lastSeq`). The client must reload state through the HTTP API and resume from `resumeFrom`.",
+  "type": "object",
+  "required": [
+    "type",
+    "reason",
+    "resumeFrom"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "resync_required"
+    },
+    "reason": {
+      "enum": [
+        "cursor_too_old",
+        "cursor_ahead",
+        "history_unavailable"
+      ]
+    },
+    "resumeFrom": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

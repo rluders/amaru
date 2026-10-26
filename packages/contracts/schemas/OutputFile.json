@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/OutputFile.json",
+  "title": "OutputFile",
+  "description": "A file a capability step produced. sha256/bytes are computed by the Platform (empty sha256 only when no inspector is configured).",
+  "type": "object",
+  "required": [
+    "role",
+    "path",
+    "mediaType",
+    "sha256",
+    "bytes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "url": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where asset storage holds a copy (asset.upload)."
+    },
+    "role": {
+      "$ref": "PortName.json"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "mediaType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "anyOf": [
+        {
+          "$ref": "Sha256Hex.json"
+        },
+        {
+          "const": ""
+        }
+      ]
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

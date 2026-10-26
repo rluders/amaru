@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/LocalCheckResult.json",
+  "title": "LocalCheckResult",
+  "type": "object",
+  "required": [
+    "name",
+    "command",
+    "outcome",
+    "exitCode",
+    "startedAt",
+    "endedAt",
+    "durationMs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "command": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outcome": {
+      "enum": [
+        "passed",
+        "failed",
+        "unavailable",
+        "timeout",
+        "invalid"
+      ]
+    },
+    "exitCode": {
+      "type": "integer"
+    },
+    "startedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "endedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "output": {
+      "type": "string",
+      "description": "Head and tail of the output, bounded; truncated says the middle was cut."
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "detail": {
+      "type": "string"
+    }
+  }
+}

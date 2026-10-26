@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/AgentModel.json",
+  "title": "AgentModel",
+  "type": "string",
+  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/\\[\\]-]*$",
+  "maxLength": 80,
+  "description": "Opaque to the Platform; the provider decides whether it is valid."
+}

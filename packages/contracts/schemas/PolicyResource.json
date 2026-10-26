@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PolicyResource.json",
+  "title": "PolicyResource",
+  "description": "What the action touches; `type` selects the matching rule. Secrets appear by name only.",
+  "type": "object",
+  "required": [
+    "type"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "type": {
+      "enum": [
+        "git_ref",
+        "url",
+        "host",
+        "path",
+        "plugin",
+        "secret",
+        "tracker_item",
+        "deploy_target",
+        "pull_request",
+        "repository"
+      ]
+    }
+  }
+}

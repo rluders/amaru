@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DeliveryLoopDecision.json",
+  "title": "DeliveryLoopDecision",
+  "description": "One thing the delivery loop did and the event that caused it.",
+  "type": "object",
+  "required": [
+    "at",
+    "triggerType",
+    "action",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "at": {
+      "$ref": "Timestamp.json"
+    },
+    "triggerSeq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "triggerType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "event",
+        "webhook",
+        "startup",
+        "resync",
+        "reconcile",
+        "grant",
+        "provider_pause",
+        "local_check"
+      ]
+    },
+    "workItemId": {
+      "$ref": "WorkItemId.json"
+    },
+    "action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string"
+    },
+    "executionId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

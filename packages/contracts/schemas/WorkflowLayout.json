@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkflowLayout.json",
+  "title": "WorkflowLayout",
+  "description": "Editor node positions by step id. UI data only.",
+  "type": "object",
+  "required": [
+    "nodes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "object",
+      "maxProperties": 50,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/PlatformState.json",
+  "title": "PlatformState",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "not": {
+        "required": [
+          "executionId"
+        ]
+      },
+      "properties": {
+        "type": {
+          "const": "platform.state"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "state"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "enum": [
+                "ready",
+                "shutting_down"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

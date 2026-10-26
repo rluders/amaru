@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UsageRecordList.json",
+  "title": "UsageRecordList",
+  "type": "array",
+  "items": {
+    "$ref": "UsageRecord.json"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Team.json",
+  "title": "Team",
+  "description": "A named set of Agents with roles, stored at `.amaru/teams/<id>.json`. Runs nothing by itself.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "members",
+    "separationOfDuties",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "AgentId.json"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "members": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "TeamMember.json"
+      }
+    },
+    "separationOfDuties": {
+      "type": "boolean",
+      "description": "When true the Platform refuses a plan in which a review step uses the Agent that produced the reviewed work."
+    },
+    "createdAt": {
+      "$ref": "Timestamp.json"
+    },
+    "updatedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

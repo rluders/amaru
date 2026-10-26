@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PortSpec.json",
+  "title": "PortSpec",
+  "description": "One named input or output of a capability. Output ports are files; their name is the output role.",
+  "type": "object",
+  "required": [
+    "name",
+    "kind"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "$ref": "PortName.json"
+    },
+    "kind": {
+      "enum": [
+        "text",
+        "number",
+        "bool",
+        "enum",
+        "file"
+      ]
+    },
+    "mediaTypes": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "MediaType.json"
+      }
+    },
+    "required": {
+      "type": "boolean"
+    },
+    "enum": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    }
+  },
+  "if": {
+    "properties": {
+      "kind": {
+        "const": "enum"
+      }
+    },
+    "required": [
+      "kind"
+    ]
+  },
+  "then": {
+    "required": [
+      "enum"
+    ]
+  }
+}

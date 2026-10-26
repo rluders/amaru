@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Provider.json",
+  "title": "Provider",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "name",
+    "capabilities",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": {
+      "$ref": "ProviderKind.json"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "CapabilityId.json"
+      },
+      "uniqueItems": true
+    },
+    "status": {
+      "$ref": "ProviderStatus.json"
+    },
+    "specs": {
+      "description": "Capability specs the provider publishes (custom capabilities or extra optional inputs). Others use the built-in catalog.",
+      "type": "array",
+      "items": {
+        "$ref": "CapabilitySpec.json"
+      }
+    },
+    "secrets": {
+      "description": "Secret names the provider needs (values are write-only).",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{0,62}$"
+      },
+      "uniqueItems": true
+    },
+    "network": {
+      "type": "boolean",
+      "description": "Sends project data to a remote service; disabled until the user enables it."
+    },
+    "connection": {
+      "$ref": "Connection.json"
+    }
+  }
+}

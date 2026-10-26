@@ -1,6 +1,6 @@
 # Contract versioning rules
 
-**Status: Proposed.** Design for WP-M1-03 ([#4](https://github.com/rluders/amaru/issues/4)). Nothing here is implemented: no `packages/contracts` directory, generator, `buf` configuration or fixture exists yet ([repository layout](../engineering/repository-layout.md)). This document applies [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md) (accepted) and does not change it. Every code block is an illustrative draft, not a file in the repository.
+**Status: Proposed; partly applied in [`packages/contracts`](../../packages/contracts/README.md) (WP-M2-01, #68).** Applied there: the `buf` configuration with `FILE` breaking rules and `STANDARD` lint, the `buf breaking` baseline (a committed Buf image, section 2), and the `/v1` URL major. Still not implemented: fixture replay (section 1, API-002 #117), deprecation headers, TypeScript generation (WP-M2-02). Design for WP-M1-03 ([#4](https://github.com/rluders/amaru/issues/4)). Nothing here is implemented: no `packages/contracts` directory, generator, `buf` configuration or fixture exists yet ([repository layout](../engineering/repository-layout.md)). This document applies [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md) (accepted) and does not change it. Every code block is an illustrative draft, not a file in the repository.
 
 ## Scope
 In: how ADR-0025 is made checkable through shared fixtures, `buf breaking`, deprecation headers, version numbers and TypeScript generation. Out: implementing any of it (M2, [WP-M2-01](WORK_PACKAGES.md#wp-m2-01-contracts-package-from-the-prototype-protocol) [#9](https://github.com/rluders/amaru/issues/9), [WP-M2-02](WORK_PACKAGES.md#wp-m2-02-generated-typescript-sdk) [#10](https://github.com/rluders/amaru/issues/10), [WP-M2-03](WORK_PACKAGES.md#wp-m2-03-contract-drift-guard) [#11](https://github.com/rluders/amaru/issues/11)); changing the ADR-0025 rules; the release process.
@@ -91,5 +91,5 @@ Evidence levels per [validation](../engineering/validation.md#evidence-levels).
 
 ## Open decisions
 - Whether `0.x` permits wire-breaking changes under `/v1` (section 4).
-- Baseline storage for `buf breaking` (section 2).
+- Baseline storage for `buf breaking` (section 2): proposed in #68 as a committed Buf image rebuilt only at a contracts release; awaiting review.
 - Whether any contract is Protobuf at M2; if not, section 2 stays dormant.

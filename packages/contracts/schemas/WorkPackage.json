@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkPackage.json",
+  "title": "WorkPackage",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "summary",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "deliveryLoop": {
+      "$ref": "DeliveryLoopPolicy.json"
+    },
+    "id": {
+      "$ref": "WorkPackageId.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "status": {
+      "$ref": "WorkPackageStatus.json"
+    },
+    "createdAt": {
+      "$ref": "Timestamp.json"
+    },
+    "updatedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

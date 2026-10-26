@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UsageRecord.json",
+  "title": "UsageRecord",
+  "description": "One usage record of a Step Execution (OBS-002, ADR-0033). Every number is a measurement with a source; `value` is absent when the source is `unknown`. Replaces the prototype `Usage` shape. Cost is a decimal string with its currency, never a float.",
+  "type": "object",
+  "required": [
+    "stepExecutionId",
+    "capturedAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stepExecutionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capturedAt": {
+      "$ref": "Timestamp.json"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "UsageReport.json"
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/WorkChanged.json",
+  "title": "WorkChanged",
+  "description": "A Work Package or Work Item was created or updated.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "work.package.changed",
+            "work.item.changed"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "packageId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

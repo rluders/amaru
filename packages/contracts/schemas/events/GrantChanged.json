@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/GrantChanged.json",
+  "title": "GrantChanged",
+  "description": "A Grant was created, lapsed or revoked (ADR-0037).",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "grant.created",
+            "grant.lapsed",
+            "grant.revoked"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "grantId",
+            "status"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "grantId": {
+              "$ref": "../Ulid.json"
+            },
+            "status": {
+              "enum": [
+                "active",
+                "lapsed",
+                "revoked",
+                "expired"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

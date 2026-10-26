@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Digest.json",
+  "title": "Digest",
+  "description": "`sha256:` followed by 64 lowercase hex characters.",
+  "type": "string",
+  "pattern": "^sha256:[0-9a-f]{64}$"
+}

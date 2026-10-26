@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/IssueEvent.json",
+  "title": "IssueEvent",
+  "description": "A normalized issue event from the Git host; issue intake re-syncs the repository. Never the raw payload.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "issue.changed"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "repo",
+            "number",
+            "action",
+            "source"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repo": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "action": {
+              "enum": [
+                "opened",
+                "edited",
+                "closed",
+                "reopened",
+                "labeled",
+                "unlabeled"
+              ]
+            },
+            "source": {
+              "enum": [
+                "webhook"
+              ]
+            },
+            "deliveryId": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

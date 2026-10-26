@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/Frame.json",
+  "title": "Frame",
+  "description": "Any frame on the event stream.",
+  "oneOf": [
+    {
+      "$ref": "Hello.json"
+    },
+    {
+      "$ref": "ResyncRequired.json"
+    },
+    {
+      "$ref": "Event.json"
+    }
+  ]
+}

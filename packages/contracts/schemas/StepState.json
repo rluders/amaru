@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/StepState.json",
+  "title": "StepState",
+  "description": "Step Execution state (DOMAIN_MODEL 5.2, ADR-0042, ADR-0044). Prototype `unsupported` is `refused` with a reason. Clients must tolerate new values.",
+  "enum": [
+    "pending",
+    "skipped",
+    "refused",
+    "awaiting_approval",
+    "queued",
+    "leased",
+    "running",
+    "succeeded",
+    "failed",
+    "timed_out",
+    "interrupted",
+    "cancelled"
+  ]
+}

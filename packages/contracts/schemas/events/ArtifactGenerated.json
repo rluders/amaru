@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ArtifactGenerated.json",
+  "title": "ArtifactGenerated",
+  "description": "Files produced by an asset.generate execution, published just before it completes.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "artifact.generated"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "paths"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "paths": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ExecutionState.json",
+  "title": "ExecutionState",
+  "enum": [
+    "queued",
+    "running",
+    "waiting",
+    "succeeded",
+    "failed",
+    "cancelled"
+  ],
+  "description": "Execution state (DOMAIN_MODEL 5.1). `waiting`: a Step awaits an Approval or a Worker. Clients must tolerate new values."
+}

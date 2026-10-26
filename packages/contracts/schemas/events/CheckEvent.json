@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/CheckEvent.json",
+  "title": "CheckEvent",
+  "description": "A check suite, check run or workflow run finished on the Git host (or the startup resync re-read a pull request awaiting CI). Never the raw payload.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pr.checks"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "repo",
+            "sha",
+            "source"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repo": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "source": {
+              "enum": [
+                "webhook",
+                "resync",
+                "reconcile"
+              ]
+            },
+            "deliveryId": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

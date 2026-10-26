@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ExecutionStep.json",
+  "title": "ExecutionStep",
+  "description": "A Step Execution of a workflow run changed state. `failed` carries `error`; `skipped`/`refused` carry `reason`; `succeeded` may carry `outputs`.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "execution.step"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "stepId",
+            "state"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "stepId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "enum": [
+                "pending",
+                "skipped",
+                "refused",
+                "awaiting_approval",
+                "queued",
+                "leased",
+                "running",
+                "succeeded",
+                "failed",
+                "timed_out",
+                "interrupted",
+                "cancelled"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "error": {
+              "type": "object",
+              "required": [
+                "code",
+                "message"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "outputs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "providerId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "$ref": "../OutputFile.json"
+              }
+            },
+            "usage": {
+              "type": "array", "items": {"$ref": "../UsageReport.json", "unevaluatedProperties": false}
+            },
+            "external": {
+              "$ref": "../ExternalRef.json"
+            },
+            "verdict": {
+              "$ref": "../StepVerdict.json"
+            },
+            "approval": {
+              "$ref": "../ApprovalState.json"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "const": "failed"
+                  }
+                },
+                "required": [
+                  "state"
+                ]
+              },
+              "then": {
+                "required": [
+                  "error"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "skipped",
+                      "refused"
+                    ]
+                  }
+                },
+                "required": [
+                  "state"
+                ]
+              },
+              "then": {
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

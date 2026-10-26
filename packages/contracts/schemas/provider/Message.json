@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/provider/Message.json",
+  "title": "Message",
+  "description": "One stdout line of a run. Unknown types are ignored by the Platform; exactly one result ends the run.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "log",
+            "message"
+          ]
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "progress"
+        },
+        "message": {
+          "type": "string"
+        },
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "jobId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "external"
+        },
+        "jobId": {
+          "type": "string",
+          "pattern": "^[!-~]{1,200}$"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "role",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "output"
+        },
+        "role": {
+          "$ref": "../PortName.json"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "ok"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "result"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "error": {
+          "$ref": "../ExecutionError.json"
+        },
+        "usage": {
+          "type": "array",
+          "items": {
+            "$ref": "../UsageReport.json",
+            "unevaluatedProperties": false
+          },
+          "description": "Usage the provider reported (ADR-0033); the Platform adds step identity and capture time."
+        }
+      },
+      "if": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "error"
+        ]
+      }
+    }
+  ]
+}

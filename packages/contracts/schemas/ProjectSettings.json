@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ProjectSettings.json",
+  "title": "ProjectSettings",
+  "description": "The project's Amaru switches (.amaru/settings.json). Every switch is off by default and only widens what Amaru reads.",
+  "type": "object",
+  "required": [
+    "importClaudeSkills"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "importClaudeSkills": {
+      "type": "boolean",
+      "description": "List .claude/skills/*/SKILL.md as read-only Skills, untrusted until the user trusts their content."
+    }
+  }
+}

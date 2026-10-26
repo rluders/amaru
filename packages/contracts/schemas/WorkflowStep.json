@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkflowStep.json",
+  "title": "WorkflowStep",
+  "description": "WHAT happens. `tool` is a display label for the intended agent/tool; providers decide HOW. Agent steps run; tool/system steps run only when they declare a `capability` a provider offers; trigger steps are control steps. `id` is optional on input; the Platform assigns step-N.",
+  "type": "object",
+  "required": [
+    "name",
+    "type"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^step-[0-9]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "type": {
+      "$ref": "StepType.json"
+    },
+    "tool": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "capability": {
+      "$ref": "CapabilityId.json",
+      "description": "Semantic operation for a tool/system step (e.g. model.validate). Names WHAT, never a provider or MCP server."
+    },
+    "agentId": {
+      "$ref": "AgentId.json",
+      "description": "Agent step only: the project Agent that runs this step. `prompt` is then the task; persona, provider and model come from the Agent. Existence and status are checked when a run starts."
+    },
+    "teamId": {
+      "$ref": "AgentId.json",
+      "description": "Agent and review steps: select the Agent through a Team role instead of agentId. On a review step they name the reviewer."
+    },
+    "role": {
+      "$ref": "TeamRole.json"
+    },
+    "reviews": {
+      "type": "string",
+      "pattern": "^step-[0-9]+$",
+      "description": "Review and approval steps: the step whose output is reviewed. Required on a review step."
+    },
+    "input": {
+      "description": "Explicit named input for the capability (e.g. {\"file\": \"models/hero.blend\"}); values may use {{variable}}. Providers validate it.",
+      "type": "object",
+      "maxProperties": 20,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "maxLength": 120
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 10000
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "agent",
+              "trigger",
+              "review",
+              "approval"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "capability"
+              ]
+            },
+            {
+              "required": [
+                "input"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "tool",
+              "system"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "if": {
+          "required": [
+            "input"
+          ]
+        },
+        "then": {
+          "required": [
+            "capability"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "agent",
+              "approval"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "required": [
+          "prompt"
+        ]
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "type": {
+              "const": "review"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "else": {
+          "not": {
+            "required": [
+              "prompt"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "agent",
+              "review"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "agentId"
+              ]
+            },
+            {
+              "required": [
+                "teamId"
+              ]
+            },
+            {
+              "required": [
+                "role"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "review"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "required": [
+          "teamId",
+          "role",
+          "reviews"
+        ],
+        "not": {
+          "required": [
+            "agentId"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "review",
+              "approval"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "reviews"
+          ]
+        }
+      }
+    }
+  ]
+}

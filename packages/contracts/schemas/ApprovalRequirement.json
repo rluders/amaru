@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalRequirement.json",
+  "title": "ApprovalRequirement",
+  "description": "Copied from the Policy output at request time so a later configuration change does not rewrite what the approver was asked to satisfy.",
+  "type": "object",
+  "required": [
+    "minRole"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "minRole": {
+      "$ref": "Role.json"
+    },
+    "requiredTeam": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "separationOfDuties": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "differFrom": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "initiator",
+              "agentSponsor"
+            ]
+          }
+        },
+        "reason": {
+          "enum": [
+            "single_user_install"
+          ]
+        }
+      }
+    },
+    "expiresAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

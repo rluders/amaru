@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/StepVerdict.json",
+  "title": "StepVerdict",
+  "description": "A review step's outcome. `changes_requested` fails the step, which ends the run.",
+  "type": "object",
+  "required": [
+    "outcome"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "enum": [
+        "approved",
+        "changes_requested"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
