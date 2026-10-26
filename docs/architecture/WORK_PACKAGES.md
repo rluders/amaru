@@ -83,6 +83,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M1-02.
 - **Done when:** layout and importer design are documented.
 - **Validation:** data-class review against [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md).
+- **Deliverables (Proposed, not validated):** [AMARU_DIRECTORY](AMARU_DIRECTORY.md) (layout, schemas, Project/clone/Execution provenance, data-class review) and [LEGACY_IMPORTER](LEGACY_IMPORTER.md) (mapping, conflicts, idempotency, recovery). Open decision: [Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
 
 ### WP-M1-06 Worker protocol schemas
 - **Issue:** [#7](https://github.com/rluders/amaru/issues/7)

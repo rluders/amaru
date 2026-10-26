@@ -70,6 +70,6 @@ Retention is an Organization Policy setting per data class ([ADR-0017](adr/0017-
 
 Moving prototype project data into Amaru is a migration concern. It requires:
 - no runtime compatibility with the prototype's project folder ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md));
-- a one-shot importer (`amaru import legacy`) for definitions and Work Items, scheduled in the roadmap;
+- a one-shot importer (`amaru import legacy`) for definitions and Work Items, scheduled in the roadmap; layout and design (Proposed): [AMARU_DIRECTORY](AMARU_DIRECTORY.md), [LEGACY_IMPORTER](LEGACY_IMPORTER.md);
 - Prototype operational history stays read-only in the prototype; it is not imported;
 - no live dual-write.

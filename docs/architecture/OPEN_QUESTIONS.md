@@ -4,11 +4,18 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**None open.** Two passes on 2026-10-25 closed every question:
+**One open (Q55, raised by WP-M1-05).** Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
   - Q13's metadata split now keeps Teams out of Git (Q27).
+
+### Q55. Project key and Linked-repository placement
+- **Question:** [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) keys a Project by repository but does not say how the key is derived, and does not say whether Linked repositories are committed definitions. Also open: what happens to a Team slug that committed definitions still reference when the Team is renamed or deleted.
+- **Why it matters:** two clones, forks, renamed remotes and repositories without a remote must resolve to the right Project, and Executions must be attributable to it.
+- **Evidence required:** a second clone against one Platform and a Cloud fetch at a commit (M3 validation, [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)); a review of the options in [AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision).
+- **Recommendation (not a decision):** normalized remote URL plus root commit, with a committed Project id as the fallback; commit remote and delivery policy of Linked repositories, keep absolute paths in the Platform.
+- **Blocks:** `attach` and the importer in WP-M3-01/WP-M3-02. Closed by an ADR owned by the product owner.
 
 A new question is added here with **why it matters**, **evidence required** and **what it blocks**, and is closed by an ADR.
 
