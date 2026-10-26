@@ -59,6 +59,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M0-01.
 - **Done when:** the conventions are in `packages/contracts` docs when that package is created (M2) and the generator pipeline is configured.
 - **Validation:** review against the prototype protocol history.
+- **Deliverables:** [CONTRACT_VERSIONING](CONTRACT_VERSIONING.md) (proposed design; no implementation).
 
 ### WP-M1-04 Approval, Policy, roles and configuration shapes
 - **Issue:** [#5](https://github.com/rluders/amaru/issues/5)
