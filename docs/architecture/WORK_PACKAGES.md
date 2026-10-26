@@ -96,6 +96,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M1-02.
 - **Done when:** schemas and fixtures are reviewed.
 - **Validation:** review; `buf lint`.
+- **Deliverables (Proposed, not validated):** [WORKER_PROTOCOL](WORKER_PROTOCOL.md): schema draft (`buf lint` clean on a scratch copy), fixtures, in-process transport, idempotency and lease fields.
 
 ### WP-M1-07 Inventory refresh at the baseline
 - **Issue:** [#8](https://github.com/rluders/amaru/issues/8)
