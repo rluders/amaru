@@ -32,7 +32,7 @@ These dispositions are decided as the plan of record (2026-10-25). Under [ADR-00
 
 | Source | Component | Amaru home | Disposition | Milestone | Depends on |
 |---|---|---|---|---|---|
-| Weave | `protocol/` (OpenAPI, schemas, fixtures) | `packages/contracts` | Adapt (rename `weave.*`, add Policy/Approval, Worker protocol, usage; fix drift) | M2 | ADR-0025, ADR-0036/0037, LICENSE files (ADR-0026) |
+| Weave | `protocol/` (OpenAPI, schemas, fixtures) | `packages/contracts` | Adapt (rename `weave.*`, add Policy/Approval, Worker protocol, usage; fix drift) | M2 | ADR-0025, ADR-0036/0037, package Apache-2.0 `LICENSE` (ADR-0026, WP-M2-01) |
 | Weave | `plugin/src/runtime/connection.ts`, `events.ts` | `packages/sdk` (event client) | Reimplement (behavioral reference; plugin code is not migrated, [ADR-0031](../architecture/adr/0031-obsidian-plugin-is-retired.md)) | M2 | WP-M2-02 |
 | Weave | `runtime/internal/domain`, `ports`, `arch` | `services/platform` core | Adapt | M3 | Domain model review |
 | Weave | `runtime/internal/app` (manager, steps, context assembly) | Execution coordinator | Adapt (Worker interface, timeouts, Policy, Approval) | M3 | ADR-0042 |
@@ -67,7 +67,7 @@ Either way:
 - keep ADRs and validation records reachable;
 - port the tests with the code.
 
-Licensing is settled by [ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md); migration starts once the LICENSE files are in effect (WP-M1-01):
+Licensing is settled by [ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md); migration is not gated by the root LICENSE file (product-owner decision 2026-10-26, WP-M1-01), because the copyright holder of the migrated code consents:
 - **Weave Runtime is MIT** (© 2026 Ricardo Lüders). The copyright holder relicenses it into Amaru; the MIT notice is preserved in the source history.
 - **The Weave prototype has no license file.** The holder consents to its reuse (recorded in ADR-0026).
 - Third-party contributions were checked on 2026-10-25: only the owner and the owner's automation identities authored commits.
@@ -125,11 +125,10 @@ Migration waves follow the [roadmap](../architecture/ROADMAP.md); there is no fi
 **Not ready.**
 
 Blocking:
-- LICENSE files not yet in effect (decision made in ADR-0026; WP-M1-01).
 - M1 validation spike not yet run (bundled PostgreSQL, embedded NATS, crash suite).
 - Contracts package not yet created (M2), although its rules are decided (ADR-0025, ADR-0036/0037).
 - Windows/macOS unvalidated in Weave.
 
-Resolved on 2026-10-25: license decision (ADR-0026), baseline `c8a2f6e` (ADR-0032), persistence and execution decisions (ADR-0014–0016), Weave-side findings no longer prerequisites.
+Resolved on 2026-10-25: license decision (ADR-0026; on 2026-10-26 the root LICENSE file was removed as a migration gate), baseline `c8a2f6e` (ADR-0032), persistence and execution decisions (ADR-0014–0016), Weave-side findings no longer prerequisites.
 
 The Weave Runtime is nevertheless the strongest evidence base for the Platform core. Its Capability→Provider boundary, contract discipline, restart semantics and delivery loop are tested and partly real-validated.

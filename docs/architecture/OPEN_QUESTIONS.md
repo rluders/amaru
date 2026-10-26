@@ -108,7 +108,7 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 ### Q12. Licensing and commercial boundaries
 - **Question:** Community license and commercial boundary.
 - **Owner answer:** "Fair-code usage from draft Amaru Community License 1.0."
-- **Decision:** Platform under the Amaru Community License 1.0 (fair-code, source-available) with separate commercial licensing; contracts and SDKs under Apache-2.0; CLA for contributions; Weave code reusable (sole copyright holder). The LICENSE text, legal review and trademark search are roadmap tasks owned by the product owner. → [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)
+- **Decision:** Platform under the Amaru Community License 1.0 (fair-code, source-available) with separate commercial licensing; contracts and SDKs under Apache-2.0; CLA for contributions; Weave code reusable (sole copyright holder). The LICENSE text, legal review and trademark search are roadmap tasks owned by the product owner (legal review dropped 2026-10-26, [WP-M1-01](WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)). → [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)
 
 ### Q13. Project metadata location
 - **Question:** Where does Amaru keep per-Project state?
