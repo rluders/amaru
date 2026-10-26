@@ -2,7 +2,7 @@
 
 Status: **Proposed** (2026-10-26), not implemented, not validated. Design deliverable of [WP-M1-05](WORK_PACKAGES.md#wp-m1-05-amaru-layout-and-importer-design) ([#6](https://github.com/rluders/amaru/issues/6)). It applies the accepted [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) and [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md). It does not create `.amaru/`, a schema file, a parser or a migration. The importer that fills this layout is designed in [LEGACY_IMPORTER](LEGACY_IMPORTER.md).
 
-Two points are **Requires decision** (§5.1 repository key, §3.4 Linked repository). Everything else follows from accepted ADRs.
+Two points are **Requires decision** (proposed in [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md), awaiting the product owner) (§5.1 repository key, §3.4 Linked repository). Everything else follows from accepted ADRs.
 
 ## 1. Principles
 

@@ -91,7 +91,7 @@ Phases (the first three never write):
   - Rollback is a Platform feature of the importer, **Proposed** and **untested**.
 - **Observability.** Events `import.started`, `import.planned`, `import.object_created`, `import.object_skipped`, `import.conflict`, `import.completed`, `import.failed`; every Event carries `importRunId`, the fingerprint and the actor. The run report is stored as an Artifact attached to the run.
 - **Reproducibility.** The report records tool version, source fingerprint, target Platform schema version and flags; same inputs ⇒ same plan.
-- **Spike carry-over (WP-M1-02, Linux only, conditionally validated).** Passed: transactional state + outbox + idempotent consumer pattern, crash matrix 86/86, embedded PostgreSQL with documented mitigations. Open: macOS and Windows (A2, A9). **Not tested by the spike and therefore untested design here:** importer transactions, definition snapshots, content hashing, `.amaru/` loading. No spike result contradicts this draft and no ADR changes are required by it.
+- **Spike carry-over (WP-M1-02, conditionally validated on the Linux, macOS and Windows hosted runners).** Passed on all three: PostgreSQL scenarios 9/9, crash matrix 86/86, with the documented mitigations. Conditions the report keeps open (A2, A9): Windows non-admin, macOS signing/notarization and footprint, upgrades and power loss. **Not tested by the spike and therefore untested design here:** importer transactions, definition snapshots, content hashing, `.amaru/` loading. No spike result contradicts this draft and no ADR change is required by it.
 
 ## 8. Fixture shape for WP-M3-02
 
@@ -120,7 +120,7 @@ Synthetic data shaped by the source structs; **no real project was read**.
 
 ## 11. Not decided here
 
-- The Project key ([AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision)) and Linked-repository placement ([Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement)).
+- The Project key, proposed in [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) ([AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision)) and Linked-repository placement ([Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement)).
 - Whether Teams can carry `separationOfDuties` as an attribute ([ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) owns Team semantics).
 - The migration ADR that authorizes implementing the importer (ADR-0007 gate).
 
