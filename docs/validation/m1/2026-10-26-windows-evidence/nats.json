@@ -1,0 +1,14 @@
+{
+  "fresh_start_after_wipe_error": "",
+  "go_heap_delta_kb": 5983,
+  "goarch": "amd64",
+  "goos": "windows",
+  "msgs_after_restart": 10000,
+  "process_rss_kb_with_10k_msgs": 36716,
+  "remove_store_after_stop_error": "",
+  "spike_binary_bytes": 32280576,
+  "start_ms": 42,
+  "stop_ms": 1,
+  "store_bytes_10k_msgs_1KiB": 8389021,
+  "store_removed": true
+}
