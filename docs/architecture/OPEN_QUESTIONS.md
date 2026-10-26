@@ -4,7 +4,7 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**One open (Q55, raised by WP-M1-05).** Two passes on 2026-10-25 closed every question:
+**Four open (Q55, raised by WP-M1-05; Q56–Q58, raised by WP-M1-04).** Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
@@ -16,6 +16,34 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 - **Evidence required:** a second clone against one Platform and a Cloud fetch at a commit (M3 validation, [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)); a review of the options in [AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision).
 - **Proposal:** [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) (`proposed`, awaiting the product owner). Recommendation: normalized remote URL plus root commit, with a committed Project id as the fallback; commit remote and delivery policy of Linked repositories, keep absolute paths in the Platform.
 - **Blocks:** `attach` and the importer in WP-M3-01/WP-M3-02. Closed by an ADR owned by the product owner.
+
+### Q56. What happens to a decided Approval and to a retried Step when Evidence changes
+- **Question:** raised by [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04), which could not decide it from the ADRs.
+  - [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md) invalidates **pending** Approvals when bound Evidence changes and keeps **decided** ones attached to what they saw. [DOMAIN_MODEL §4](DOMAIN_MODEL.md#4-key-relationships-and-rules) says an Approval "is void" when its subject changes. These differ for an `approved` record.
+  - [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) retries an idempotent Step as a new Lease. [ADR-0006](adr/0006-human-authorization-for-consequential-actions.md) says an Approval authorizes one occurrence. It is unstated whether the retry reuses the original Approval, and how "first use of a secret" ([rule 12](../security/SECURITY_MODEL.md#baseline-rules)) is remembered afterwards.
+- **Why it matters:** an approved push or pull request must neither run unapproved on changed content nor ask the human twice for the same occurrence after a crash.
+- **Evidence required:** a crash-injection case on fakes (approved, then interrupted) and an agreed reading of DOMAIN_MODEL §4/§5.5.
+- **Recommendation (not a decision):** an `approved` record is immutable; validity is checked at use time against the evidence digest; an idempotent retry of the same occurrence reuses the Approval while the digest is unchanged; DOMAIN_MODEL §4 is reworded to match.
+- **Blocks:** Approval contract in WP-M2-01 and WP-M3-04. Closed by an ADR owned by the product owner.
+
+### Q57. How does Policy treat a Capability no rule covers, and who is the requester of a triggered Execution
+- **Question:** raised by [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04).
+  - [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md) ends resolution with "anything else is denied" yet says missing authority parks the item (`needs_grant`) instead of failing. It is unstated whether an uncovered, non-approvable request is `deny` (Step `refused`) or a park, and how an explicit `deny` differs.
+  - Webhooks, schedules and the delivery loop have no human requester. [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md) bars service accounts from approving and [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) defines separation of duties against the initiator and the Agent's human sponsor, but nothing names the sponsor of a Trigger.
+- **Why it matters:** the delivery loop must park, not stall or fail; separation of duties needs a defined initiator for unattended runs.
+- **Evidence required:** a decision table (explicit deny, uncovered, approvable) reviewed with the loop's `needs_grant` phase; the Trigger principal and sponsor rule.
+- **Recommendation (not a decision):** explicit `deny` refuses the Step; uncovered and non-approvable parks as `needs_grant` with decision `deny` recorded; a Trigger is a principal of kind `trigger` with a named human sponsor who is the initiator for separation of duties.
+- **Blocks:** Policy contract in WP-M2-01, Trigger shapes in WP-M7 and the delivery loop in WP-M3. Closed by an ADR owned by the product owner.
+
+### Q58. Policy defaults versus the MVP never-merges rule, and what a Project may tighten
+- **Question:** raised by [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04).
+  - [Baseline rule 2](../security/SECURITY_MODEL.md#baseline-rules) says the Platform never merges pull requests in the MVP; rule 12 lists merging as `require_approval`. Is there a merge Capability in the MVP catalog at all?
+  - Rule 12 does not name opening a pull request, which UC-1 gates on an approval. Is it a "write to an external tracker"?
+  - [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md) lets lower scopes only tighten security-relevant keys, while Policy rules live at Organization scope ([AMARU_DIRECTORY §3.1](AMARU_DIRECTORY.md)). Which keys can Project configuration tighten, and is shorter retention "tighter"?
+- **Why it matters:** the default list is a security baseline; its interpretation must not drift between contracts and code.
+- **Evidence required:** product-owner reading of rules 2 and 12; review of the key table in [POLICY_AND_APPROVAL_SHAPES §8](POLICY_AND_APPROVAL_SHAPES.md#8-configuration).
+- **Recommendation (not a decision):** no merge Capability in the MVP catalog (default `deny`, `require_approval` once added); treat opening a pull request as approvable; Project config may add approval requirements, narrow allowlists, shorten retention and expiry, and nothing else.
+- **Blocks:** default rule set and configuration contract in WP-M2-01. Closed by an ADR owned by the product owner.
 
 A new question is added here with **why it matters**, **evidence required** and **what it blocks**, and is closed by an ADR.
 

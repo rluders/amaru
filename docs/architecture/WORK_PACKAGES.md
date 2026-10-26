@@ -72,6 +72,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M0-01.
 - **Done when:** shapes are drafted for M2.
 - **Validation:** walkthrough of UC-1 and UC-5.
+- **Deliverables:** [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (Proposed draft; evidence level: not validated).
 
 ### WP-M1-05 `.amaru/` layout and importer design
 - **Issue:** [#6](https://github.com/rluders/amaru/issues/6)
