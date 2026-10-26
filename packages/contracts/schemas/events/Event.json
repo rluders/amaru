@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/Event.json",
+  "title": "Event",
+  "description": "A seq-numbered event frame. Clients must ignore unknown event types and unknown fields (additive evolution within v1, ADR-0025).",
+  "oneOf": [
+    {
+      "$ref": "ExecutionLifecycle.json"
+    },
+    {
+      "$ref": "ExecutionFailed.json"
+    },
+    {
+      "$ref": "ExecutionOutput.json"
+    },
+    {
+      "$ref": "ExecutionProgress.json"
+    },
+    {
+      "$ref": "ExecutionStep.json"
+    },
+    {
+      "$ref": "ArtifactGenerated.json"
+    },
+    {
+      "$ref": "PlatformState.json"
+    },
+    {
+      "$ref": "CatalogChanged.json"
+    },
+    {
+      "$ref": "WorkChanged.json"
+    },
+    {
+      "$ref": "DeliveryLoopDecisionEvent.json"
+    },
+    {
+      "$ref": "CheckoutEvent.json"
+    },
+    {
+      "$ref": "PullRequestEvent.json"
+    },
+    {
+      "$ref": "CheckEvent.json"
+    },
+    {
+      "$ref": "IssueEvent.json"
+    },
+    {
+      "$ref": "ReconcileCompleted.json"
+    },
+    {
+      "$ref": "ApprovalEvent.json"
+    },
+    {
+      "$ref": "PolicyEvaluated.json"
+    },
+    {
+      "$ref": "GrantChanged.json"
+    },
+    {
+      "$ref": "UsageRecorded.json"
+    },
+    {
+      "$ref": "ResultRejectedStale.json"
+    }
+  ]
+}

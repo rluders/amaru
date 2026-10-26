@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Workflow.json",
+  "title": "Workflow",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "status",
+    "type",
+    "steps",
+    "variables",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "WorkflowId.json"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "status": {
+      "$ref": "WorkflowStatus.json"
+    },
+    "type": {
+      "$ref": "WorkflowType.json"
+    },
+    "steps": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "WorkflowStep.json"
+          },
+          {
+            "type": "object",
+            "required": [
+              "id"
+            ]
+          }
+        ]
+      }
+    },
+    "variables": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "WorkflowVariable.json"
+      }
+    },
+    "createdAt": {
+      "$ref": "Timestamp.json"
+    },
+    "updatedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "WorkflowEdge.json"
+      }
+    },
+    "layout": {
+      "$ref": "WorkflowLayout.json"
+    }
+  }
+}

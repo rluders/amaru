@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PolicyDecision.json",
+  "title": "PolicyDecision",
+  "description": "Output of the single Policy function: allow | require_approval | deny with reasons (ADR-0037). Total and deterministic.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "decision",
+    "reasons",
+    "evaluatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "requestId": {
+      "$ref": "Ulid.json"
+    },
+    "decision": {
+      "enum": [
+        "allow",
+        "require_approval",
+        "deny"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "PolicyReason.json"
+      }
+    },
+    "matchedGrantId": {
+      "oneOf": [
+        {
+          "$ref": "Ulid.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "gateKind",
+        "minRole",
+        "bindTo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "gateKind": {
+          "enum": [
+            "step_approval",
+            "policy_required",
+            "work_item_acceptance"
+          ]
+        },
+        "minRole": {
+          "$ref": "Role.json"
+        },
+        "requiredTeam": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "separationOfDuties": {
+          "type": "object",
+          "required": [
+            "enabled"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "differFrom": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "initiator",
+                  "agentSponsor"
+                ]
+              }
+            },
+            "reason": {
+              "enum": [
+                "single_user_install"
+              ]
+            }
+          }
+        },
+        "bindTo": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "execution",
+              "step_execution",
+              "commit",
+              "diff",
+              "artifact",
+              "check_result",
+              "definition"
+            ]
+          }
+        },
+        "expiresIn": {
+          "type": "string",
+          "description": "ISO 8601 duration."
+        }
+      }
+    },
+    "effectiveConfigHash": {
+      "$ref": "Digest.json"
+    },
+    "policyVersion": {
+      "$ref": "Digest.json"
+    },
+    "evaluatedAt": {
+      "$ref": "Timestamp.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "require_approval"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "required": [
+          "approval"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "approval"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkflowEdge.json",
+  "title": "WorkflowEdge",
+  "description": "`from` runs before `to`. With fromPort+toPort it is a data edge: input toPort of `to` receives the path of `from`'s output with role fromPort.",
+  "type": "object",
+  "required": [
+    "from",
+    "to"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "from": {
+      "type": "string",
+      "pattern": "^step-[0-9]+$"
+    },
+    "fromPort": {
+      "$ref": "PortName.json"
+    },
+    "to": {
+      "type": "string",
+      "pattern": "^step-[0-9]+$"
+    },
+    "toPort": {
+      "$ref": "PortName.json"
+    }
+  },
+  "dependentRequired": {
+    "fromPort": [
+      "toPort"
+    ],
+    "toPort": [
+      "fromPort"
+    ]
+  }
+}

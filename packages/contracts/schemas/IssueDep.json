@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/IssueDep.json",
+  "title": "IssueDep",
+  "description": "One issue another issue is blocked by. Only a blocker closed as completed is resolved.",
+  "type": "object",
+  "required": [
+    "repo",
+    "number",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "repo": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state": {
+      "enum": [
+        "open",
+        "closed"
+      ]
+    },
+    "stateReason": {
+      "type": "string",
+      "description": "completed | not_planned | duplicate | reopened"
+    }
+  }
+}

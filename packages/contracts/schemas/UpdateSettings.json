@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UpdateSettings.json",
+  "title": "UpdateSettings",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": false,
+  "properties": {
+    "importClaudeSkills": {
+      "type": "boolean"
+    }
+  }
+}

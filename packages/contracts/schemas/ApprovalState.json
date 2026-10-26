@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalState.json",
+  "title": "ApprovalState",
+  "description": "The human gate of an approval step. While `pending` the step stays `running` and the run waits for a person.",
+  "type": "object",
+  "required": [
+    "status",
+    "message",
+    "requestedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "requestedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "decidedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ExternalRef.json",
+  "title": "ExternalRef",
+  "description": "Provider-side job of a remote step.",
+  "type": "object",
+  "required": [
+    "providerId",
+    "jobId",
+    "submittedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "providerId": {
+      "$ref": "ProviderId.json"
+    },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[!-~]{1,200}$"
+    },
+    "submittedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

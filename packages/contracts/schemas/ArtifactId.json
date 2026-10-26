@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ArtifactId.json",
+  "title": "ArtifactId",
+  "type": "string",
+  "minLength": 1,
+  "description": "Project-relative slash path of the note, e.g. Assets/Player.md."
+}

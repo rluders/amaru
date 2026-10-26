@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalList.json",
+  "title": "ApprovalList",
+  "type": "array",
+  "items": {
+    "$ref": "Approval.json"
+  }
+}

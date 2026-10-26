@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/CheckoutEvent.json",
+  "title": "CheckoutEvent",
+  "description": "A Platform worktree was prepared or removed.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "checkout.prepared",
+            "checkout.removed"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "workItemId",
+            "checkout"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "workItemId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checkout": {
+              "type": "object",
+              "required": [
+                "path",
+                "branch",
+                "base"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

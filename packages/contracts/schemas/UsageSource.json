@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UsageSource.json",
+  "title": "UsageSource",
+  "description": "Provenance of a usage number (ADR-0033): reported by the provider, estimated by Amaru, or unknown. Unknown is never stored as zero.",
+  "enum": [
+    "reported",
+    "estimated",
+    "unknown"
+  ]
+}

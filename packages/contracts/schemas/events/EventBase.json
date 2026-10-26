@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/EventBase.json",
+  "title": "EventBase",
+  "description": "Common fields of every persisted event (WRK-003). `seq` is the per-Project cursor: strictly increasing, gap-free per Project, and the value a client sends to resume. `id` is stable across redelivery (clients deduplicate on it). `resource` names what the event is about; `correlationId` links events caused by the same request or Execution.",
+  "type": "object",
+  "required": [
+    "id",
+    "seq",
+    "type",
+    "time",
+    "projectId",
+    "resource",
+    "data"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "../Ulid.json"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "time": {
+      "$ref": "../Timestamp.json"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

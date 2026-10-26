@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/EvidenceItem.json",
+  "title": "EvidenceItem",
+  "description": "One reference into the Evidence view an Approval was shown (POLICY_AND_APPROVAL_SHAPES 3.2). References and hashes only; never content or secrets.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "execution"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "step_execution"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "sha",
+        "repository"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "commit"
+        },
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "diff"
+        },
+        "hash": {
+          "$ref": "Digest.json"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "artifact"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "$ref": "Digest.json"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "hash",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "check_result"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "$ref": "Digest.json"
+        },
+        "outcome": {
+          "enum": [
+            "passed",
+            "failed",
+            "errored",
+            "skipped"
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "commit",
+        "contentHash",
+        "dirty"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "definition"
+        },
+        "commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentHash": {
+          "$ref": "Digest.json"
+        },
+        "dirty": {
+          "type": "boolean"
+        }
+      }
+    }
+  ]
+}

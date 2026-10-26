@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/AgentId.json",
+  "title": "AgentId",
+  "type": "string",
+  "pattern": "^[a-z][a-z0-9-]{1,62}[a-z0-9]$",
+  "description": "Human-referenceable slug, e.g. godot-developer. Immutable."
+}

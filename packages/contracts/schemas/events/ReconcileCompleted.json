@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ReconcileCompleted.json",
+  "title": "ReconcileCompleted",
+  "description": "One periodic (or startup) reconcile pass against the Git host finished. error is at most 200 characters and never a secret.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "reconcile.completed"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "scope",
+            "ok",
+            "partial",
+            "created",
+            "updated",
+            "unchanged",
+            "errors",
+            "durationMs"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "enum": [
+                "intake",
+                "autoloop"
+              ]
+            },
+            "ok": {
+              "type": "boolean"
+            },
+            "partial": {
+              "type": "boolean"
+            },
+            "created": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "updated": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unchanged": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "errors": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "error": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "durationMs": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

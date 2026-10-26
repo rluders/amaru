@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DeliveryLoopItem.json",
+  "title": "DeliveryLoopItem",
+  "type": "object",
+  "required": [
+    "phase",
+    "attempt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "phase": {
+      "enum": [
+        "waiting",
+        "implementing",
+        "validating",
+        "reviewing",
+        "awaiting_ci",
+        "awaiting_merge",
+        "done",
+        "blocked",
+        "needs_grant",
+        "paused"
+      ]
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "$ref": "DeliveryLoopRun.json"
+      }
+    },
+    "checkout": {
+      "$ref": "Checkout.json"
+    },
+    "pr": {
+      "$ref": "PullRequest.json"
+    },
+    "feedback": {
+      "type": "string"
+    },
+    "parkedFor": {
+      "enum": [
+        "implement",
+        "review",
+        "preflight",
+        "resume",
+        ""
+      ],
+      "description": "resume: an unblocked item is checking its delivered pull request before anything is redone."
+    },
+    "extraAttempts": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Attempts granted when a person moved a blocked item back."
+    },
+    "ci": {
+      "$ref": "CIState.json"
+    },
+    "resumeAt": {
+      "$ref": "Timestamp.json",
+      "description": "When a paused item (provider quota or session limit) tries again."
+    },
+    "blockedIn": {
+      "enum": [
+        "waiting",
+        "implementing",
+        "validating",
+        "reviewing",
+        "awaiting_ci",
+        "awaiting_merge",
+        "needs_grant",
+        "paused"
+      ],
+      "description": "The phase the item was blocked in; unblocking resumes from it when the delivered work is still usable."
+    },
+    "reviewedSha": {
+      "type": "string",
+      "description": "The pull request head an approved review covered."
+    },
+    "base": {
+      "$ref": "BaseState.json"
+    },
+    "local": {
+      "$ref": "LocalCheckState.json"
+    },
+    "excluded": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "ExcludedFile.json"
+      },
+      "description": "New files the last commit left out as agent scratch; they stay in the worktree."
+    },
+    "allowed": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string"
+      },
+      "description": "Scratch-looking files committed because the policy's commitInclude names them."
+    },
+    "restartRecoveries": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Runs of the current attempt a Platform restart interrupted; they spend no attempt, bounded at 3."
+    },
+    "reviewFloor": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Index into runs from which review runs count toward the review budget; a person's unblock moves it."
+    }
+  }
+}

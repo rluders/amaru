@@ -19,6 +19,7 @@ amaru/
 │   ├── engineering/        conventions, this file, agent instructions, validation
 │   ├── security/           security model
 ├── spikes/wp-m1-02/        Go module: WP-M1-02 validation experiments (throwaway, not the Platform)
+├── packages/contracts/     versioned API, event, Provider and Worker contracts + route-drift guard (Go module, Protobuf)
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
@@ -28,7 +29,6 @@ There is **no LICENSE file** yet: the license is decided in [ADR-0026](../archit
 
 | Path | Purpose | Introduced when (evidence required) |
 |---|---|---|
-| `packages/contracts` | API, event, provider and Worker schemas + golden fixtures | [M2](../architecture/ROADMAP.md#m2-contracts-v0): versioning per [ADR-0025](../architecture/adr/0025-api-and-protocol-versioning-policy.md); migration ADR for the prototype `protocol/`. |
 | `packages/sdk` | Client SDK generated from contracts (TS first) | M2: contracts exist; the Web client needs it. |
 | `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves prototype Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-earlier-internal-runtime.md)). |
 | `apps/web` | Web client served by the Platform | [M4](../architecture/ROADMAP.md#m4-local-mvp): Web is the MVP client ([ADR-0010](../architecture/adr/0010-local-mvp-client-is-a-web-ui.md)). |
@@ -45,6 +45,9 @@ Rules for introducing an area:
 
 ## Why `spikes/wp-m1-02` exists now
 WP-M1-02 ([#3](https://github.com/rluders/amaru/issues/3)) must validate bundled PostgreSQL, embedded JetStream and restart semantics by running them, and the evidence must be reproducible. The code is a separate Go module with its own pinned dependencies, [README](../../spikes/wp-m1-02/README.md) and `make spike-vet` / `make spike-m1-02` targets. It holds no Platform code and no code from earlier prototypes; it is removed or replaced when `services/platform` is introduced (M3). Its third-party dependencies are scoped to the spike module and do not make the Platform depend on them.
+
+## Why `packages/contracts` exists now
+WP-M2-01 ([#9](https://github.com/rluders/amaru/issues/9)): the contract must exist, versioned and checkable, before the Platform, SDK or Workers that depend on it. It was introduced with the accepted migration ADR ([ADR-0047](../architecture/adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md)) and holds OpenAPI, JSON Schemas, the Worker Protobuf and a route-drift guard. It is a separate Go module (the guard reads YAML, which the standard library cannot, so it pins `gopkg.in/yaml.v3`); `make contracts-test` and `make contracts-proto` are in `make check`. Its [README](../../packages/contracts/README.md) states what is and is not there. Fixtures validated in Go and TypeScript come with API-002 ([#117](https://github.com/rluders/amaru/issues/117)); the package `LICENSE` is added by the product owner, not by agents.
 
 ## Why `tools/doccheck` exists now
 The bootstrap's deliverable is documentation whose value depends on staying consistent: links, ADR statuses and Skill adapters. Off-the-shelf link checkers (markdownlint, lychee) are not installed here and would not check the ADR index or the Skill symlink scheme. A stdlib-only Go tool adds no dependencies, matches the Platform's planned language, and has unit tests.

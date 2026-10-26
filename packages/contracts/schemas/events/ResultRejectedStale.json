@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ResultRejectedStale.json",
+  "title": "ResultRejectedStale",
+  "description": "A Worker result carried a fencing token below the Step's current one and was rejected (ADR-0044 point 4).",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "result.rejected_stale"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "attemptId",
+            "presentedToken",
+            "currentToken"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "attemptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "presentedToken": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "currentToken": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

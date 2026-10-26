@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UpdateWorkItem.json",
+  "title": "UpdateWorkItem",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": false,
+  "properties": {
+    "dependsOn": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "WorkItemId.json"
+      }
+    },
+    "workflowId": {
+      "anyOf": [
+        {
+          "$ref": "WorkflowId.json"
+        },
+        {
+          "const": ""
+        }
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "intent": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "status": {
+      "$ref": "WorkItemStatus.json"
+    },
+    "blockedReason": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "owner": {
+      "$ref": "WorkOwner.json"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DeliveryLoopRun.json",
+  "title": "DeliveryLoopRun",
+  "type": "object",
+  "required": [
+    "kind",
+    "attempt",
+    "executionId",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "implement",
+        "review"
+      ]
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "executionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "$ref": "ExecutionState.json"
+    },
+    "error": {
+      "$ref": "ExecutionError.json"
+    },
+    "abandoned": {
+      "type": "boolean",
+      "description": "The item was blocked while this run was live; the run is cancelled and its result ignored."
+    }
+  }
+}

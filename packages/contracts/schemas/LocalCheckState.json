@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/LocalCheckState.json",
+  "title": "LocalCheckState",
+  "description": "What the delivery loop knows about the local checks of an item's pull request head. Source is always local: this is not hosted CI.",
+  "type": "object",
+  "required": [
+    "source",
+    "headSha",
+    "configHash",
+    "state",
+    "runs",
+    "repairs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "const": "local"
+    },
+    "headSha": {
+      "type": "string"
+    },
+    "configHash": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "running",
+        "interrupted",
+        "cancelled",
+        "passed",
+        "failed",
+        "unavailable",
+        "timeout",
+        "invalid"
+      ]
+    },
+    "runs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "repairs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "results": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "$ref": "LocalCheckResult.json"
+      }
+    },
+    "handled": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string"
+      }
+    },
+    "runKey": {
+      "type": "string"
+    }
+  }
+}

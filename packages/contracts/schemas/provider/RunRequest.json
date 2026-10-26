@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/provider/RunRequest.json",
+  "title": "RunRequest",
+  "type": "object",
+  "required": [
+    "protocol",
+    "method",
+    "capability",
+    "input",
+    "projectRoot",
+    "outputDir"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "const": "amaru.provider/v1"
+    },
+    "method": {
+      "const": "run"
+    },
+    "capability": {
+      "$ref": "../CapabilityId.json"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Named inputs; file inputs are project-relative paths. Untrusted: validate."
+    },
+    "projectRoot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute project root; also the process working directory."
+    },
+    "outputDir": {
+      "type": "string",
+      "description": "Project-relative directory (already created) that every output file must be inside."
+    },
+    "resume": {
+      "type": "object",
+      "required": [
+        "jobId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "Re-attach to this job instead of submitting new work."
+    }
+  }
+}

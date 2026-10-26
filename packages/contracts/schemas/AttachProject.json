@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/AttachProject.json",
+  "title": "AttachProject",
+  "description": "POST /projects body. Idempotent: the same canonical root always yields the same project.",
+  "type": "object",
+  "required": [
+    "root"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute native path of an existing directory (the vault root)."
+    }
+  }
+}

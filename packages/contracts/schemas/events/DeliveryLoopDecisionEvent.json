@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/DeliveryLoopDecisionEvent.json",
+  "title": "DeliveryLoopDecisionEvent",
+  "description": "The delivery loop recorded a decision.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "delivery_loop.decision"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "packageId",
+            "decision"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "packageId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "decision": {
+              "type": "object",
+              "required": [
+                "at",
+                "triggerType",
+                "action",
+                "reason"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

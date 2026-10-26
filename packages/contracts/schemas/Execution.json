@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Execution.json",
+  "title": "Execution",
+  "type": "object",
+  "required": [
+    "id",
+    "projectId",
+    "capability",
+    "providerId",
+    "state",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "checkout": {
+      "$ref": "Checkout.json"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability": {
+      "$ref": "CapabilityId.json"
+    },
+    "providerId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "input": {
+      "description": "What was requested. Present on executions created by this Platform; user-authored text, never credentials.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifactId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Artifact id (project-relative note path) for asset.generate."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "prompt"
+          ],
+          "not": {
+            "required": [
+              "artifactId"
+            ]
+          }
+        },
+        {
+          "required": [
+            "artifactId"
+          ],
+          "not": {
+            "required": [
+              "prompt"
+            ]
+          }
+        }
+      ]
+    },
+    "state": {
+      "$ref": "ExecutionState.json"
+    },
+    "createdAt": {
+      "$ref": "Timestamp.json"
+    },
+    "startedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "endedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "error": {
+      "$ref": "ExecutionError.json"
+    },
+    "workItemId": {
+      "description": "Work Item this execution was started for. Absent for executions not tied to a Work Item. Not a status: a Work Item's status never mirrors its executions.",
+      "$ref": "WorkItemId.json"
+    },
+    "workflowId": {
+      "description": "Workflow this execution was started from (POST /workflows/{id}/run). Absent otherwise.",
+      "$ref": "WorkflowId.json"
+    },
+    "outputs": {
+      "description": "Project-relative files the execution produced (asset.generate; workflow runs: the union of step outputs). Absent otherwise.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "steps": {
+      "description": "Ordered Step Executions of a workflow run. Absent for executions not started from a workflow.",
+      "type": "array",
+      "items": {
+        "$ref": "StepExecution.json"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "error"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "endedAt"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "queued"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "startedAt"
+          ]
+        }
+      }
+    }
+  ]
+}

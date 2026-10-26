@@ -38,7 +38,7 @@ Start here: [README](README.md) · [PRD](docs/product/PRD.md) · [Architecture](
 - Conventions: [docs/engineering/CONVENTIONS.md](docs/engineering/CONVENTIONS.md).
 
 ## Dependencies
-Standard library first. Every new dependency needs a stated reason, verified docs, a pinned version and an acceptable license. Current third-party dependencies: none in `tools/doccheck`; the throwaway [`spikes/wp-m1-02`](spikes/wp-m1-02/README.md) module pins `embedded-postgres` v2, `nats-server`, `nats.go` and `pgx` for WP-M1-02 only (reasons and versions in its README); none is a Platform dependency.
+Standard library first. Every new dependency needs a stated reason, verified docs, a pinned version and an acceptable license. Current third-party dependencies: none in `tools/doccheck`; `gopkg.in/yaml.v3` v3.0.1 in `packages/contracts` (the route-drift guard reads OpenAPI YAML; reason and license in its [README](packages/contracts/README.md#dependencies)); the throwaway [`spikes/wp-m1-02`](spikes/wp-m1-02/README.md) module pins `embedded-postgres` v2, `nats-server`, `nats.go` and `pgx` for WP-M1-02 only (reasons and versions in its README); none is a Platform dependency.
 
 ## Skills
 Reusable procedures live in `.agents/skills/<name>/SKILL.md` (canonical; `.claude/skills/` holds symlinks):

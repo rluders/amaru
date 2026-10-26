@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/MediaType.json",
+  "title": "MediaType",
+  "type": "string",
+  "pattern": "^[a-z]+/([a-z0-9][a-z0-9.+-]*|\\*)$"
+}

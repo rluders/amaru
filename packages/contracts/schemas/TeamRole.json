@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/TeamRole.json",
+  "title": "TeamRole",
+  "type": "string",
+  "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$",
+  "description": "A role label inside a Team, unique per Team."
+}

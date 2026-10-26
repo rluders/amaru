@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CapabilityInfo.json",
+  "title": "CapabilityInfo",
+  "description": "A capability usable in workflow tool/system steps: canonical spec plus the providers offering it (GET /v1/capabilities).",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "inputs",
+    "outputs",
+    "builtin",
+    "providers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "CapabilityId.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "inputs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "PortSpec.json"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "OutputPortSpec.json"
+      }
+    },
+    "builtin": {
+      "type": "boolean"
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "$ref": "CapabilityOffer.json"
+      }
+    }
+  }
+}

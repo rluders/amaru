@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UpdateWorkPackage.json",
+  "title": "UpdateWorkPackage",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": false,
+  "properties": {
+    "deliveryLoop": {
+      "$ref": "DeliveryLoopPolicy.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "status": {
+      "$ref": "WorkPackageStatus.json"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalGate.json",
+  "title": "ApprovalGate",
+  "description": "What the Approval gates. `capability` is present for `policy_required`.",
+  "type": "object",
+  "required": [
+    "kind"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "step_approval",
+        "policy_required",
+        "work_item_acceptance"
+      ]
+    },
+    "stepExecutionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workItemId": {
+      "$ref": "WorkItemId.json"
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policyEvaluationId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
