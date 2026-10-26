@@ -64,6 +64,7 @@ Planning IDs mapped to their GitHub issues in [rluders/amaru](https://github.com
 | M5 | `E5.2` | [#32](https://github.com/rluders/amaru/issues/32) | — | E5.2 Environment registry and routing |
 | M5 | `E5.3` | [#33](https://github.com/rluders/amaru/issues/33) | — | E5.3 Leases and partition tests |
 | M5 | `E5.6` | [#34](https://github.com/rluders/amaru/issues/34) | — | E5.6 Retries, parallelism and scheduling |
+| M5 | `E5.7` | [#222](https://github.com/rluders/amaru/issues/222) | — | E5.7 Delivery efficiency (context budget, bounded CI repair) |
 | M5 | `MADR-provider-mcp` | [#89](https://github.com/rluders/amaru/issues/89) | [#28](https://github.com/rluders/amaru/issues/28) | Migration ADR: runtime/internal/provider/mcp → Worker providers (MCP gateway) |
 | M5 | `MADR-sandbox-runtime` | [#90](https://github.com/rluders/amaru/issues/90) | [#29](https://github.com/rluders/amaru/issues/29) | Migration ADR: runtime/{driver,cli_driver,podman}.go → Sandbox Environment Worker |
 | M5 | `SPK-A5-A8` | [#103](https://github.com/rluders/amaru/issues/103) | [#28](https://github.com/rluders/amaru/issues/28) | Spike: interactive-session Worker and Unreal MCP coverage (A5, A8) |
@@ -116,7 +117,7 @@ Every scheduled feature (P0, P1, and P2 with a milestone). "Covered by" means th
 | FEAT-API-005 | M3 | [#106](https://github.com/rluders/amaru/issues/106) | [#18](https://github.com/rluders/amaru/issues/18) |
 | FEAT-ART-001 | M3 | [#119](https://github.com/rluders/amaru/issues/119) | [#19](https://github.com/rluders/amaru/issues/19) |
 | FEAT-ART-002 | M3 | [#124](https://github.com/rluders/amaru/issues/124) | [#19](https://github.com/rluders/amaru/issues/19) |
-| FEAT-ART-003 | M3 | [#125](https://github.com/rluders/amaru/issues/125) | [#14](https://github.com/rluders/amaru/issues/14) |
+| FEAT-ART-003 | M3 | [#125](https://github.com/rluders/amaru/issues/125) | [#19](https://github.com/rluders/amaru/issues/19) |
 | FEAT-CAP-001 | M3 | [#111](https://github.com/rluders/amaru/issues/111) | [#13](https://github.com/rluders/amaru/issues/13) |
 | FEAT-CAP-002 | M3 | [#127](https://github.com/rluders/amaru/issues/127) | [#17](https://github.com/rluders/amaru/issues/17) |
 | FEAT-CAP-003 | M3 | [#128](https://github.com/rluders/amaru/issues/128) | [#17](https://github.com/rluders/amaru/issues/17) |
@@ -180,14 +181,14 @@ Every scheduled feature (P0, P1, and P2 with a milestone). "Covered by" means th
 | FEAT-WRK-004 | M4 | [#220](https://github.com/rluders/amaru/issues/220) | [#23](https://github.com/rluders/amaru/issues/23) |
 | FEAT-WRK-005 | M4 | [#221](https://github.com/rluders/amaru/issues/221) | [#23](https://github.com/rluders/amaru/issues/23) |
 | FEAT-API-004 | M5 | [#98](https://github.com/rluders/amaru/issues/98) | [#31](https://github.com/rluders/amaru/issues/31) |
-| FEAT-ART-004 | M5 | [#126](https://github.com/rluders/amaru/issues/126) | [#33](https://github.com/rluders/amaru/issues/33) |
+| FEAT-ART-004 | M5 | [#126](https://github.com/rluders/amaru/issues/126) | [#31](https://github.com/rluders/amaru/issues/31) |
 | FEAT-CAP-006 | M5 | [#133](https://github.com/rluders/amaru/issues/133) | [#28](https://github.com/rluders/amaru/issues/28) |
 | FEAT-ENV-002 | M5 | [#100](https://github.com/rluders/amaru/issues/100) | [#31](https://github.com/rluders/amaru/issues/31) |
 | FEAT-ENV-003 | M5 | [#146](https://github.com/rluders/amaru/issues/146) | [#32](https://github.com/rluders/amaru/issues/32) |
 | FEAT-ENV-004 | M5 | [#101](https://github.com/rluders/amaru/issues/101) | [#33](https://github.com/rluders/amaru/issues/33) |
 | FEAT-ENV-005 | M5 | [#147](https://github.com/rluders/amaru/issues/147) | [#32](https://github.com/rluders/amaru/issues/32) |
 | FEAT-ENV-006 | M5 | [#148](https://github.com/rluders/amaru/issues/148) | [#31](https://github.com/rluders/amaru/issues/31) |
-| FEAT-ENV-007 | M5 | [#149](https://github.com/rluders/amaru/issues/149) | [#33](https://github.com/rluders/amaru/issues/33) |
+| FEAT-ENV-007 | M5 | [#149](https://github.com/rluders/amaru/issues/149) | [#31](https://github.com/rluders/amaru/issues/31) |
 | FEAT-ENV-008 | M5 | [#102](https://github.com/rluders/amaru/issues/102) | [#29](https://github.com/rluders/amaru/issues/29) |
 | FEAT-ENV-009 | M5 | [#153](https://github.com/rluders/amaru/issues/153) | [#28](https://github.com/rluders/amaru/issues/28) |
 | FEAT-ENV-011 | M5 | [#150](https://github.com/rluders/amaru/issues/150) | [#28](https://github.com/rluders/amaru/issues/28) |
@@ -195,10 +196,10 @@ Every scheduled feature (P0, P1, and P2 with a milestone). "Covered by" means th
 | FEAT-EXE-007 | M5 | [#159](https://github.com/rluders/amaru/issues/159) | [#34](https://github.com/rluders/amaru/issues/34) |
 | FEAT-EXE-008 | M5 | [#160](https://github.com/rluders/amaru/issues/160) | [#34](https://github.com/rluders/amaru/issues/34) |
 | FEAT-IAM-006 | M5 | [#99](https://github.com/rluders/amaru/issues/99) | [#31](https://github.com/rluders/amaru/issues/31) |
-| FEAT-SKL-004 | M5 | [#204](https://github.com/rluders/amaru/issues/204) | [#34](https://github.com/rluders/amaru/issues/34) |
+| FEAT-SKL-004 | M5 | [#204](https://github.com/rluders/amaru/issues/204) | [#222](https://github.com/rluders/amaru/issues/222) |
 | FEAT-VAL-004 | M5 | [#207](https://github.com/rluders/amaru/issues/207) | [#29](https://github.com/rluders/amaru/issues/29) |
 | FEAT-VAL-005 | M5 | [#208](https://github.com/rluders/amaru/issues/208) | [#29](https://github.com/rluders/amaru/issues/29) |
-| FEAT-VAL-006 | M5 | [#209](https://github.com/rluders/amaru/issues/209) | [#34](https://github.com/rluders/amaru/issues/34) |
+| FEAT-VAL-006 | M5 | [#209](https://github.com/rluders/amaru/issues/209) | [#222](https://github.com/rluders/amaru/issues/222) |
 | FEAT-WFL-005 | M5 | [#213](https://github.com/rluders/amaru/issues/213) | [#34](https://github.com/rluders/amaru/issues/34) |
 | FEAT-WFL-006 | M5 | [#214](https://github.com/rluders/amaru/issues/214) | [#34](https://github.com/rluders/amaru/issues/34) |
 | FEAT-PLG-001 | M6 | [#94](https://github.com/rluders/amaru/issues/94) | [#36](https://github.com/rluders/amaru/issues/36) |
@@ -228,7 +229,7 @@ Every scheduled feature (P0, P1, and P2 with a milestone). "Covered by" means th
 | FEAT-OPS-006 | M7 | [#181](https://github.com/rluders/amaru/issues/181) | [#45](https://github.com/rluders/amaru/issues/45) |
 | FEAT-PLG-009 | M7 | [#155](https://github.com/rluders/amaru/issues/155) | [#49](https://github.com/rluders/amaru/issues/49) |
 | FEAT-POL-008 | M7 | covered by [#48](https://github.com/rluders/amaru/issues/48) (`E7.7`) | — |
-| FEAT-PRJ-006 | M7 | [#194](https://github.com/rluders/amaru/issues/194) | [#45](https://github.com/rluders/amaru/issues/45) |
+| FEAT-PRJ-006 | M7 | [#194](https://github.com/rluders/amaru/issues/194) | [#43](https://github.com/rluders/amaru/issues/43) |
 | FEAT-REV-007 | M7 | [#202](https://github.com/rluders/amaru/issues/202) | [#42](https://github.com/rluders/amaru/issues/42) |
 | FEAT-SKL-003 | M7 | [#203](https://github.com/rluders/amaru/issues/203) | [#42](https://github.com/rluders/amaru/issues/42) |
 | FEAT-WFL-007 | M7 | [#215](https://github.com/rluders/amaru/issues/215) | [#42](https://github.com/rluders/amaru/issues/42) |
@@ -245,44 +246,54 @@ Every scheduled feature (P0, P1, and P2 with a milestone). "Covered by" means th
 | FEAT-POL-009 | M9 | covered by [#56](https://github.com/rluders/amaru/issues/56) (`E9.1`) | — |
 | FEAT-PLG-010 | M10 | [#63](https://github.com/rluders/amaru/issues/63) | — |
 
-## 3. Proposed feature-to-epic mapping (M5–M9)
+## 3. Feature-to-epic mapping (M5–M9)
 
-The [roadmap](../architecture/ROADMAP.md) lists epics and each milestone's features but not which feature belongs to which epic. This split is **proposed** for review; it changes no milestone or priority.
+Confirmed in the backlog refinement of 2026-10-25 against the roadmap exit criteria, catalog dependencies and Work Package boundaries; the [roadmap](../architecture/ROADMAP.md) lists the same grouping per epic. Each scheduled M5–M9 feature has exactly one owning epic. No milestone or priority changed.
 
-| Epic | Features |
-|---|---|
-| `E5.1` [#31](https://github.com/rluders/amaru/issues/31) | FEAT-API-004, FEAT-ENV-002, FEAT-ENV-006, FEAT-IAM-006 |
-| `E5.2` [#32](https://github.com/rluders/amaru/issues/32) | FEAT-ENV-003, FEAT-ENV-005 |
-| `E5.3` [#33](https://github.com/rluders/amaru/issues/33) | FEAT-ART-004, FEAT-ENV-004, FEAT-ENV-007 |
-| `E5.4` [#29](https://github.com/rluders/amaru/issues/29) | FEAT-ENV-008, FEAT-VAL-004, FEAT-VAL-005 |
-| `E5.5` [#28](https://github.com/rluders/amaru/issues/28) | FEAT-CAP-006, FEAT-ENV-009, FEAT-ENV-011, FEAT-ENV-013 |
-| `E5.6` [#34](https://github.com/rluders/amaru/issues/34) | FEAT-EXE-007, FEAT-EXE-008, FEAT-SKL-004, FEAT-VAL-006, FEAT-WFL-005, FEAT-WFL-006 |
-| `E6.1` [#36](https://github.com/rluders/amaru/issues/36) | FEAT-PLG-001, FEAT-PLG-007 |
-| `E6.2` [#37](https://github.com/rluders/amaru/issues/37) | FEAT-PLG-002, FEAT-PLG-008 |
-| `E6.3` [#38](https://github.com/rluders/amaru/issues/38) | FEAT-PLG-003 |
-| `E6.4` [#39](https://github.com/rluders/amaru/issues/39) | FEAT-PLG-004 |
-| `E6.5` [#40](https://github.com/rluders/amaru/issues/40) | FEAT-PLG-005 |
-| `E6.6` [#30](https://github.com/rluders/amaru/issues/30) | FEAT-PLG-006 |
-| `E7.1` [#43](https://github.com/rluders/amaru/issues/43) | FEAT-ADM-002, FEAT-ADM-003, FEAT-IAM-002, FEAT-IAM-003, FEAT-IAM-004, FEAT-IAM-005 |
-| `E7.2` [#44](https://github.com/rluders/amaru/issues/44) | — (roadmap scope only) |
-| `E7.3` [#45](https://github.com/rluders/amaru/issues/45) | FEAT-OPS-004, FEAT-OPS-005, FEAT-OPS-006, FEAT-PRJ-006 |
-| `E7.4` [#42](https://github.com/rluders/amaru/issues/42) | FEAT-AGT-005, FEAT-INT-003, FEAT-INT-004, FEAT-REV-007, FEAT-SKL-003, FEAT-WFL-007, FEAT-WFL-008, FEAT-WFL-009 |
-| `E7.5` [#46](https://github.com/rluders/amaru/issues/46) | FEAT-OBS-004, FEAT-OBS-005, FEAT-OBS-006 |
-| `E7.6` [#47](https://github.com/rluders/amaru/issues/47) | FEAT-CLI-012 |
-| `E7.7` [#48](https://github.com/rluders/amaru/issues/48) | FEAT-POL-008 |
-| `E7.8` [#49](https://github.com/rluders/amaru/issues/49) | FEAT-ENV-014, FEAT-PLG-009 |
-| `E8.1` [#50](https://github.com/rluders/amaru/issues/50) | — (roadmap scope only) |
-| `E8.2` [#51](https://github.com/rluders/amaru/issues/51) | FEAT-CLI-008 |
-| `E8.3` [#52](https://github.com/rluders/amaru/issues/52) | FEAT-CLI-010, FEAT-IAM-007 |
-| `E8.4` [#53](https://github.com/rluders/amaru/issues/53) | FEAT-CLI-009, FEAT-CLI-011 |
-| `E8.5` [#54](https://github.com/rluders/amaru/issues/54) | — (roadmap scope only) |
-| `E9.1` [#56](https://github.com/rluders/amaru/issues/56) | FEAT-POL-009 |
-| `E9.2` [#57](https://github.com/rluders/amaru/issues/57) | FEAT-OPS-007 |
-| `E9.3` [#59](https://github.com/rluders/amaru/issues/59) | FEAT-ENV-012 |
-| `E9.4` [#58](https://github.com/rluders/amaru/issues/58) | FEAT-OPS-008 |
+| Epic | Features | Change from the initial proposal |
+|---|---|---|
+| `E5.1` [#31](https://github.com/rluders/amaru/issues/31) | FEAT-API-004, FEAT-ART-004 (port and filesystem adapter), FEAT-ENV-002, FEAT-ENV-006, FEAT-ENV-007, FEAT-IAM-006 | ART-004 and ENV-007 moved from E5.3: Worker uploads are part of the protocol data plane and need the store port |
+| `E5.2` [#32](https://github.com/rluders/amaru/issues/32) | FEAT-ENV-003, FEAT-ENV-005 | — |
+| `E5.3` [#33](https://github.com/rluders/amaru/issues/33) | FEAT-ENV-004 | Leases plus the partition suite of the M5 exit |
+| `E5.4` [#29](https://github.com/rluders/amaru/issues/29) | FEAT-ENV-008, FEAT-VAL-004, FEAT-VAL-005 | — |
+| `E5.5` [#28](https://github.com/rluders/amaru/issues/28) | FEAT-CAP-006, FEAT-ENV-009, FEAT-ENV-011, FEAT-ENV-013 | — |
+| `E5.6` [#34](https://github.com/rluders/amaru/issues/34) | FEAT-EXE-007, FEAT-EXE-008, FEAT-WFL-005, FEAT-WFL-006 | SKL-004 and VAL-006 moved to E5.7 |
+| `E5.7` [#222](https://github.com/rluders/amaru/issues/222) | FEAT-SKL-004, FEAT-VAL-006 | New epic: delivery-flow efficiency fits none of E5.1–E5.6 |
+| `E6.1` [#36](https://github.com/rluders/amaru/issues/36) | FEAT-PLG-001, FEAT-PLG-007 | — |
+| `E6.2` [#37](https://github.com/rluders/amaru/issues/37) | FEAT-PLG-002, FEAT-PLG-008 | — |
+| `E6.3` [#38](https://github.com/rluders/amaru/issues/38) | FEAT-PLG-003 | — |
+| `E6.4` [#39](https://github.com/rluders/amaru/issues/39) | FEAT-PLG-004 | — |
+| `E6.5` [#40](https://github.com/rluders/amaru/issues/40) | FEAT-PLG-005 | — |
+| `E6.6` [#30](https://github.com/rluders/amaru/issues/30) | FEAT-PLG-006 | — |
+| `E7.1` [#43](https://github.com/rluders/amaru/issues/43) | FEAT-ADM-002, FEAT-ADM-003, FEAT-IAM-002, FEAT-IAM-003, FEAT-IAM-004, FEAT-IAM-005, FEAT-PRJ-006 | PRJ-006 moved from E7.3: Project archive is Organization data administration beside ADM-003, not packaging |
+| `E7.2` [#44](https://github.com/rluders/amaru/issues/44) | — (roadmap scope) plus the S3-compatible adapter of FEAT-ART-004 | ART-004 is owned by E5.1 for M5; E7.2 delivers its M7 part |
+| `E7.3` [#45](https://github.com/rluders/amaru/issues/45) | FEAT-OPS-004, FEAT-OPS-005, FEAT-OPS-006 | — |
+| `E7.4` [#42](https://github.com/rluders/amaru/issues/42) | FEAT-AGT-005, FEAT-INT-003, FEAT-INT-004, FEAT-REV-007, FEAT-SKL-003, FEAT-WFL-007, FEAT-WFL-008, FEAT-WFL-009 | — |
+| `E7.5` [#46](https://github.com/rluders/amaru/issues/46) | FEAT-OBS-004, FEAT-OBS-005, FEAT-OBS-006 | — |
+| `E7.6` [#47](https://github.com/rluders/amaru/issues/47) | FEAT-CLI-012 | — |
+| `E7.7` [#48](https://github.com/rluders/amaru/issues/48) | FEAT-POL-008 | `SECURITY.md` is created early by the M1 owner task [#71](https://github.com/rluders/amaru/issues/71); E7.7 verifies it for the self-hosted release |
+| `E7.8` [#49](https://github.com/rluders/amaru/issues/49) | FEAT-ENV-014, FEAT-PLG-009 | — |
+| `E8.1` [#50](https://github.com/rluders/amaru/issues/50) | — (roadmap scope only) | — |
+| `E8.2` [#51](https://github.com/rluders/amaru/issues/51) | FEAT-CLI-008 | — |
+| `E8.3` [#52](https://github.com/rluders/amaru/issues/52) | FEAT-CLI-010, FEAT-IAM-007 | — |
+| `E8.4` [#53](https://github.com/rluders/amaru/issues/53) | FEAT-CLI-009, FEAT-CLI-011 | — |
+| `E8.5` [#54](https://github.com/rluders/amaru/issues/54) | — (roadmap scope only) | — |
+| `E9.1` [#56](https://github.com/rluders/amaru/issues/56) | FEAT-POL-009 | — |
+| `E9.2` [#57](https://github.com/rluders/amaru/issues/57) | FEAT-OPS-007 | — |
+| `E9.3` [#59](https://github.com/rluders/amaru/issues/59) | FEAT-ENV-012 | — |
+| `E9.4` [#58](https://github.com/rluders/amaru/issues/58) | FEAT-OPS-008 | — |
 
-## 4. Not tracked as issues
+## 4. Dependency notes and gates
+
+- **Cycle FEAT-CAP-002 ↔ FEAT-POL-006: corrected.** POL-006 depends on CAP-002 and AGT-003 ([#190](https://github.com/rluders/amaru/issues/190) blocked by [#127](https://github.com/rluders/amaru/issues/127) and [#113](https://github.com/rluders/amaru/issues/113)); CAP-002 no longer depends on POL-006.
+- **Cross-package dependencies** (resolutions in [WORK_PACKAGES](../architecture/WORK_PACKAGES.md#cross-package-feature-dependencies)):
+  - FEAT-ART-003 → FEAT-ART-002: hard. ART-003 [#125](https://github.com/rluders/amaru/issues/125) moved from WP-M3-02 [#14](https://github.com/rluders/amaru/issues/14) to WP-M3-07 [#19](https://github.com/rluders/amaru/issues/19) and is blocked by REV-003 [#197](https://github.com/rluders/amaru/issues/197), which is blocked by ART-002 [#124](https://github.com/rluders/amaru/issues/124).
+  - FEAT-WRK-001 → FEAT-PRJ-001: soft, recorded in [#166](https://github.com/rluders/amaru/issues/166).
+  - FEAT-WRK-004 → FEAT-VAL-001, FEAT-REV-004, FEAT-REV-005, FEAT-INT-001: soft, recorded in [#220](https://github.com/rluders/amaru/issues/220); the real run is in WP-M4-07 [#27](https://github.com/rluders/amaru/issues/27).
+- **Human approval gates** ([delivery §8](delivery.md#8-human-approval-gates)): all `MADR-*` issues and [#65](https://github.com/rluders/amaru/issues/65), [#66](https://github.com/rluders/amaru/issues/66), [#69](https://github.com/rluders/amaru/issues/69) carry `awaiting-owner-approval`. Every migration ADR issue is blocked by [#66](https://github.com/rluders/amaru/issues/66) (root `LICENSE`) and [#8](https://github.com/rluders/amaru/issues/8) (inventory refresh).
+
+- **Decided 2026-10-25 (delegated by the product owner):** the epic changes of §3, ART-003's move and its REV-003 dependency, and the WP-M1-01 *Done when* correction are confirmed. Default OS owner for M3/M4 is the product owner. The Go Worker SDK is created in E6.6 [#30](https://github.com/rluders/amaru/issues/30). The egress check that POL-004 [#168](https://github.com/rluders/amaru/issues/168) reuses from `transport/webhook/sender.go` is covered by the M3 migration ADR MADR-httpapi [#83](https://github.com/rluders/amaru/issues/83), which blocks #168; the rest of `transport/webhook` stays with MADR-webhook [#95](https://github.com/rluders/amaru/issues/95) in M7. License decisions are deferred by the product owner; their gates stay open.
+
+## 5. Not tracked as issues
 
 - P2 features in the catalog *Backlog* and all P3 features: not scheduled, so no issue (catalog priority rules).
-- Catalog dependency cycle FEAT-CAP-002 ↔ FEAT-POL-006: the backlog links POL-006 as blocked by CAP-002 only; the catalog row needs a correction (requires decision).
-- Soft dependencies (catalog dependency against the Work Package order) are listed in the affected issue bodies, not as native links: FEAT-ART-003 → FEAT-ART-002, FEAT-WRK-001 → FEAT-PRJ-001, FEAT-WRK-004 → FEAT-INT-001, FEAT-WRK-004 → FEAT-REV-004, FEAT-WRK-004 → FEAT-REV-005, FEAT-WRK-004 → FEAT-VAL-001.
