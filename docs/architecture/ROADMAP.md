@@ -7,10 +7,11 @@ A milestone starts when its dependencies are met and ends when its exit criteria
 Features are referenced by catalog ID without the `FEAT-` prefix ([feature catalog](../product/FEATURE_CATALOG.md)). Epics and Work Packages: [WORK_PACKAGES](WORK_PACKAGES.md).
 
 **Current position:**
-- **M0 complete** (2026-10-25): the product owner reviewed the planning package and accepted ADRs 0002–0005 and 0008–0039; a second pass the same day closed the residual questions Q23–Q54 with ADRs 0040–0043 (superseding 0014, 0019, 0020 and 0027). No open questions remain.
+- **M0 complete** (2026-10-25): the product owner reviewed the planning package and accepted ADRs 0002–0005 and 0008–0039; a second pass the same day closed the residual questions Q23–Q54 with ADRs 0040–0043 (superseding 0014, 0019, 0020 and 0027). No open questions remained at M0; Q55–Q58 were raised during M1 (Q55 closed by ADR-0046).
 - **Tracking:** every Work Package, epic and scheduled feature has a GitHub issue ([backlog map](../engineering/backlog-map.md), [delivery workflow](../engineering/delivery.md)).
 - **Epic features (M5–M9):** each epic lists the features it owns; every feature of a milestone belongs to exactly one epic. The grouping was confirmed in the backlog refinement of 2026-10-25 (E5.7 added; ART-004 and ENV-007 moved to E5.1; PRJ-006 moved to E7.1; ART-004's S3-compatible adapter delivered by E7.2). It is refined into Work Packages when M4 is near.
-- **Next: M1** validation spikes and license texts. The prototype is used as-is from its baseline commit (ADR-0032).
+- **M1 complete** (2026-10-26, [#60](https://github.com/rluders/amaru/issues/60)): the storage and execution spike is *conditionally validated* on Linux, macOS and Windows hosted runners (remaining conditions carried to M3/M4); the contract, Policy and Approval, Worker protocol, `.amaru/` layout and importer designs are drafted (**Proposed, not validated**); the root `LICENSE` is in effect; ADR-0044 to ADR-0046 are accepted. Q56–Q58 are open for the product owner. Details under [M1](#m1-decisions-and-spikes).
+- **Next: M2** contracts and generated SDK, starting from the M1 drafts. The prototype is used as-is from its baseline commit (ADR-0032). The Apache-2.0 `LICENSE` of each contract or SDK package is added when the package is created.
 
 ## Overview
 
@@ -34,8 +35,8 @@ flowchart LR
 
 | Milestone | Objective | Prerequisite for |
 |---|---|---|
-| M0 | Consistent product, architecture and delivery plan | M1 |
-| M1 | Validate the accepted decisions with spikes; license texts in effect | M2, M3 |
+| M0 (complete) | Consistent product, architecture and delivery plan | M1 |
+| M1 (complete) | Validate the accepted decisions with spikes; license texts in effect | M2, M3 |
 | M2 | Contracts and generated SDK | M3, M4, M6 |
 | M3 | Amaru Platform core running headless with Policy and Approval | M4 |
 | **M4** | **Local MVP: the supervised delivery flow in Amaru Web on three OSes** | M5, M6, M8 |
@@ -71,7 +72,7 @@ flowchart LR
   - Worker protocol draft as Protobuf schemas (`amaru.worker.v1`, [ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md)) and the contract versioning rules in fixtures ([ADR-0025](adr/0025-api-and-protocol-versioning-policy.md)).
   - Approval, Policy, roles and configuration shapes drafted for M2 ([ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md), [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md), [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)).
   - A refreshed prototype inventory at the pinned baseline ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)); prototype findings F-27, F-39, F-40, F-41 written as Amaru acceptance tests.
-- **License tasks (product owner, [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)):** no separate legal review of the Amaru Community License 1.0 draft (decided 2026-10-26 by the product owner); add `LICENSE` files (community license at the root before the first public release or external contribution, not a migration gate; Apache-2.0 in each contract and SDK package when it is created); CLA text and tooling; trademark search for "Amaru"; vulnerability disclosure policy (`SECURITY.md`) before the first public release.
+- **License tasks (product owner, [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)) — done 2026-10-26 unless noted:** no separate legal review of the Amaru Community License 1.0 draft (decided by the product owner); the root `LICENSE` added ([#66](https://github.com/rluders/amaru/issues/66); Apache-2.0 files in each contract and SDK package are added when the package is created, still open); CLA text and tooling; trademark search for "Amaru"; vulnerability disclosure policy (`SECURITY.md`) before the first public release.
 - **Features:** none implemented.
 - **Unblocks:** API-001, EXE-002, PRJ-005, POL-001 and REV-001.
 - **Dependencies:** M0. No prototype-side work is required.
