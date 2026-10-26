@@ -1,0 +1,17 @@
+{
+  "id": "01J00000000000000000000013",
+  "seq": 13,
+  "type": "hook.delivery_failed",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "hookId": "outgoing",
+    "deliveryId": "del_02",
+    "eventSeq": 8,
+    "error": "timeout"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

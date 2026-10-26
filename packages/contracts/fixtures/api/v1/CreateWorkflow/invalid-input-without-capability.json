@@ -1,0 +1,14 @@
+{
+  "name": "Bad",
+  "type": "task",
+  "status": "draft",
+  "steps": [
+    {
+      "name": "Do",
+      "type": "tool",
+      "input": {
+        "file": "a.blend"
+      }
+    }
+  ]
+}

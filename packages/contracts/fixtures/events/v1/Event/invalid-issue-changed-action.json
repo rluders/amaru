@@ -1,0 +1,17 @@
+{
+  "id": "01J00000000000000000000042",
+  "seq": 42,
+  "type": "issue.changed",
+  "time": "2026-10-05T12:02:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "repo": "a/b",
+    "number": 7,
+    "action": "transferred",
+    "source": "webhook"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

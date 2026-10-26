@@ -38,7 +38,7 @@ Start here: [README](README.md) · [PRD](docs/product/PRD.md) · [Architecture](
 - Conventions: [docs/engineering/CONVENTIONS.md](docs/engineering/CONVENTIONS.md).
 
 ## Dependencies
-Standard library first. Every new dependency needs a stated reason, verified docs, a pinned version and an acceptable license. Current third-party dependencies: none in `tools/doccheck`; `gopkg.in/yaml.v3` v3.0.1 in `packages/contracts` (the route-drift guard reads OpenAPI YAML; reason and license in its [README](packages/contracts/README.md#dependencies)); the throwaway [`spikes/wp-m1-02`](spikes/wp-m1-02/README.md) module pins `embedded-postgres` v2, `nats-server`, `nats.go` and `pgx` for WP-M1-02 only (reasons and versions in its README); none is a Platform dependency.
+Standard library first. Every new dependency needs a stated reason, verified docs, a pinned version and an acceptable license. Current third-party dependencies: none in `tools/doccheck`; `packages/contracts` pins `gopkg.in/yaml.v3` v3.0.1 (OpenAPI YAML), `santhosh-tekuri/jsonschema/v6` v6.0.3 and `google.golang.org/protobuf` v1.36.12 (Go fixture validation), and, for the TypeScript fixture suite from a committed pnpm lockfile, `ajv` 8.17.1, `ajv-formats` 3.0.1, `@bufbuild/protobuf` 2.16.0, `typescript` 5.9.3 and `@types/node` 22.20.5 (reasons, licenses and versions in its [README](packages/contracts/README.md#dependencies); test tooling only, none ships to users); the throwaway [`spikes/wp-m1-02`](spikes/wp-m1-02/README.md) module pins `embedded-postgres` v2, `nats-server`, `nats.go` and `pgx` for WP-M1-02 only (reasons and versions in its README); none is a Platform dependency.
 
 ## Skills
 Reusable procedures live in `.agents/skills/<name>/SKILL.md` (canonical; `.claude/skills/` holds symlinks):

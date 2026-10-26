@@ -1,0 +1,20 @@
+{
+  "events": [
+    {
+      "id": "01J00000000000000000000003",
+      "seq": 3,
+      "type": "execution.output",
+      "time": "2026-10-01T12:00:00Z",
+      "projectId": "prj_01",
+      "data": {
+        "stream": "message",
+        "text": "Reading docs..."
+      },
+      "executionId": "exe_01",
+      "resource": {
+        "type": "execution",
+        "id": "exe_01"
+      }
+    }
+  ]
+}

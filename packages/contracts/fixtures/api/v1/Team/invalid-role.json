@@ -1,0 +1,13 @@
+{
+  "id": "release-team",
+  "name": "R",
+  "members": [
+    {
+      "agentId": "writer-agent",
+      "role": "Bad Role"
+    }
+  ],
+  "separationOfDuties": false,
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

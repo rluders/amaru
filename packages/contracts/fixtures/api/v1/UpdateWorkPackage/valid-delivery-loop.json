@@ -1,0 +1,9 @@
+{
+  "deliveryLoop": {
+    "enabled": true,
+    "maxAttempts": 2,
+    "reviewWorkflowId": "WF-002",
+    "repo": "Game/OrbitalCourier",
+    "base": "main"
+  }
+}

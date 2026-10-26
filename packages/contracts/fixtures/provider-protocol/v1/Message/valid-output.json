@@ -1,0 +1,5 @@
+{
+  "type": "output",
+  "role": "model",
+  "path": "generated/x/model.glb"
+}

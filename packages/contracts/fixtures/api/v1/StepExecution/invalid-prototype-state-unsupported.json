@@ -1,0 +1,13 @@
+{
+  "stepId": "implement",
+  "name": "Implement",
+  "type": "agent",
+  "executable": true,
+  "state": "unsupported",
+  "startedAt": "2026-10-26T09:00:00Z",
+  "endedAt": "2026-10-26T09:30:00Z",
+  "error": {
+    "code": "timeout",
+    "message": "Step exceeded its 30m limit"
+  }
+}

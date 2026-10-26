@@ -1,0 +1,8 @@
+{
+  "type": "result",
+  "ok": false,
+  "error": {
+    "code": "quota",
+    "message": "no credits"
+  }
+}

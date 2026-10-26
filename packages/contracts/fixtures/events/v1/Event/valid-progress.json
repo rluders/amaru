@@ -1,0 +1,16 @@
+{
+  "id": "01J00000000000000000000004",
+  "seq": 4,
+  "type": "execution.progress",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "message": "Analyzing",
+    "percent": 50
+  },
+  "executionId": "exe_01",
+  "resource": {
+    "type": "execution",
+    "id": "exe_01"
+  }
+}

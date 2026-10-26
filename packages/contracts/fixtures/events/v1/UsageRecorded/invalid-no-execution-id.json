@@ -1,0 +1,15 @@
+{
+  "id": "01J0Q8Z3X50000000000000113",
+  "seq": 13,
+  "type": "usage.recorded",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "step_execution",
+    "id": "se_01"
+  },
+  "data": {
+    "stepExecutionId": "se_01",
+    "usageRecordId": "use_01"
+  }
+}

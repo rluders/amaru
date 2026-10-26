@@ -1,0 +1,5 @@
+{
+  "providerId": "claude",
+  "workItemId": "WI-001",
+  "idempotencyKey": "k1"
+}

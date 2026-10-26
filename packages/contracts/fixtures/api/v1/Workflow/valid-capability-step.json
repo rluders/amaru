@@ -1,0 +1,25 @@
+{
+  "id": "WF-001",
+  "name": "Model pipeline",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Validate Model",
+      "type": "tool",
+      "tool": "Blender",
+      "capability": "model.validate"
+    },
+    {
+      "id": "step-2",
+      "name": "Generate LODs",
+      "type": "agent",
+      "prompt": "make lods"
+    }
+  ],
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

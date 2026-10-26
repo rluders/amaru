@@ -1,0 +1,34 @@
+{
+  "packageId": "WP-001",
+  "items": {
+    "WI-003": {
+      "phase": "awaiting_ci",
+      "attempt": 3,
+      "extraAttempts": 2,
+      "checkout": {
+        "path": ".amaru/runtime/worktrees/WI-003",
+        "branch": "amaru/wi-003-x",
+        "base": "main"
+      },
+      "pr": {
+        "number": 21,
+        "url": "https://github.com/a/b/pull/21",
+        "branch": "amaru/wi-003-x",
+        "state": "open",
+        "commit": "abc",
+        "draft": true
+      },
+      "ci": {
+        "headSha": "abc",
+        "state": "failure",
+        "repairs": 1,
+        "handled": [
+          "abc:failure"
+        ],
+        "lastFailure": "test: recoverable",
+        "lastFailureClass": "recoverable"
+      }
+    }
+  },
+  "decisions": []
+}

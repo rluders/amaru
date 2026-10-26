@@ -1,0 +1,63 @@
+{
+  "packageId": "WP-001",
+  "items": {
+    "WI-001": {
+      "phase": "validating",
+      "attempt": 2,
+      "checkout": {
+        "path": ".amaru/runtime/worktrees/WI-001",
+        "branch": "amaru/wi-001-x",
+        "base": "main"
+      },
+      "pr": {
+        "number": 3,
+        "url": "https://github.com/a/b/pull/3",
+        "branch": "amaru/wi-001-x",
+        "state": "open",
+        "commit": "def",
+        "draft": true
+      },
+      "local": {
+        "source": "local",
+        "headSha": "def",
+        "configHash": "0123456789abcdef",
+        "state": "failed",
+        "runs": 1,
+        "repairs": 1,
+        "results": [
+          {
+            "name": "go-test",
+            "command": [
+              "go",
+              "test",
+              "./..."
+            ],
+            "outcome": "failed",
+            "exitCode": 1,
+            "startedAt": "2026-10-12T20:00:00Z",
+            "endedAt": "2026-10-12T20:00:09Z",
+            "durationMs": 9000,
+            "output": "--- FAIL: TestX",
+            "truncated": false,
+            "detail": "exit 1"
+          }
+        ],
+        "handled": [
+          "WI-001:def:0123456789abcdef:1"
+        ]
+      },
+      "excluded": [
+        {
+          "path": ".tmp_edit.py",
+          "reason": "dot-prefixed agent working file (.tmp*)"
+        }
+      ],
+      "allowed": [
+        ".scratch/keep/spec.md (policy include .scratch/keep/)"
+      ],
+      "restartRecoveries": 1,
+      "reviewFloor": 2
+    }
+  },
+  "decisions": []
+}

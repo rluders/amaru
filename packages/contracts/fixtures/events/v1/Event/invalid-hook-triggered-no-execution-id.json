@@ -1,0 +1,15 @@
+{
+  "id": "01J00000000000000000000010",
+  "seq": 10,
+  "type": "hook.triggered",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "hookId": "incoming",
+    "workflowId": "wf_build"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

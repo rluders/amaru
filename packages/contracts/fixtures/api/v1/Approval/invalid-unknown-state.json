@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "01J0Q8Z3X50000000000000001",
+  "projectId": "prj_01",
+  "state": "needs_grant",
+  "gate": {
+    "kind": "step_approval",
+    "stepExecutionId": "se_01",
+    "capability": "scm.pr.create"
+  },
+  "occurrence": {
+    "stepExecutionId": "se_01",
+    "capability": "scm.pr.create",
+    "resource": {
+      "type": "pull_request",
+      "repository": "example/app",
+      "number": 12
+    }
+  },
+  "requester": {
+    "kind": "agent",
+    "id": "agent_impl",
+    "sponsor": "user_01"
+  },
+  "requirement": {
+    "minRole": "maintainer",
+    "separationOfDuties": {
+      "enabled": true,
+      "differFrom": [
+        "agentSponsor"
+      ]
+    }
+  },
+  "evidence": {
+    "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "items": [
+      {
+        "kind": "diff",
+        "hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      {
+        "kind": "check_result",
+        "id": "chk_1",
+        "hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "outcome": "passed"
+      }
+    ]
+  },
+  "requestedAt": "2026-10-26T09:00:00Z"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "01J00000000000000000000004",
+  "seq": 4,
+  "type": "execution.step",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "stepId": "step-2",
+    "state": "failed"
+  },
+  "executionId": "exe_01",
+  "resource": {
+    "type": "execution",
+    "id": "exe_01"
+  }
+}

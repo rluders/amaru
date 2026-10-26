@@ -1,0 +1,21 @@
+{
+  "name": "Inspect",
+  "type": "task",
+  "status": "draft",
+  "steps": [
+    {
+      "name": "Inspect Blender Scene",
+      "type": "tool",
+      "capability": "scene.inspect",
+      "input": {
+        "file": "models/{{asset}}.blend"
+      }
+    }
+  ],
+  "variables": [
+    {
+      "name": "asset",
+      "value": "hero"
+    }
+  ]
+}

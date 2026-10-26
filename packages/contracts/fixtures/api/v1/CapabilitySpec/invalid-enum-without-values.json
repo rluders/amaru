@@ -1,0 +1,11 @@
+{
+  "id": "x.y",
+  "title": "t",
+  "inputs": [
+    {
+      "name": "mode",
+      "kind": "enum"
+    }
+  ],
+  "outputs": []
+}

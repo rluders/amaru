@@ -1,0 +1,13 @@
+{
+  "id": "prj_01",
+  "name": "MyGame",
+  "root": "/home/user/MyGame",
+  "config": {
+    "present": true,
+    "path": ".amaru/project.yaml"
+  },
+  "git": {
+    "present": true,
+    "branch": "main"
+  }
+}

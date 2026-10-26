@@ -1,0 +1,24 @@
+{
+  "provider": "example-llm",
+  "model": "model-x",
+  "inputTokens": {
+    "value": 1200,
+    "source": "reported"
+  },
+  "outputTokens": {
+    "value": 300,
+    "source": "reported"
+  },
+  "cacheReadTokens": {
+    "source": "unknown"
+  },
+  "wallDurationMs": {
+    "value": 4100,
+    "source": "estimated"
+  },
+  "cost": {
+    "amount": "0.0132",
+    "currency": "USD",
+    "source": "estimated"
+  }
+}

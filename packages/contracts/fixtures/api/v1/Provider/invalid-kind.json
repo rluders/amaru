@@ -1,0 +1,12 @@
+{
+  "id": "claude",
+  "kind": "wizard",
+  "name": "Claude Code",
+  "capabilities": [
+    "agent.run"
+  ],
+  "status": {
+    "available": true,
+    "version": "2.1.287"
+  }
+}

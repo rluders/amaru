@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "01J0Q8Z3X50000000000000020",
+  "scope": {
+    "level": "project"
+  },
+  "subject": {
+    "kind": "agent",
+    "id": "agent_impl"
+  },
+  "capabilities": [
+    "scm.pr.create"
+  ],
+  "resource": {
+    "type": "repository",
+    "match": "example/app"
+  },
+  "grantedBy": "user_01",
+  "createdAt": "2026-10-26T09:00:00Z",
+  "expiresAt": null,
+  "status": "active"
+}

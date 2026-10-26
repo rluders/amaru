@@ -1,0 +1,8 @@
+{
+  "id": "hello",
+  "name": "Hello provider (example)",
+  "protocol": "amaru.provider/v1",
+  "command": [
+    "./hello"
+  ]
+}

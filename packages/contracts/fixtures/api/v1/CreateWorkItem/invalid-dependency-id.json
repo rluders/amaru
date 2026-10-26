@@ -1,0 +1,7 @@
+{
+  "packageId": "WP-001",
+  "title": "HUD",
+  "dependsOn": [
+    "nope"
+  ]
+}

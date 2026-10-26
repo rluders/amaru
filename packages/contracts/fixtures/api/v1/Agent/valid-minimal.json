@@ -1,0 +1,10 @@
+{
+  "id": "qa-agent",
+  "name": "QA",
+  "instructions": "Test.",
+  "requestedCapabilities": [],
+  "providerPreference": [],
+  "status": "disabled",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "01J00000000000000000000009",
+  "seq": 9,
+  "type": "execution.step",
+  "time": "2026-10-02T12:02:00Z",
+  "projectId": "prj_01",
+  "executionId": "exe_02",
+  "data": {
+    "stepId": "step-1",
+    "state": "running",
+    "external": {
+      "providerId": "meshy",
+      "jobId": "has space",
+      "submittedAt": "2026-10-02T12:00:02Z"
+    }
+  },
+  "resource": {
+    "type": "execution",
+    "id": "exe_02"
+  }
+}

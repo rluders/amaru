@@ -70,7 +70,7 @@ docs/architecture/  architecture hub and views, roadmap, work packages, decision
 docs/engineering/   conventions, repository layout, validation, agent instructions
 docs/security/      security model
 tools/doccheck/     offline documentation checker (Go, standard library only)
-packages/contracts/ versioned API, event, Provider and Worker contracts (OpenAPI, JSON Schema, Protobuf) and the route-drift guard
+packages/contracts/ versioned API, event, Provider and Worker contracts (OpenAPI, JSON Schema, Protobuf) shared fixtures and the route-drift guard
 ```
 
 Application, service and package directories are added only when they have real content ([repository layout](docs/engineering/repository-layout.md)).

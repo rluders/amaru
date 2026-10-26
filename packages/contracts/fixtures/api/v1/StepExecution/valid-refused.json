@@ -1,0 +1,8 @@
+{
+  "stepId": "implement",
+  "name": "Implement",
+  "type": "agent",
+  "executable": true,
+  "state": "refused",
+  "reason": "policy.explicit_deny"
+}

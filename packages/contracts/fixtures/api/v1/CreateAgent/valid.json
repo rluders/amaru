@@ -1,0 +1,7 @@
+{
+  "name": "Godot developer",
+  "instructions": "You are the Godot developer.",
+  "providerPreference": [
+    "claude"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01J00000000000000000000007",
+  "seq": 7,
+  "type": "artifact.generated",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "executionId": "exe_02",
+  "data": {
+    "paths": [
+      "Game/OrbitalCourier/assets/player.svg"
+    ]
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

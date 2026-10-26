@@ -1,0 +1,34 @@
+{
+  "id": "01J00000000000000000000009",
+  "seq": 9,
+  "type": "execution.step",
+  "time": "2026-10-02T12:02:00Z",
+  "projectId": "prj_01",
+  "executionId": "exe_02",
+  "data": {
+    "stepId": "step-1",
+    "state": "succeeded",
+    "providerId": "meshy",
+    "outputs": [
+      "g/m.glb"
+    ],
+    "files": [
+      {
+        "role": "model",
+        "path": "g/m.glb",
+        "mediaType": "model/gltf-binary",
+        "sha256": "abababababababababababababababababababababababababababababababab",
+        "bytes": 10
+      }
+    ],
+    "external": {
+      "providerId": "meshy",
+      "jobId": "job-1",
+      "submittedAt": "2026-10-02T12:00:02Z"
+    }
+  },
+  "resource": {
+    "type": "execution",
+    "id": "exe_02"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "provider": "example-llm",
+  "inputTokens": {
+    "source": "unknown"
+  },
+  "outputTokens": {
+    "source": "unknown"
+  },
+  "cost": {
+    "source": "unknown"
+  }
+}

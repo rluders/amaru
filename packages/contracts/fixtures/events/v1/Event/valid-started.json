@@ -1,0 +1,15 @@
+{
+  "id": "01J00000000000000000000002",
+  "seq": 2,
+  "type": "execution.started",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "state": "running"
+  },
+  "executionId": "exe_01",
+  "resource": {
+    "type": "execution",
+    "id": "exe_01"
+  }
+}

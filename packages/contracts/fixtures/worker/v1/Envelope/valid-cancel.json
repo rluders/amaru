@@ -1,0 +1,7 @@
+{
+  "messageId": "13",
+  "cancel": {
+    "attemptId": "att_2",
+    "reason": "cancelled by user"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "failed",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "startedAt": "2026-10-01T12:00:00Z",
+  "endedAt": "2026-10-01T12:00:00Z",
+  "error": {
+    "code": "exit_nonzero",
+    "message": "process exited with code 1"
+  }
+}

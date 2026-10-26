@@ -1,0 +1,6 @@
+{
+  "capability": "AgentRun",
+  "input": {
+    "prompt": "Summarize the design docs"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "messageId": "1",
+  "hello": {
+    "workerId": "wrk_01",
+    "workerVersion": "0.1.0",
+    "manifest": {
+      "os": "linux",
+      "architecture": "amd64",
+      "sandboxSupported": true
+    },
+    "sessionId": "ses_01"
+  }
+}

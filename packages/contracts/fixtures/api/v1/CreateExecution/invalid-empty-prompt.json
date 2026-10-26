@@ -1,0 +1,6 @@
+{
+  "capability": "agent.run",
+  "input": {
+    "prompt": ""
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Release team",
+  "members": [
+    {
+      "agentId": "writer-agent",
+      "role": "author"
+    }
+  ]
+}
