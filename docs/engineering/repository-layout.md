@@ -22,7 +22,7 @@ amaru/
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
-There is **no LICENSE file** yet: the license is decided in [ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md) and the product owner adds the files after legal review (WP-M1-01).
+There is **no LICENSE file** yet: the license is decided in [ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md) and stated in the [README](../../README.md#license); the product owner adds the root file before the first public release or external contribution, and each package's Apache-2.0 file when the package is created (WP-M1-01).
 
 ## Target areas (not created)
 

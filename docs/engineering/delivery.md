@@ -83,8 +83,8 @@ Some decisions belong only to the product owner (AGENTS.md hard rules 3 and 9). 
 | Gate | Issues | Closes when | Blocks |
 |---|---|---|---|
 | Migration ADR accepted ([ADR-0007](../architecture/adr/0007-weave-migration-is-a-separate-activity.md), [MIGRATION_PLAN §5](../migration/MIGRATION_PLAN.md#5-readiness-criteria) criterion 8) | every `MADR-*` issue (see [backlog map](backlog-map.md)) | the ADR is merged with status `accepted` and a recorded approval. "Changes requested" keeps the issue open. | every issue that moves code of that component (native link, or through a parent) |
-| License legal review | `OWN-legal-review` | the owner records the outcome in the repository | the root `LICENSE` and the CLA |
-| Root `LICENSE` in effect ([ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)) | `OWN-license-files` | the owner commits the root `LICENSE` | every migration ADR issue, so every migration |
+| License legal review | `OWN-legal-review` | closed 2026-10-26: no separate legal review (owner decision, [WP-M1-01](../architecture/WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)) | — |
+| Root `LICENSE` in effect ([ADR-0026](../architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md)) | `OWN-license-files` | the owner commits the root `LICENSE` | the first public release and the first external contribution; not migration (decided 2026-10-26) |
 | Apache-2.0 `LICENSE` per contract or SDK package | the issue that creates the package (WP-M2-01, WP-M2-02, E6.3; E6.6 for the Go Worker SDK) | the owner commits the file in that package | that issue |
 | CLA | `OWN-cla` | the owner approves the CLA text and the signing tooling | the first external contribution |
 

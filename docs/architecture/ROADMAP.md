@@ -64,23 +64,22 @@ flowchart LR
 - **Deferred:** all implementation.
 
 ## M1 Decisions and spikes
-- **Objective:** validate the accepted decisions before code moves, and put the license in effect.
+- **Objective:** validate the accepted decisions before code moves, and record the license state ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Decisions (done 2026-10-25):** every architecture question is closed by an accepted ADR (0014–0039; [OPEN_QUESTIONS](OPEN_QUESTIONS.md)). M1 no longer chooses technology.
 - **Outcome (engineering):**
   - Storage and execution spike: bundled PostgreSQL ([ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md)) + embedded NATS JetStream ([ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md)) + own state machine with outbox ([ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md)) run the representative Workflow with forced crashes in every Step state on Windows, macOS and Linux; install footprint recorded against the NFR-34 budget (≤ 120 MB increment); `embedded-postgres` v2 validated as the supervisor (A12).
   - Worker protocol draft as Protobuf schemas (`amaru.worker.v1`, [ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md)) and the contract versioning rules in fixtures ([ADR-0025](adr/0025-api-and-protocol-versioning-policy.md)).
   - Approval, Policy, roles and configuration shapes drafted for M2 ([ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md), [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md), [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)).
   - A refreshed Weave inventory at the baseline `feat/orkestra-dogfood` @ `c8a2f6e` ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)); Weave findings F-27, F-39, F-40, F-41 written as Amaru acceptance tests.
-- **License tasks (product owner, [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)):** legal review of the Amaru Community License 1.0 draft; add `LICENSE` files (community license at the root, Apache-2.0 in contract and SDK packages); CLA text and tooling; trademark search for "Amaru"; vulnerability disclosure policy (`SECURITY.md`) before the first public release.
+- **License tasks (product owner, [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)):** no separate legal review of the Amaru Community License 1.0 draft (decided 2026-10-26 by the product owner); add `LICENSE` files (community license at the root before the first public release or external contribution, not a migration gate; Apache-2.0 in each contract and SDK package when it is created); CLA text and tooling; trademark search for "Amaru"; vulnerability disclosure policy (`SECURITY.md`) before the first public release.
 - **Features:** none implemented.
 - **Unblocks:** API-001, EXE-002, PRJ-005, POL-001 and REV-001.
 - **Dependencies:** M0. No Weave-side work is required.
 - **Work Packages:** WP-M1-01 … WP-M1-07.
-- **Exit criteria:** spike reports in `docs/architecture/investigations/` show the validation checks A2 and A9 pass (or a superseding ADR is accepted); LICENSE files added by the product owner; MIGRATION_PLAN §5 criteria 1, 2 and 7 met for the first wave.
+- **Exit criteria:** spike reports in `docs/architecture/investigations/` show the validation checks A2 and A9 pass (or a superseding ADR is accepted); MIGRATION_PLAN §5 criteria 1, 2 and 7 met for the first wave.
 - **Validation:** spike reports with crash-injection results and install footprint per OS.
 - **Risks:**
   - bundled PostgreSQL blocked on Windows/macOS (A2), mitigated by an installer-managed PostgreSQL service as fallback;
-  - license review delays migration, mitigated by migrating only after LICENSE files exist.
 - **Deferred:** nothing undecided; implementation of later decisions follows their milestones.
 
 ## M2 Contracts v0
@@ -279,7 +278,7 @@ All decisions are taken (2026-10-25). What remains on the path are **validations
 
 - **Cycles.** The milestone graph is acyclic. Feature dependencies never point to a later milestone; this is checked by script, see the next section.
 - **Gaps.**
-  - M3 requires migration ADRs, which require the LICENSE files to exist. If legal review stalls, M3 can only proceed by reimplementing, which reverses ADR-0011.
+  - M3 requires migration ADRs. They are not gated by the root LICENSE file (decided 2026-10-26 by the product owner); ADR-0026 resolves relicensing of Weave code.
   - M4 adapts the Weave prototype UI, which has no LICENSE file; the copyright holder's consent is recorded in [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md).
 - **Not planned (P2/P3).** All P2/P3 features without a milestone are in the catalog's Backlog or "—", by design.
 
@@ -308,7 +307,7 @@ Every P0 and P1 feature maps to exactly one milestone above. The lists per miles
 
 | ID | Risk | Likelihood / impact | Mitigation | Owner |
 |---|---|---|---|---|
-| R1 | License text or legal review delays migration (decision made in ADR-0026) | Medium / High | LICENSE files are an M1 exit criterion | Product owner |
+| R1 | Root LICENSE text not added before the first public release or external contribution (decision made in ADR-0026) | Low / High | README states all rights reserved until it exists; migration is not gated by it (2026-10-26) | Product owner |
 | R2 | Weave evolves faster than the inventory | High / Medium | Refresh inventory at M1 and per migration ADR; fixed baseline `c8a2f6e` (ADR-0032) | Engineering |
 | R3 | Bundled PostgreSQL and embedded NATS bloat or destabilize compact installs | Medium / High | M1 spike with footprint per OS (A2, A9); NFR-34; fallback in the validation register | Engineering |
 | R4 | Delivery loop waste persists (Cycle 7: 6 wasted runs) | Medium / High | WRK-005, OBS-002, M4 exit criterion on runs per accepted change | Engineering |

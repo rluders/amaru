@@ -32,13 +32,13 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Issue:** [#2](https://github.com/rluders/amaru/issues/2)
 - **Goal:** apply [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md).
 - **Scope:**
-  - Legal review of the Amaru Community License 1.0 draft.
+  - Record the license state: decided in ADR-0026 and stated in the [README](../../README.md#license); no separate legal review of the draft (product-owner decision, 2026-10-26; [#65](https://github.com/rluders/amaru/issues/65) closed).
   - CLA text and signing tooling.
   - Trademark search for "Amaru".
   - Vulnerability disclosure policy (`SECURITY.md`).
 - **Depends on:** WP-M0-01.
-- **Done when:** the product owner adds the root `LICENSE` (agents never add license text). The Apache-2.0 `LICENSE` of each contract or SDK package is added by the product owner in the Work Package or epic that creates that package (WP-M2-01, WP-M2-02, E6.3, and E6.6 for the Go Worker SDK), because those directories do not exist in M1 ([repository layout](../engineering/repository-layout.md)).
-- **Validation:** legal review recorded.
+- **Done when:** the license state is recorded as above and the remaining sub-issues are done. The root `LICENSE` ([#66](https://github.com/rluders/amaru/issues/66), product owner; agents never add license text) is not part of this Work Package and does not gate migration: ADR-0026 already resolves the relicensing of Weave code (sole copyright holder), and until the file is added all rights stay reserved (README). It must exist before the first public release or the first external contribution. The Apache-2.0 `LICENSE` of each contract or SDK package is added by the product owner in the Work Package or epic that creates that package (WP-M2-01, WP-M2-02, E6.3, and E6.6 for the Go Worker SDK), because those directories do not exist in M1 ([repository layout](../engineering/repository-layout.md)).
+- **Validation:** owner decision recorded (this entry and the closing comment of #65).
 
 ### WP-M1-02 Storage and execution validation spike
 - **Issue:** [#3](https://github.com/rluders/amaru/issues/3)
