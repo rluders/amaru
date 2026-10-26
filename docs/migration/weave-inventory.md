@@ -1,14 +1,32 @@
 # Weave inventory (snapshot)
 
-**Snapshot:** `rluders/weave-obsidian`, branch `feat/orkestra-dogfood`, commit `c8a2f6e` ("Cycle 7: deployment, supervised httpsuite pilot, findings F-38..F-45", 2026-10-18), 120 commits, clean working tree, read on **2026-10-25**.
+**Baseline:** `rluders/weave-obsidian`, branch `feat/orkestra-dogfood`, commit `c8a2f6e983beba59edc446f36df2f442edaa9855` ("Cycle 7: deployment, supervised httpsuite pilot, findings F-38..F-45", 2026-10-18), 120 commits. Governing decision: [ADR-0032](../architecture/adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md).
+
+**Refreshed:** 2026-10-26 (WP-M1-07, [#8](https://github.com/rluders/amaru/issues/8)). Every figure below was measured on a clean detached checkout of exactly `c8a2f6e` (`git worktree add --detach … c8a2f6e`, `git rev-parse HEAD` = the SHA above, 0 modified files), not on the current branch head. `feat/orkestra-dogfood` was at the same commit when read.
 
 **Branches:**
-- `origin/main` is `d31c977` (36 commits). It is an ancestor of the snapshot and is 84 commits behind it.
+- `origin/main` is `d31c977` (36 commits). It is an ancestor of the baseline and is 84 commits behind it.
 - The local `main` is stale at `08a46a0`.
-- The previous snapshot (2026-10-24) read `d31c977`.
-- The migration baseline is this snapshot commit, `c8a2f6e` on `feat/orkestra-dogfood` ([ADR-0032](../architecture/adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)).
+- Earlier snapshots: 2026-10-24 read `d31c977`; 2026-10-25 read `c8a2f6e` without running tests.
+- The migration baseline is `c8a2f6e` on `feat/orkestra-dogfood`.
 
-This is a point-in-time reading of another repository, made for migration planning. It is not maintained live; refresh it before any migration decision ([MIGRATION_PLAN §5](MIGRATION_PLAN.md#5-readiness-criteria)). Claims come from reading code, tests and Weave's own docs. **No Weave test was run for this snapshot.**
+This is a point-in-time reading of another repository, made for migration planning. It is not maintained live; refresh it before any migration decision ([MIGRATION_PLAN §5](MIGRATION_PLAN.md#5-readiness-criteria)). Structure and findings come from reading code, tests and Weave's own docs; test results come from the run recorded in [Test run at the baseline](#test-run-at-the-baseline).
+
+## Test run at the baseline
+Command: `make check` in the baseline checkout (Weave `Makefile`: `vet` + `test` + `plugin-check`). Run **2026-10-26**, Linux x86_64 (Fedora, kernel 7.2.11), Go 1.26.0, pnpm 11.5.0, `pnpm -C plugin install --frozen-lockfile` first (plugin: typescript 6.0.3, vitest 5.0.3). Evidence level: **integration-tested at the baseline, Linux only** (not real-validated, not CI; Weave's own CI has never run on GitHub, GAP-05).
+
+| Step | Result |
+|---|---|
+| `make check` | **exit 0** |
+| `go vet ./...` | clean |
+| `go test -race -count=1 ./...` | 44 packages: 35 `ok`, 9 `[no test files]`, 0 failed. Re-run with `-json`: **543 tests passed**, 0 failed, 0 skipped, plus 339 passing subtests. |
+| `tsc --noEmit`, `eslint src test` | clean |
+| `vitest run` | 30 files: 29 passed, 1 skipped; **548 tests passed, 10 skipped**, 0 failed |
+
+Notes:
+- The 10 skipped plugin tests are all in `plugin/test/runtime.integration.test.ts` (`describe.skipIf(!have)`: `RuntimeConnection vs weaved --fake` runs only when a built `weaved` binary exists). They were **not** exercised.
+- 546 `func Test*` exist in `runtime/**/*_test.go`; 3 are `TestMain`, hence 543 executed tests.
+- Not run: Windows and macOS (GAP-05), the real Codex/OpenCode/Claude provider paths beyond what the test suite runs, and any Weave dogfood cycle. Raw logs were kept outside the repository and are not committed.
 
 ## Identity and license
 - **Product name in code and docs: Weave.**
@@ -21,16 +39,16 @@ This is a point-in-time reading of another repository, made for migration planni
 ## Structure and stack
 | Area | Content | Size |
 |---|---|---|
-| `runtime/` | Go daemon. `cmd/weaved`; `internal/{domain,app,ports,provider/*,platform,transport/{httpapi,webhook},store/{fsstore,fsscan,projectfs,userstore},discovery,auth,project,connector,protocol,version,arch}` | 134 non-test Go files (≈27.4k lines); 103 test files (≈19.2k lines); 546 `func Test*` |
-| `plugin/` | Obsidian plugin: TypeScript, esbuild, React 19 (workflow editor `ui/flow`, `@xyflow/react`), three.js viewer, vitest; `isDesktopOnly: true` | 71 source files (≈9.6k lines); 32 test files (≈281 cases) |
+| `runtime/` | Go daemon. `cmd/weaved`; `internal/{domain,app,ports,provider/*,platform,transport/{httpapi,webhook},store/{fsstore,fsscan,projectfs,userstore},discovery,auth,project,connector,protocol,version,arch}` | 134 non-test Go files (27,368 lines); 103 test files (19,179 lines); 546 `func Test*` (543 executed tests, 339 subtests) |
+| `plugin/` | Obsidian plugin: TypeScript, esbuild, React 19 (workflow editor `ui/flow`, `@xyflow/react`), three.js viewer, vitest; `isDesktopOnly: true` | 71 TypeScript/TSX source files + 1 CSS (10,105 lines); 30 test files (548 passed, 10 skipped) |
 | `protocol/` | `openapi.yaml` (56 paths), `schema.json`, `events.schema.json`, `provider.schema.json`; fixtures in `fixtures/{types,events,provider}` | 271 fixtures |
-| `docs/` | architecture, protocol, provider protocol, security, ROADMAP, 29 ADRs, click-through records, dogfood cycle reports and findings | — |
+| `docs/` | architecture, protocol, provider protocol, security, ROADMAP, 30 files in `docs/decisions/` (ADR-001…029, two numbered 009), click-through records, dogfood cycle reports and findings | — |
 | `.claude/skills/` | `graft`, `obsidian-plugin`, `runtime-integration`, `testing`, `ui-reference` | — |
 | `.github/workflows/ci.yml` | Go vet/test on ubuntu/macos/windows (race on Linux); plugin typecheck/lint/test | Weave records it as never run on GitHub (GAP-05) |
 | `graft/` | Generated repository map (gitignored), tooling only | — |
 | `design/` | Pencil design file and reference PNGs | — |
 
-Go dependencies: `coder/websocket`, `rluders/lane`, `yaml.v3`, `santhosh-tekuri/jsonschema` (tests). No database. `make check` = vet + `go test -race -count=1 ./...` + plugin checks.
+Go dependencies: `coder/websocket`, `rluders/lane`, `yaml.v3`, `santhosh-tekuri/jsonschema` (tests). No database. `make check` = vet + `go test -race -count=1 ./...` + plugin checks (results above).
 
 ## Implemented behavior (by evidence level)
 
@@ -116,18 +134,20 @@ Source: `docs/dogfood/2026-10-orkestra/findings.md`, plus the cycle reports.
 - F-7: lost update when editing Agents.
 - F-13: webhook relay operations.
 - F-23: stale approval notices.
-- F-27: fixed 30-minute quota pause.
+- F-27: fixed 30-minute quota pause (`domain.ProviderPause`, `runtime/internal/domain/autoloop.go:511`).
 - F-34: flaky test.
 - F-35: log tail can miss failing lines.
 - F-36: CI billing cause not shown.
 - F-37: stale cancelled run listed.
-- F-39: no-op implementation spends an attempt.
+- F-39: no-op implementation spends an attempt (the `no_changes` rule at `runtime/internal/app/autoloop.go:1029` compares only against the base, not the PR head).
 - F-40: unblock re-implements instead of re-reviewing.
-- F-41: token and cost usage dropped.
+- F-41: token and cost usage dropped (Claude provider `parse.go` drops `usage` and `total_cost_usd`).
 - F-42: `dir: "."` rejected.
 - F-43: no UI for `localChecks` or workflow variables.
 - F-44: templates don't warn about a missing team.
 - F-45: PR stays draft after approval.
+
+F-27, F-39, F-40 and F-41 are specified as Amaru acceptance tests in [weave-findings-acceptance-specs](weave-findings-acceptance-specs.md) (specifications only; none is implemented).
 
 **Cycle 7 verdict:** "Not ready for unattended engineering. Ready for: one package, one Go repository, local checks plus hosted CI, a person approving each review and doing each merge." One accepted change took 2 useful LLM runs and 6 wasted ones. 15 Autoloops are paused.
 
