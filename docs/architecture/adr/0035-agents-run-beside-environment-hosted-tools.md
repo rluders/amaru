@@ -10,7 +10,7 @@ deciders: Ricardo Lüders
 ## Context
 - Question: [Q22](../OPEN_QUESTIONS.md#q22-agent-placement-relative-to-environment-hosted-tools). Product-owner answer: "You can decide."
 - Verified 2026-10-25: Epic's Unreal MCP plugin (UE 5.8, Experimental) serves HTTP/SSE **only on `127.0.0.1:8000/mcp`, without authentication**, and runs tool calls one at a time on the game thread (https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-mcp-in-unreal-editor). Community UE MCP servers are early-stage.
-- Weave ADR-025 (accepted in direction, not built) plans a loopback MCP gateway per agent session that proxies an allow-listed set of tools, keeps secrets in the Runtime and audits every call by argument hash. Weave ADR-023 runs agents hermetically (`--strict-mcp-config`, explicit allowed tools).
+- Prototype ADR-025 (accepted in direction, not built) plans a loopback MCP gateway per agent session that proxies an allow-listed set of tools, keeps secrets in the Runtime and audits every call by argument hash. Prototype ADR-023 runs agents hermetically (`--strict-mcp-config`, explicit allowed tools).
 
 ## Decision
 - The agent process runs **on the Worker in the same Execution Environment** as the tools it uses; MCP traffic stays on loopback.

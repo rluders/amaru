@@ -10,7 +10,7 @@ deciders: Ricardo Lüders
 ## Context
 - Question: [Q4](../OPEN_QUESTIONS.md#q4-artifact-and-object-storage-strategy). Product-owner answer: "RustFS is a good alternative, 'cause it can handle artifacts versions/history."
 - Verified 2026-10-25: RustFS is Apache-2.0, GA since 1.0.0 (2026-09-16), latest 1.0.4; versioning, object lock and replication listed as available; a Windows x86_64 binary is published but Windows support is not stated in the README (https://github.com/rustfs/rustfs). MinIO's repository is archived and no longer maintained (https://github.com/minio/minio). SeaweedFS is Apache-2.0; Garage is AGPL-3.0.
-- Weave stores generated files in the Project tree or a per-user `asset-store/`; the Weave prototype copies whole workspaces to `ARTIFACT_ROOT` with no versions or hashes.
+- The prototype stores generated files in the Project tree or a per-user `asset-store/`; the earlier prototype copies whole workspaces to `ARTIFACT_ROOT` with no versions or hashes.
 - Compact installs must work without an object-storage service ([ADR-0015](0015-postgresql-is-the-only-database-bundled-in-compact-installs.md) NFR-34 restatement).
 
 ## Decision

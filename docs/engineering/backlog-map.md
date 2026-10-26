@@ -23,7 +23,7 @@ Planning IDs mapped to their GitHub issues in [rluders/amaru](https://github.com
 | M1 | `SPK-nats-outbox` | [#73](https://github.com/rluders/amaru/issues/73) | [#3](https://github.com/rluders/amaru/issues/3) | Spike: embedded NATS JetStream with outbox relay (A9) |
 | M1 | `SPK-crash-suite` | [#74](https://github.com/rluders/amaru/issues/74) | [#3](https://github.com/rluders/amaru/issues/3) | Spike: representative Workflow under crash injection, Approval wait, timeouts and leases |
 | M1 | `EXIT-M1` | [#60](https://github.com/rluders/amaru/issues/60) | — | M1 Decisions and spikes: exit validation |
-| M2 | `WP-M2-01` | [#9](https://github.com/rluders/amaru/issues/9) | — | WP-M2-01 Contracts package from the Weave protocol |
+| M2 | `WP-M2-01` | [#9](https://github.com/rluders/amaru/issues/9) | — | WP-M2-01 Contracts package from the prototype protocol |
 | M2 | `WP-M2-02` | [#10](https://github.com/rluders/amaru/issues/10) | — | WP-M2-02 Generated TypeScript SDK |
 | M2 | `WP-M2-03` | [#11](https://github.com/rluders/amaru/issues/11) | — | WP-M2-03 Contract drift guard |
 | M2 | `MADR-protocol` | [#67](https://github.com/rluders/amaru/issues/67) | [#9](https://github.com/rluders/amaru/issues/9) | Migration ADR: protocol/ → packages/contracts |

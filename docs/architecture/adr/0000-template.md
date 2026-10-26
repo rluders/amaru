@@ -10,7 +10,7 @@ deciders:
 <!-- Copy to NNNN-lowercase-title.md, add a row to ../DECISIONS.md. Keep it to what a future reader needs. -->
 
 ## Context
-What forces the decision: requirements, constraints, evidence (link files, Weave ADRs, spikes). State what is verified and what is assumed.
+What forces the decision: requirements, constraints, evidence (link files, prototype ADRs, spikes). State what is verified and what is assumed.
 
 ## Decision
 The choice, in active voice ("The Platform owns…"). Concrete enough to check compliance.

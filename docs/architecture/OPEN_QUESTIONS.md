@@ -18,13 +18,13 @@ Decisions that rest on assumptions name how they are checked. Each check is a ro
 
 | ID | Assumption | Decision | Checked at | If false |
 |---|---|---|---|---|
-| A1 | Weave Runtime components can be adapted faster than reimplemented. | [ADR-0011](adr/0011-platform-adapted-from-weave-runtime.md) | M3 (first migration ADR) | Reimplement the coordinator with Weave tests as specification. |
+| A1 | prototype Runtime components can be adapted faster than reimplemented. | [ADR-0011](adr/0011-platform-adapted-from-earlier-internal-runtime.md) | M3 (first migration ADR) | Reimplement the coordinator with prototype tests as specification. |
 | A2 | A bundled, supervised PostgreSQL works without admin rights on Windows, macOS and Linux and survives crashes and upgrades. | [ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md) | M1 spike | Install PostgreSQL as an installer-managed service (one-time admin consent, the user operates nothing) on the affected OS, through a superseding ADR ([Q30](#q30-fallback-if-bundled-postgresql-fails)). |
 | A3 | Users accept a browser UI for the local MVP. | [ADR-0010](adr/0010-local-mvp-client-is-a-web-ui.md) | M4 validation | Bring Desktop (M8) forward. |
-| A4 | The Weave prototype design system can be reused with modest change. | [ADR-0010](adr/0010-local-mvp-client-is-a-web-ui.md) | M4 | Rebuild components on shadcn directly. |
+| A4 | The earlier prototype design system can be reused with modest change. | [ADR-0010](adr/0010-local-mvp-client-is-a-web-ui.md) | M4 | Rebuild components on shadcn directly. |
 | A5 | Outbound pull Workers, run inside an interactive session, satisfy Windows/UE5 use cases. | [ADR-0024](adr/0024-remote-worker-registration-identity-and-delivery.md) | M5 UE5 pilot | Add a session-broker design or keep a person at the machine. |
 | A6 | A single manifest with targeted components is manageable for plugin authors. | [ADR-0012](adr/0012-plugin-package-with-targeted-components.md) | M6 example plugins | Allow multi-package plugins with a parent manifest. |
-| A7 | Licensing permits moving MIT Weave code into Amaru. | [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md) | **Resolved 2026-10-25**: sole copyright holder consents; no third-party authors in either repository. | — |
+| A7 | Licensing permits moving MIT prototype code into Amaru. | [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md) | **Resolved 2026-10-25**: sole copyright holder consents; no third-party authors in either repository. | — |
 | A8 | Unreal MCP servers expose enough editor functionality for useful agent work. | [ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md) | M5 UE5 pilot | Fall back to command-line engine Capabilities (build, test, commandlets). |
 | A9 | Embedded NATS JetStream fits compact installs (footprint, Windows file locking). | [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md) | M1 spike | Replace the embedded bus in compact mode with an in-process implementation of the `Bus` port. |
 | A10 | Javy-built QuickJS Wasm in a separate plugin-host process performs well enough for plugin `logic` (cold start < 50 ms, memory cap enforced, crash isolated), and Javy keeps supporting WASI-free modules. | [ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md) | M6 spike | Move heavy logic to `worker-adapter` components; revisit the toolchain or runtime. |
@@ -49,9 +49,9 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 ## Closed
 
 ### Q1. Durable workflow technology
-- **Question:** Keep a hand-written durable state machine (Weave's model), or adopt a durable execution engine (Temporal, Restate, DBOS, Hatchet, a database-backed queue)?
+- **Question:** Keep a hand-written durable state machine (the prototype's model), or adopt a durable execution engine (Temporal, Restate, DBOS, Hatchet, a database-backed queue)?
 - **Owner answer:** "Temporal is way too overpower, let's use Postgres."
-- **Decision:** Amaru's own durable state machine, adapted from Weave, persisted in PostgreSQL with timers, Approval waits, idempotency keys and a transactional outbox. → [ADR-0014](adr/0014-durable-execution-on-own-state-machine-over-postgres.md), superseded by [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) (restart rule only, [Q26](#q26-restart-semantics-for-non-resumable-steps))
+- **Decision:** Amaru's own durable state machine, adapted from the prototype, persisted in PostgreSQL with timers, Approval waits, idempotency keys and a transactional outbox. → [ADR-0014](adr/0014-durable-execution-on-own-state-machine-over-postgres.md), superseded by [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) (restart rule only, [Q26](#q26-restart-semantics-for-non-resumable-steps))
 
 ### Q2. Queue and messaging strategy
 - **Question:** Does the Platform need a message broker or a database-backed work queue, and from which deployment onward?
@@ -108,11 +108,11 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 ### Q12. Licensing and commercial boundaries
 - **Question:** Community license and commercial boundary.
 - **Owner answer:** "Fair-code usage from draft Amaru Community License 1.0."
-- **Decision:** Platform under the Amaru Community License 1.0 (fair-code, source-available) with separate commercial licensing; contracts and SDKs under Apache-2.0; CLA for contributions; Weave code reusable (sole copyright holder). The LICENSE text, legal review and trademark search are roadmap tasks owned by the product owner (legal review dropped 2026-10-26, [WP-M1-01](WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)). → [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)
+- **Decision:** Platform under the Amaru Community License 1.0 (fair-code, source-available) with separate commercial licensing; contracts and SDKs under Apache-2.0; CLA for contributions; prototype code reusable (sole copyright holder). The LICENSE text, legal review and trademark search are roadmap tasks owned by the product owner (legal review dropped 2026-10-26, [WP-M1-01](WORK_PACKAGES.md#wp-m1-01-license-texts-in-effect)). → [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)
 
 ### Q13. Project metadata location
 - **Question:** Where does Amaru keep per-Project state?
-- **Owner answer:** "You can choose the best approach, don't need to keep compatibility with weave."
+- **Owner answer:** "You can choose the best approach, don't need to keep compatibility with the prototype."
 - **Decision:** Definitions committed under `.amaru/`; operational state (including Work Items) in the Platform; Executions record the definition revision. → [ADR-0027](adr/0027-project-definitions-in-git-operational-state-in-platform.md), superseded by [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) (Teams only, [Q27](#q27-where-teams-live))
 
 ### Q14. Sandbox for TypeScript plugin logic
@@ -137,14 +137,14 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 - **Decision:** Committed Markdown docs, ADRs, Skills, Playbooks, Artifact notes and `.amaru/` definitions (not source code); lexical PostgreSQL full-text search per Project; semantic retrieval only if evaluation proves lexical insufficient, opt-in per Organization. → [ADR-0030](adr/0030-knowledge-is-lexically-indexed-project-documentation.md)
 
 ### Q18. Future of the Obsidian plugin
-- **Question:** Retire, keep as Weave-only, or rebuild as an Amaru integration?
+- **Question:** Retire, keep as prototype-only, or rebuild as an Amaru integration?
 - **Owner answer:** "Obsidian plugin is retired."
 - **Decision:** Retired; no Amaru Obsidian client; FEAT-CLI-013 dropped. → [ADR-0031](adr/0031-obsidian-plugin-is-retired.md)
 
 ### Q19. Migration source branch
-- **Question:** Which `weave-obsidian` commit is the migration baseline?
-- **Owner answer:** "`feat/orkestra-dofgook`, I think this is the one that holds the latest commit." (The branch is `feat/orkestra-dogfood`; verified head `c8a2f6e`, 84 commits ahead of `origin/main`.)
-- **Decision:** Baseline `feat/orkestra-dogfood` at `c8a2f6e`; Weave findings F-27, F-39, F-40, F-41 become Amaru acceptance tests instead of Weave prerequisites. → [ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)
+- **Question:** Which commit of the earlier implementation is the migration baseline?
+- **Owner answer:** The development branch that holds the latest commit (verified: well ahead of the default branch, nothing behind it).
+- **Decision:** Baseline is one pinned commit of that branch; prototype findings F-27, F-39, F-40, F-41 become Amaru acceptance tests instead of the prototype prerequisites. → [ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)
 
 ### Q20. Cost and usage telemetry model
 - **Question:** How usage and cost are captured, how unknowns are represented and how cost is attributed.
@@ -161,23 +161,23 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 - **Owner answer:** "You can decide."
 - **Decision:** On the Worker, beside the tools, behind a Worker-side MCP gateway that enforces Policy and audits calls; editor Environments leased exclusively. Epic's UE 5.8 MCP plugin is loopback-only and unauthenticated (verified 2026-10-25). → [ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md)
 
-### Carried over from Weave
-These came from [`weave-obsidian` `docs/ROADMAP.md`](https://github.com/rluders/weave-obsidian/blob/main/docs/ROADMAP.md). No product-owner answer was recorded; they were resolved under the session's delegation.
+### Carried over from the prototype
+These came from the earlier implementation's roadmap. No product-owner answer was recorded; they were resolved under the session's delegation.
 
 ### W1. Approval model
-- **Question:** Who approves, how an Approval relates to Work Item status, what Evidence it binds to (Weave Q2).
+- **Question:** Who approves, how an Approval relates to Work Item status, what Evidence it binds to (prototype Q2).
 - **Decision:** Human-only, role-authorized Approvals bound to specific Evidence, invalidated when Evidence changes; Work Item "awaiting approval" is derived. → [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md)
 
 ### W2. Capability permission model
-- **Question:** How requested Capabilities, Grants and Approvals form one Policy (Weave GAP-09).
+- **Question:** How requested Capabilities, Grants and Approvals form one Policy (prototype GAP-09).
 - **Decision:** One Policy function returning allow / require_approval / deny; requests are never authority; deny wins; missing authority parks the item. → [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md)
 
 ### W3. Teams
-- **Question:** Roles and enforced separation of duties across humans and Agents (Weave ADR-019).
+- **Question:** Roles and enforced separation of duties across humans and Agents (prototype ADR-019).
 - **Decision:** Fixed Organization roles, Teams of humans and Agents, per-gate separation of duties, required reviewer Teams; Agents never approve. → [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md)
 
 ### W4. Configuration scopes
-- **Question:** Which settings are deployment, Organization, user or Project level, and the resolution order (Weave Q8).
+- **Question:** Which settings are deployment, Organization, user or Project level, and the resolution order (prototype Q8).
 - **Decision:** Deployment < Organization < Project (`.amaru/config.yaml`) < user preferences, with locks from higher scopes and no secrets in Project configuration. → [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)
 
 ### Second pass (2026-10-25)
@@ -219,9 +219,9 @@ Implicit questions found in the planning documents during the second sweep. The 
 - **Question:** WP-M1-03 left the generator open.
 - **Decision:** `openapi-typescript` with `openapi-fetch` (MIT, OpenAPI 3.1, runtime-free types; verified 2026-10-25). The event-stream client is hand-written on the generated types. → [TECHNOLOGY_BENCHMARK §8](TECHNOLOGY_BENCHMARK.md#contracts-typescript-sdk-generation), FEAT-API-003
 
-### Q32. Provider protocol name and Weave compatibility
-- **Question:** The glossary called `weave.provider/v1` a "candidate", and FEAT-CAP-003 asked for a decision on a compatibility shim.
-- **Decision:** `amaru.provider/v1`, adapted from `weave.provider/v1` in M2. No shim: Weave Providers are ported. → [GLOSSARY](../product/GLOSSARY.md), FEAT-CAP-003
+### Q32. Provider protocol name and prototype compatibility
+- **Question:** The glossary called the prototype's provider protocol a "candidate", and FEAT-CAP-003 asked for a decision on a compatibility shim.
+- **Decision:** `amaru.provider/v1`, adapted from the prototype provider protocol in M2. No shim: prototype Providers are ported. → [GLOSSARY](../product/GLOSSARY.md), FEAT-CAP-003
 
 ### Q33. Contract versions before the first release
 - **Question:** The roadmap kept the contract at `0.x` until M4, while ADR-0025 uses `/v1` with additive-only changes.
@@ -241,7 +241,7 @@ Implicit questions found in the planning documents during the second sweep. The 
 
 ### Q37. Work Item identifiers
 - **Question:** How are Work Items identified across Projects and Instances (FEAT-WRK-001 risk)?
-- **Decision:** A ULID internally and a display key `<PROJECTKEY>-<n>` unique per Instance. Links across Instances use the Instance URL plus the ULID. Imported Weave `WI-001` numbers are kept as aliases. → [DOMAIN_MODEL §3](DOMAIN_MODEL.md#3-entities-and-responsibilities), FEAT-WRK-001
+- **Decision:** A ULID internally and a display key `<PROJECTKEY>-<n>` unique per Instance. Links across Instances use the Instance URL plus the ULID. Imported prototype `WI-001` numbers are kept as aliases. → [DOMAIN_MODEL §3](DOMAIN_MODEL.md#3-entities-and-responsibilities), FEAT-WRK-001
 
 ### Q38. Workflow version storage, two clones and Cloud
 - **Question:** Where are old Workflow versions kept once definitions live in Git? How do two clones and Cloud read them?
@@ -313,7 +313,7 @@ Implicit questions found in the planning documents during the second sweep. The 
 ### Q46. Local command-line scope and `amaru backup`
 - **Question:** The CLI was planned for M7, but launch codes, migrations, backup and import are needed earlier. ADR-0023 says Amaru ships no backup system.
 - **Decision:**
-  - The Platform binary ships local operator subcommands from M3/M4: `open`, `migrate`, `backup`, `import weave`, `admin check`, `worker` and `plugin-host`.
+  - The Platform binary ships local operator subcommands from M3/M4: `open`, `migrate`, `backup`, `import legacy`, `admin check`, `worker` and `plugin-host`.
   - FEAT-CLI-012 at M7 is the remote API client.
   - `amaru backup` is supported for compact installs only; server backup stays with the operator.
   → [DEPLOYMENT §4](DEPLOYMENT.md#4-resolved-deployment-points), FEAT-CLI-012
@@ -357,19 +357,18 @@ Implicit questions found in the planning documents during the second sweep. The 
 - **Question:** The client view said package names are "indicative" and packages "may start inside `apps/web`".
 - **Decision:** UI code starts inside `apps/web` at M4. `packages/app` and `packages/ui` are extracted at M8, when Desktop is their second consumer. → [CLIENTS §1](CLIENTS.md)
 
-### Q54. Weave migration details
+### Q54. Prototype migration details
 - **Question:** The migration plan left these open:
   - whether migrated components are frozen
   - history-preserving import versus fresh import
   - what happens to media providers
   - how Obsidian plugin code (SDK reconnect logic, React Flow editor) is treated after ADR-0031
-  - how `.weave/hooks.yaml` maps
+  - how the prototype's hooks file maps
   - whether its dispositions were "hypotheses"
 - **Decision:**
-  - Components are frozen in Weave when they migrate.
+  - Components are frozen in the prototype when they migrate.
   - Default to a fresh import with provenance; a migration ADR may choose history-preserving import with a reason.
   - Pandoc and ffmpeg become M6 example plugins. The other media providers are retired.
   - Obsidian plugin code is reimplemented with the old code as a behavioral reference.
   - Inbound hooks become Workflow webhook Triggers, and outbound hooks become Project webhook configuration. Secrets and consent are re-entered by a human.
   - The dispositions are the plan of record. Each migration ADR (ADR-0007) confirms its own.
-  → [MIGRATION_PLAN](../migration/MIGRATION_PLAN.md)

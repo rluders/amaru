@@ -7,7 +7,7 @@ Status: **accepted** (2026-10-25), not implemented. Storage decisions: [ADR-0015
 | Class | Examples | Owner | Source of truth | Requirements |
 |---|---|---|---|---|
 | **Project knowledge** | Code, docs, ADRs, Skills, Playbooks, Artifact notes | User | The user's Git repositories | Never moved or rewritten by Amaru. Read by path + hash. |
-| **Definitions** | Workflows, Agents, Team references (by slug), templates, check configs, Project configuration | User (edited via Amaru or Git) | Committed files under `.amaru/` ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)) | Versioned by Git history; each Execution stores the commit SHA, content hash and an immutable snapshot of the definitions it used; diffable; concurrent edits detected (Weave F-7). |
+| **Definitions** | Workflows, Agents, Team references (by slug), templates, check configs, Project configuration | User (edited via Amaru or Git) | Committed files under `.amaru/` ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)) | Versioned by Git history; each Execution stores the commit SHA, content hash and an immutable snapshot of the definitions it used; diffable; concurrent edits detected (prototype F-7). |
 | **Operational state** | Teams and memberships, Work Packages, Work Items, Executions, Step states, leases, delivery-loop ledgers, approvals pending, outbox | Platform | PostgreSQL | Transactional updates, crash-safe, queryable. Not committed to user repositories. |
 | **History and audit** | Events, decisions, Grants, Approval decisions, snapshots of Agents/Skills/context | Platform | Event log + run history | Append-only, ordered by a per-Execution `seq` assigned by the Platform (never by Worker clocks), retained per §5, exportable. |
 | **Logs and evidence** | Provider stdout/stderr, transcripts, CI log excerpts, check output | Platform | Run history / artifact store | Size-bounded, redacted, retention-limited (GAP-07). |
@@ -18,14 +18,14 @@ Status: **accepted** (2026-10-25), not implemented. Storage decisions: [ADR-0015
 
 ## 2. Current predecessors (verified)
 
-- **Weave Runtime** keeps everything in files; there is no database.
+- **The prototype Runtime** keeps everything in files; there is no database.
   - **Write mechanics:** files are written atomically with a temp file and rename.
   - **Locations:**
-    - `.weave/work`, `.weave/workflows`, `.weave/agents`, `.weave/teams`: committed definitions.
-    - `.weave/runtime/executions/<id>/{execution.json,events.jsonl}` and `.weave/runtime/autoloop`: gitignored operational state.
+    - the per-project `work`, `workflows`, `agents` and `teams` folders: committed definitions.
+    - the per-project runtime folder, with `executions/<id>/{execution.json,events.jsonl}` and the delivery-loop ledgers: gitignored operational state.
     - user state dir: credentials and grants.
-  - **Gaps:** no schema migrations; work files are read only at startup (`weave-obsidian` `store/fsstore`, `cmd/weaved/main.go`).
-- **Weave prototype** uses PostgreSQL, with 30 sequential SQL migrations applied by a custom runner (`store/migrations.go`). Artifacts are kept on the local filesystem (`ArtifactRoot`). SQLite is test-only.
+  - **Gaps:** no schema migrations; work files are read only at startup.
+- **The earlier prototype** uses PostgreSQL, with 30 sequential SQL migrations applied by a custom runner (`store/migrations.go`). Artifacts are kept on the local filesystem (`ArtifactRoot`). SQLite is test-only.
 
 ## 3. Store roles (decided)
 
@@ -68,8 +68,8 @@ Retention is an Organization Policy setting per data class ([ADR-0017](adr/0017-
 
 ## 6. Migration of existing data
 
-Moving Weave `.weave/` data into Amaru is a migration concern ([MIGRATION_PLAN §8](../migration/MIGRATION_PLAN.md#8-persistence-and-state-migration)). It requires:
-- no runtime compatibility with `.weave/` ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md));
-- a one-shot importer (`amaru import weave`) for definitions and Work Items, scheduled in the roadmap;
-- Weave operational history stays read-only in Weave; it is not imported;
+Moving prototype project data into Amaru is a migration concern. It requires:
+- no runtime compatibility with the prototype's project folder ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md));
+- a one-shot importer (`amaru import legacy`) for definitions and Work Items, scheduled in the roadmap;
+- Prototype operational history stays read-only in the prototype; it is not imported;
 - no live dual-write.
