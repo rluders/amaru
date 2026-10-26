@@ -1,8 +1,8 @@
 ---
 title: Clarify ADR-0042 restart semantics for unstarted Steps, embedded Workers, timeouts, fenced results and attempts
-status: proposed
+status: accepted
 date: 2026-10-26
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0044. Clarify ADR-0042 restart semantics for unstarted Steps, embedded Workers, timeouts, fenced results and attempts
@@ -34,4 +34,4 @@ Also: a `Resumable` Step that was interrupted **before** its remote job id was r
 - **Wait for the Lease after a restart even for the embedded Worker**: the Worker cannot come back, so the Step would sit idle for up to a Lease length for no benefit.
 
 ## Approval
-Proposed by: Claude (M1 spike, 2026-10-26) · Approved by: — (pending; product owner)
+Proposed by: Claude (M1 spike, 2026-10-26) · Approved by: Ricardo Lüders on 2026-10-26, in the WP-M1-02 session ("Merge, accept 44 and 45, close. We are good.")

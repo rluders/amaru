@@ -49,7 +49,7 @@ Details: [security model](../security/SECURITY_MODEL.md).
 
 | ID | Requirement | Compact | Server | Cloud | Target / how set |
 |---|---|---|---|---|---|
-| NFR-1 | Local deployment runs on Windows, macOS and Linux without Docker/Podman. | Required | — | — | Recorded install and run per OS in M4. |
+| NFR-1 | Local deployment (bundled flavor) runs on Windows, macOS and Linux without Docker/Podman. | Required | — | — | Recorded install and run per OS in M4. |
 | NFR-25 | Workers run on Windows, macOS and Linux; environment-specific tools are optional capabilities. | Embedded | Required | Managed Linux + customer Workers on any OS | M5 pilot on Windows. |
 | NFR-26 | Web client works in current Chromium, Firefox and WebKit-based browsers. | Same | Same | Same | End-to-end tests in M4. |
 
@@ -83,7 +83,7 @@ Details: [security model](../security/SECURITY_MODEL.md).
 | NFR-6 | Retention, redaction, schema migration of persisted data. | Same | Same | Same | Defaults in [DATA_ARCHITECTURE §5](../architecture/DATA_ARCHITECTURE.md) (audit indefinite, logs 30 days, intermediate Artifacts 90 days); M3. |
 | NFR-7 | Install, upgrade, backup and restore documented and tested. | Install + upgrade | All four | Vendor runbooks | M4 (compact install), M7 (server). |
 | NFR-33 | Recovery point and recovery time objectives. | User backups | Operator-defined | RPO ≤ 15 min (PostgreSQL point-in-time recovery), RTO ≤ 4 h | *(initial)* Validated by a restore drill in M9. |
-| NFR-34 | Operational footprint: the compact install needs no service the user installs or operates; the Platform supervises its bundled PostgreSQL and embeds NATS. | Required | Database server allowed | Managed services allowed | [ADR-0015](../architecture/adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md), [ADR-0016](../architecture/adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md); compact installer increment ≤ 120 MB per OS and idle memory ≤ 300 MB for Platform + PostgreSQL + NATS *(initial)*; validated by the M1 spike. |
+| NFR-34 | Operational footprint: the bundled compact install needs no service the user installs or operates (the slim flavor connects to a PostgreSQL the user provides, [ADR-0045](../architecture/adr/0045-compact-installs-have-a-bundled-and-a-slim-flavor-on-one-engine.md)); the Platform supervises its bundled PostgreSQL and embeds NATS. | Required | Database server allowed | Managed services allowed | [ADR-0015](../architecture/adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md), [ADR-0016](../architecture/adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md); compact installer increment ≤ 120 MB per OS and idle memory ≤ 300 MB for Platform + PostgreSQL + NATS *(initial)*; validated by the M1 spike. |
 
 ## 10. Maintainability
 
