@@ -1,3 +1,4 @@
+# Runs on public-repo hosted runners (free for public repositories).
 # WP-M1-02 storage and execution spike, run natively on GitHub-hosted runners.
 # Scope: spikes/wp-m1-02 only. Not a general CI pipeline (see docs/engineering/validation.md).
 name: spike-m1-02
