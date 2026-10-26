@@ -17,7 +17,7 @@ Target layout: [AMARU_DIRECTORY](AMARU_DIRECTORY.md). Applies [ADR-0043](adr/004
 | Input | `amaru import legacy <project-root> [--platform <endpoint>] [--dry-run]`. `<project-root>` contains the prototype's hidden project folder. |
 | Recognition | The folder must contain at least one of: `work/`, `workflows/`, `agents/`, `teams/`. Otherwise exit with "not a prototype project", writing nothing. |
 | Read-only | The importer **never writes, renames or deletes** anything in the source folder, and takes no lock on it. It refuses to run if a prototype runtime is detected writing (a recent-modification check on `runtime/` plus a user confirmation) because in-flight Executions are not migrated ([DATA_ARCHITECTURE §6](DATA_ARCHITECTURE.md#6-migration-of-existing-data); users finish or cancel them first). |
-| Target | A reachable Platform (local or remote), authenticated as an Owner/Admin of the Organization; the Project is attached (repository key per [AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision)). The Platform schema version must be current. |
+| Target | A reachable Platform (local or remote), authenticated as an Owner/Admin of the Organization; the Project is attached (repository key per [AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key)). The Platform schema version must be current. |
 | Git state | Target repository clean in `.amaru/` (or no `.amaru/`); otherwise the importer asks for `--allow-dirty` and records it. The importer writes files but **never commits**; the user reviews and commits (Git review is the point of ADR-0043). |
 | Confirmation | Per Project, after the dry-run report is shown ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md): "after the user confirms"). |
 | Size/format limits | Files over a bounded size (default 1 MiB) or that fail to parse are reported, not guessed. |
@@ -38,7 +38,7 @@ Each row is justified by prototype source and by [ADR-0043](adr/0043-project-def
 | Hooks (`hooks.yaml`) | id, direction in/out, secret **name**, url, events, format, workflowId, inputs | Inbound → Workflow `triggers[]`; outbound → `config.yaml` `webhooks.outbound[]` | Secret **values** and egress consent are never copied; the importer lists each secret name and URL and requires a human to re-enter them and re-consent. |
 | Settings (`settings.json`) | one flag: import host-tool skills | Dropped; reported | A prototype-specific toggle for a retired feature; no Amaru counterpart. |
 | Project config (`config.yaml`) | schema version only | `.amaru/config.yaml` (created with `schemaVersion` and name) | Nothing else to map. |
-| Linked repositories (project metadata) | id, absolute path, remote | `needs-decision` | See [AMARU_DIRECTORY §3.4](AMARU_DIRECTORY.md#34-repositoriesyaml-linked-repositories--requires-decision). |
+| Linked repositories (project metadata) | id, absolute path, remote | `.amaru/repositories.yaml` (`id`, `remote`; base branch and delivery policy from the Work Package delivery policy when present); the absolute path is **not** imported | [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md); [AMARU_DIRECTORY §3.4](AMARU_DIRECTORY.md#34-repositoriesyaml-linked-repositories). |
 
 ## 4. Intentionally excluded
 
@@ -120,7 +120,6 @@ Synthetic data shaped by the source structs; **no real project was read**.
 
 ## 11. Not decided here
 
-- The Project key, proposed in [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md) ([AMARU_DIRECTORY §5.1](AMARU_DIRECTORY.md#51-project-key--requires-decision)) and Linked-repository placement ([Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement)).
 - Whether Teams can carry `separationOfDuties` as an attribute ([ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) owns Team semantics).
 - The migration ADR that authorizes implementing the importer (ADR-0007 gate).
 

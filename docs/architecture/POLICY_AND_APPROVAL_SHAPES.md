@@ -66,7 +66,7 @@ Teams are never in Git; definitions reference them by slug ([ADR-0043](adr/0043-
 
 | Field | Rule |
 |---|---|
-| `slug` | Unique per Organization; referenced from definitions. Rename and delete behavior is open ([Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement)). |
+| `slug` | Unique per Organization; referenced from definitions. Immutable; deletion is guarded while a definition references it ([ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md)). |
 | `members[].teamRole` | Free label (implementer, reviewer) used by Workflows and gates; carries no permission by itself. |
 | Authority | A gate that names a Team accepts only a **human** member of it who also holds a role permitted to decide ([§3.4](#34-separation-of-duties-and-team-rules)). An Agent in a Team never approves. |
 
