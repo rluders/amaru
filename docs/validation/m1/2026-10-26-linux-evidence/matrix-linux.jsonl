@@ -1,0 +1,86 @@
+{"case":"idem/start.before_commit#1","what":"Execution creation uncommitted (nothing durable)","pass":true,"runs":2}
+{"case":"nonidem/start.before_commit#1","what":"Execution creation uncommitted (nothing durable)","pass":true,"runs":2}
+{"case":"resumable/start.before_commit#1","what":"Execution creation uncommitted (nothing durable)","pass":true,"runs":2}
+{"case":"idem/start.after_commit#1","what":"Execution + first assignment committed, outbox unsent","pass":true,"runs":2}
+{"case":"nonidem/start.after_commit#1","what":"Execution + first assignment committed, outbox unsent","pass":true,"runs":2}
+{"case":"resumable/start.after_commit#1","what":"Execution + first assignment committed, outbox unsent","pass":true,"runs":2}
+{"case":"idem/relay.before_publish#2","what":"work assignment committed, not yet published","pass":true,"runs":2}
+{"case":"nonidem/relay.before_publish#2","what":"work assignment committed, not yet published","pass":true,"runs":2}
+{"case":"resumable/relay.before_publish#2","what":"work assignment committed, not yet published","pass":true,"runs":2}
+{"case":"idem/relay.after_publish#2","what":"work assignment published, row not marked sent (lost ack)","pass":true,"runs":2}
+{"case":"nonidem/relay.after_publish#2","what":"work assignment published, row not marked sent (lost ack)","pass":true,"runs":2}
+{"case":"resumable/relay.after_publish#2","what":"work assignment published, row not marked sent (lost ack)","pass":true,"runs":2}
+{"case":"idem/worker.after_fetch#2","what":"work assignment fetched, nothing recorded","pass":true,"runs":2}
+{"case":"nonidem/worker.after_fetch#2","what":"work assignment fetched, nothing recorded","pass":true,"runs":2}
+{"case":"resumable/worker.after_fetch#2","what":"work assignment fetched, nothing recorded","pass":true,"runs":2}
+{"case":"idem/running.before_commit#2","what":"running transition uncommitted","pass":true,"runs":2}
+{"case":"nonidem/running.before_commit#2","what":"running transition uncommitted","pass":true,"runs":2}
+{"case":"resumable/running.before_commit#2","what":"running transition uncommitted","pass":true,"runs":2}
+{"case":"idem/complete.after_commit#2","what":"work result committed, assignment un-acked, next assignment unsent","pass":true,"runs":2}
+{"case":"nonidem/complete.after_commit#2","what":"work result committed, assignment un-acked, next assignment unsent","pass":true,"runs":2}
+{"case":"resumable/complete.after_commit#2","what":"work result committed, assignment un-acked, next assignment unsent","pass":true,"runs":2}
+{"case":"idem/worker.before_ack#2","what":"work result committed, ack not sent","pass":true,"runs":2}
+{"case":"nonidem/worker.before_ack#2","what":"work result committed, ack not sent","pass":true,"runs":2}
+{"case":"resumable/worker.before_ack#2","what":"work result committed, ack not sent","pass":true,"runs":2}
+{"case":"idem/running.after_commit#2","what":"work running, side effect not yet performed","pass":true,"runs":2}
+{"case":"nonidem/running.after_commit#2","what":"work running, side effect not yet performed","pass":true,"runs":2}
+{"case":"nonidem/running.after_commit#2+human-resume","what":"work running, side effect not yet performed; human resumes the interrupted Step","pass":true,"runs":3}
+{"case":"resumable/running.after_commit#2","what":"work running, side effect not yet performed","pass":true,"runs":2}
+{"case":"resumable/running.after_commit#2+human-resume","what":"work running, side effect not yet performed; human resumes the interrupted Step","pass":true,"runs":3}
+{"case":"idem/worker.after_effect#2","what":"side effect performed, result not recorded","pass":true,"runs":2}
+{"case":"nonidem/worker.after_effect#2","what":"side effect performed, result not recorded","pass":true,"runs":2}
+{"case":"nonidem/worker.after_effect#2+human-resume","what":"side effect performed, result not recorded; human resumes the interrupted Step","pass":true,"runs":3}
+{"case":"resumable/worker.after_effect#2","what":"side effect performed, result not recorded","pass":true,"runs":2}
+{"case":"idem/complete.before_commit#2","what":"result written, transaction uncommitted","pass":true,"runs":2}
+{"case":"nonidem/complete.before_commit#2","what":"result written, transaction uncommitted","pass":true,"runs":2}
+{"case":"nonidem/complete.before_commit#2+human-resume","what":"result written, transaction uncommitted; human resumes the interrupted Step","pass":true,"runs":3}
+{"case":"resumable/complete.before_commit#2","what":"result written, transaction uncommitted","pass":true,"runs":2}
+{"case":"resumable/worker.after_job_recorded#1","what":"remote job id recorded, side effect not yet performed","pass":true,"runs":2}
+{"case":"idem/crash-storm","what":"crash after the effect in three consecutive runs","pass":true,"runs":4}
+{"case":"idem/nats-store-lost","what":"assignment fetched, then the whole JetStream store is deleted before restart","pass":true,"runs":2}
+{"case":"nonidem/nats-store-lost","what":"assignment fetched, then the whole JetStream store is deleted before restart","pass":true,"runs":2}
+{"case":"idem/worker-hangs-lease-expires","what":"Worker hangs while running; lease expires under controlled time","pass":true,"runs":1}
+{"case":"nonidem/worker-hangs-lease-expires","what":"same, non-idempotent Step: must not be re-run","pass":true,"runs":1}
+{"case":"nonidem/worker-hangs-after-effect-lease-expires","what":"non-idempotent effect done, Worker hangs before the result: interrupted, effect not duplicated","pass":true,"runs":1}
+{"case":"resumable/worker-hangs-lease-expires","what":"resumable Step with job id: resumed under a new lease","pass":true,"runs":1}
+{"case":"timeout/step-timeout","what":"running Step exceeds its 60 s timeout; lease is longer","pass":true,"runs":1}
+{"case":"flaky/retry-backoff","what":"first attempt fails; back-off timer fires after the clock advances","pass":true,"runs":2}
+{"case":"flaky/retry-timer-survives-crash","what":"crash while the retry timer is pending; timer still fires after restart","pass":true,"runs":2}
+{"case":"approval/multi-day-wait-then-approve","what":"waits 3 simulated days with a restart each day, then approved","pass":true,"runs":5}
+{"case":"approval/still-waiting-after-days","what":"three days pass across restarts; gate keeps waiting and nothing else runs","pass":true,"runs":4}
+{"case":"approval/killed-while-waiting","what":"process killed externally while the gate waits; restart keeps waiting","pass":true,"runs":2}
+{"case":"approval/deadline-expires","what":"5-day approval deadline passes: gate fails, delivery never runs","pass":true,"runs":2}
+{"case":"approval/approve-crash-before-commit","what":"crash while recording the approval: still waiting, approving again succeeds","pass":true,"runs":3}
+{"case":"approval/approve-crash-after-commit","what":"crash right after the approval committed: delivery completes after restart, once","pass":true,"runs":3}
+{"case":"approval/duplicate-approve","what":"the same approval is submitted twice","pass":true,"runs":3}
+{"case":"approval/approve-after-reject","what":"approval arrives after the gate was rejected: ignored","pass":true,"runs":3}
+{"case":"fuzz-idem-00","what":"external kill after 525ms (seed 1000), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-01","what":"external kill after 143ms (seed 1001), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-02","what":"external kill after 532ms (seed 1002), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-03","what":"external kill after 578ms (seed 1003), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-04","what":"external kill after 127ms (seed 1004), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-05","what":"external kill after 726ms (seed 1005), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-06","what":"external kill after 679ms (seed 1006), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-07","what":"external kill after 112ms (seed 1007), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-08","what":"external kill after 922ms (seed 1008), then restart","pass":true,"runs":2}
+{"case":"fuzz-idem-09","what":"external kill after 659ms (seed 1009), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-00","what":"external kill after 525ms (seed 1000), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-01","what":"external kill after 143ms (seed 1001), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-02","what":"external kill after 532ms (seed 1002), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-03","what":"external kill after 578ms (seed 1003), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-04","what":"external kill after 127ms (seed 1004), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-05","what":"external kill after 726ms (seed 1005), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-06","what":"external kill after 679ms (seed 1006), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-07","what":"external kill after 112ms (seed 1007), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-08","what":"external kill after 922ms (seed 1008), then restart","pass":true,"runs":2}
+{"case":"fuzz-nonidem-09","what":"external kill after 659ms (seed 1009), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-00","what":"external kill after 525ms (seed 1000), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-01","what":"external kill after 143ms (seed 1001), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-02","what":"external kill after 532ms (seed 1002), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-03","what":"external kill after 578ms (seed 1003), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-04","what":"external kill after 127ms (seed 1004), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-05","what":"external kill after 726ms (seed 1005), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-06","what":"external kill after 679ms (seed 1006), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-07","what":"external kill after 112ms (seed 1007), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-08","what":"external kill after 922ms (seed 1008), then restart","pass":true,"runs":2}
+{"case":"fuzz-resumable-09","what":"external kill after 659ms (seed 1009), then restart","pass":true,"runs":2}

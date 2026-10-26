@@ -3,3 +3,6 @@
 /bundle/
 /state*/
 *.jsonl
+/out/
+/mx/
+/bundle.tgz

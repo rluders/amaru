@@ -1,0 +1,8 @@
+spike: start postgres: psql: exit status 1: psql: error: connection to server on socket "/tmp/claude-1000/spk/mx/resumable_relay.before_publish@2/s/ep-3723054582/.s.PGSQL.44285" failed: No such file or directory
+	Is the server running locally and accepting connections on that socket?
+exit status 2
+
+2026-10-26 11:21:10.467 -03 [1591676] FATAL:  lock file "postmaster.pid" already exists
+2026-10-26 11:21:10.467 -03 [1591676] HINT:  Is another postmaster (PID 1591596) running in data directory "/tmp/claude-1000/spk/mx/resumable_relay.before_publish@2/data"?
+PostgreSQL exited: exit status 1
+

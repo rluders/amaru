@@ -1,0 +1,89 @@
+# Runs on public-repo hosted runners (free for public repositories).
+# WP-M1-02 storage and execution spike, run natively on GitHub-hosted runners.
+# Scope: spikes/wp-m1-02 only. Not a general CI pipeline (see docs/engineering/validation.md).
+name: spike-m1-02
+
+on:
+  push:
+    branches: ['spike/**', 'feat/3-wp-m1-02-storage-and-execution']
+    paths: ['spikes/wp-m1-02/**', '.github/workflows/spike-m1-02.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spike:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    defaults:
+      run:
+        shell: bash
+        working-directory: spikes/wp-m1-02
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+          cache-dependency-path: spikes/wp-m1-02/go.sum
+
+      - name: Environment
+        run: |
+          mkdir -p out
+          {
+            echo "commit: $(git rev-parse HEAD)"
+            go version
+            uname -a
+            uname -m
+            echo "whoami: $(whoami)"
+            id || true
+          } | tee out/env.txt
+          if [ "$RUNNER_OS" = "macOS" ]; then sw_vers | tee -a out/env.txt; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem | Select Caption,Version,OSArchitecture | Format-List | Out-String)" | tee -a out/env.txt
+            powershell -NoProfile -Command '& "$env:windir\System32\whoami.exe" /groups' | tee -a out/env.txt
+          fi
+
+      - name: Build
+        run: go build -o "spike$(go env GOEXE)" ./cmd/spike
+
+      - name: Bundle (build-time fetch)
+        run: ./spike bundle -out ./bundle 2>&1 | tee out/bundle.log
+
+      - name: Footprint
+        run: |
+          du -sh bundle | tee out/footprint.txt
+          tar -czf bundle.tgz bundle && ls -l bundle.tgz | tee -a out/footprint.txt
+
+      - name: PostgreSQL scenarios
+        if: ${{ !cancelled() }}
+        run: ./spike pg -bundle ./bundle -state ./state-pg -out out/pg.jsonl ${{ runner.os == 'Windows' && '-allow-elevated' || '' }}
+
+      - name: NATS JetStream
+        if: ${{ !cancelled() }}
+        run: ./spike nats | tee out/nats.json
+
+      - name: Crash matrix
+        if: ${{ !cancelled() }}
+        run: ./spike matrix -bundle ./bundle -work ./mx -out out/matrix.jsonl -fuzz 10
+
+      - name: Go tests
+        if: ${{ !cancelled() }}
+        env:
+          SPIKE_BUNDLE: ${{ github.workspace }}/spikes/wp-m1-02/bundle
+        run: go test -count=1 -timeout 8m -v ./internal/... 2>&1 | tee out/gotest.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp-m1-02-${{ matrix.os }}
+          path: |
+            spikes/wp-m1-02/out
+            spikes/wp-m1-02/mx/logs
+          retention-days: 30

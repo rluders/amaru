@@ -26,7 +26,11 @@ go build -o spike ./cmd/spike
 ./spike bundle -out ./bundle                       # build-time fetch: PostgreSQL 18.6.1 distribution + supervisor
 ./spike pg -bundle ./bundle -state ./state-pg -out pg.jsonl      # A2/A12 scenarios, prints one JSON line each
 ./spike nats                                                      # embedded JetStream footprint + file handling
-SPIKE_BUNDLE=$PWD/bundle go test -count=1 -v ./internal/outbox/   # outbox/relay/dedup tests
+./spike matrix -bundle ./bundle -work ./mx -out matrix.jsonl -fuzz 10   # crash-injection matrix, Approval waits, leases, timers
+SPIKE_BUNDLE=$PWD/bundle go test -count=1 -v ./internal/...        # outbox/relay/dedup and coordinator tests
 ```
 
-The per-OS runbook is added with the crash matrix (#74). A run counts for an OS only when it executes natively there ([validation](../../docs/engineering/validation.md#cross-platform-validation-m3-and-m4)).
+The per-OS runbook is [docs/validation/m1/RUNBOOK.md](../../docs/validation/m1/RUNBOOK.md). A run counts for an OS only when it executes natively there ([validation](../../docs/engineering/validation.md#cross-platform-validation-m3-and-m4)).
+
+## Hosted runs
+`.github/workflows/spike-m1-02.yml` runs the whole sequence on GitHub-hosted Linux, macOS and Windows runners and uploads the evidence as artifacts (scoped to this spike; not a general CI pipeline). Hosted Windows runners are administrators, so `spike pg -allow-elevated` records the elevation as a limitation instead of failing; `-allow-elevated` must not be used for a run that is meant to show non-admin behavior.

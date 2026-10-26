@@ -1,0 +1,42 @@
+?   	github.com/rluders/amaru/spikes/wp-m1-02/internal/bus	[no test files]
+=== RUN   TestOutboxIsAtomicWithState
+--- PASS: TestOutboxIsAtomicWithState (0.03s)
+=== RUN   TestRelayPublishesWithMsgIDAndMarksSentAfterAck
+--- PASS: TestRelayPublishesWithMsgIDAndMarksSentAfterAck (0.09s)
+=== RUN   TestPublishFailureKeepsRowAndRetries
+    outbox_test.go:185: publish failure surfaced as: nats: connection closed
+--- PASS: TestPublishFailureKeepsRowAndRetries (0.06s)
+=== RUN   TestAckLostIsDeduplicatedInsideWindow
+--- PASS: TestAckLostIsDeduplicatedInsideWindow (0.12s)
+=== RUN   TestRedeliveryAfterRestartIsIdempotent
+    outbox_test.go:261: redelivered with NumDelivered=2; effect applied once, duplicate skipped by key
+--- PASS: TestRedeliveryAfterRestartIsIdempotent (0.08s)
+=== RUN   TestDuplicateWindowGap
+    outbox_test.go:301: window gap confirmed: bus-only consumer applied the effect 2 times; PostgreSQL-keyed consumer 1 time
+--- PASS: TestDuplicateWindowGap (5.07s)
+=== RUN   TestMaxDeliverExhaustionLeavesOrphan
+    outbox_test.go:318: deliveries=2, stream msgs=1, consumer ack_pending=0 redelivered=1
+--- PASS: TestMaxDeliverExhaustionLeavesOrphan (1.45s)
+PASS
+ok  	github.com/rluders/amaru/spikes/wp-m1-02/internal/outbox	12.569s
+?   	github.com/rluders/amaru/spikes/wp-m1-02/internal/pgsup	[no test files]
+=== RUN   TestConcurrentDispatchAssignsEachStepOnce
+--- PASS: TestConcurrentDispatchAssignsEachStepOnce (0.11s)
+=== RUN   TestDuplicateAndOutOfOrderReports
+--- PASS: TestDuplicateAndOutOfOrderReports (0.06s)
+=== RUN   TestZombieWorkerResultIsFenced
+=== RUN   TestZombieWorkerResultIsFenced/idempotent_re-leased_and_completed_by_B
+=== RUN   TestZombieWorkerResultIsFenced/non-idempotent_interrupted,_late_result_discarded
+--- PASS: TestZombieWorkerResultIsFenced (0.13s)
+    --- PASS: TestZombieWorkerResultIsFenced/idempotent_re-leased_and_completed_by_B (0.07s)
+    --- PASS: TestZombieWorkerResultIsFenced/non-idempotent_interrupted,_late_result_discarded (0.06s)
+=== RUN   TestStaleTimerIsIgnored
+--- PASS: TestStaleTimerIsIgnored (0.06s)
+=== RUN   TestApprovalDeadlineBoundary
+--- PASS: TestApprovalDeadlineBoundary (0.05s)
+=== RUN   TestTwoRelaysPublishEachRowOnce
+--- PASS: TestTwoRelaysPublishEachRowOnce (0.23s)
+=== RUN   TestReconcileReenqueuesAssignedStep
+--- PASS: TestReconcileReenqueuesAssignedStep (0.05s)
+PASS
+ok  	github.com/rluders/amaru/spikes/wp-m1-02/internal/wf	6.298s

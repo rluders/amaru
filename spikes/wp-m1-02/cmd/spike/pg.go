@@ -46,6 +46,7 @@ func cmdPG(args []string) error {
 	bundle := fl.String("bundle", "", "bundle directory made by `spike bundle`")
 	state := fl.String("state", "", "empty state directory (created)")
 	out := fl.String("out", "", "also write JSON lines here")
+	allowElevated := fl.Bool("allow-elevated", false, "record an elevated (admin/root) user as a limitation instead of a failure; for hosted CI runners, which cannot run as a standard user")
 	fl.Parse(args)
 	if *bundle == "" || *state == "" {
 		return fmt.Errorf("-bundle and -state required")
@@ -67,7 +68,12 @@ func cmdPG(args []string) error {
 	ctx := context.Background()
 
 	isAdmin, adminDetail := elevated()
-	rec.add(result{Scenario: "env", Pass: !isAdmin, Detail: adminDetail, Metrics: map[string]any{
+	envPass := !isAdmin
+	if isAdmin && *allowElevated {
+		envPass = true
+		adminDetail += "; ELEVATED run accepted by -allow-elevated: non-admin behavior is NOT validated by this run"
+	}
+	rec.add(result{Scenario: "env", Pass: envPass, Detail: adminDetail, Metrics: map[string]any{
 		"goos": runtime.GOOS, "goarch": runtime.GOARCH, "go": runtime.Version(), "elevated": isAdmin,
 	}})
 
@@ -282,6 +288,8 @@ func relocate(ctx context.Context, b pgsup.Bundle, state string) result {
 }
 
 // helpers
+
+func alive(pid int) bool { return pgsup.Alive(pid) }
 
 func postmasterPID(state string) int {
 	b, err := os.ReadFile(filepath.Join(state, "data", "postmaster.pid"))
