@@ -8,6 +8,7 @@ Features are referenced by catalog ID without the `FEAT-` prefix ([feature catal
 
 **Current position:**
 - **M0 complete** (2026-10-25): the product owner reviewed the planning package and accepted ADRs 0002–0005 and 0008–0039; a second pass the same day closed the residual questions Q23–Q54 with ADRs 0040–0043 (superseding 0014, 0019, 0020 and 0027). No open questions remain.
+- **Tracking:** every Work Package, epic and scheduled feature has a GitHub issue ([backlog map](../engineering/backlog-map.md), [delivery workflow](../engineering/delivery.md)).
 - **Next: M1** validation spikes and license texts. Weave is used as-is from its baseline commit (ADR-0032).
 
 ## Overview
@@ -155,12 +156,12 @@ flowchart LR
 - **Requirements:** FR-14, FR-43; NFR-10, NFR-11, NFR-25, NFR-29.
 - **Dependencies:** M4; [ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md) (transport), [ADR-0024](adr/0024-remote-worker-registration-identity-and-delivery.md) (enrollment), [ADR-0017](adr/0017-content-addressed-artifact-store-filesystem-or-s3.md) (filesystem adapter at least), [ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md) (agent placement).
 - **Work Packages (epic level):**
-  - E5.1 Worker protocol implementation
-  - E5.2 Environment registry and routing
-  - E5.3 Leases and partition tests
-  - E5.4 Sandbox Environment (single-level rootless containers)
-  - E5.5 UE5 + MCP pilot on a Windows VM: interactive-session Worker, editor health, Environment-hosted MCP through the gateway
-  - E5.6 Retries/parallelism/scheduling
+  - E5.1 Worker protocol implementation ([#31](https://github.com/rluders/amaru/issues/31))
+  - E5.2 Environment registry and routing ([#32](https://github.com/rluders/amaru/issues/32))
+  - E5.3 Leases and partition tests ([#33](https://github.com/rluders/amaru/issues/33))
+  - E5.4 Sandbox Environment (single-level rootless containers) ([#29](https://github.com/rluders/amaru/issues/29))
+  - E5.5 UE5 + MCP pilot on a Windows VM: interactive-session Worker, editor health, Environment-hosted MCP through the gateway ([#28](https://github.com/rluders/amaru/issues/28))
+  - E5.6 Retries/parallelism/scheduling ([#34](https://github.com/rluders/amaru/issues/34))
 - **Exit criteria:** partition suite green; a recorded UE5 run on a Windows VM where an agent completes a Work Item using the editor's MCP tools, with every MCP call audited and cancellation working; the embedded and remote Workers pass the same assignment tests.
 - **Risks:** editor stability and interactive sessions (R12); GPU and license cost (R13); network and proxy diversity.
 - **Deferred:** on-demand provisioning of Environments (M7, ENV-014); managed Cloud Workers (M9).
@@ -175,12 +176,12 @@ flowchart LR
 - **Requirements:** FR-42; NFR-18, NFR-27, NFR-28.
 - **Dependencies:** M4 (UI), M2 contracts; [ADR-0041](adr/0041-isolation-tiers-for-plugins-providers-and-steps.md), [ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md), [ADR-0021](adr/0021-plugin-packaging-signing-permissions-and-compatibility.md) (signing), ADR-0005, ADR-0012; Javy + Amaru Javy plugin toolchain validated in the M6 spike (A10).
 - **Work Packages (epic level):**
-  - E6.1 Manifest schema and registry
-  - E6.2 Permissions and consent
-  - E6.3 TypeScript SDK
-  - E6.4 UI extension host
-  - E6.5 Logic extension host
-  - E6.6 Adapter components (including MCP servers shipped as `worker-adapter` components)
+  - E6.1 Manifest schema and registry ([#36](https://github.com/rluders/amaru/issues/36))
+  - E6.2 Permissions and consent ([#37](https://github.com/rluders/amaru/issues/37))
+  - E6.3 TypeScript SDK ([#38](https://github.com/rluders/amaru/issues/38))
+  - E6.4 UI extension host ([#39](https://github.com/rluders/amaru/issues/39))
+  - E6.5 Logic extension host ([#40](https://github.com/rluders/amaru/issues/40))
+  - E6.6 Adapter components (including MCP servers shipped as `worker-adapter` components) ([#30](https://github.com/rluders/amaru/issues/30))
 - **Exit criteria:** example plugins built only against the SDK; escape tests pass; a plugin exceeding its permissions is blocked.
 - **Risks:** sandbox maturity on Windows; SDK churn (the SDK stays pre-1.0 until M8).
 - **Deferred:** registry (M10), service plugins (M7).
@@ -197,14 +198,14 @@ flowchart LR
 - **Requirements:** FR-3, FR-15, FR-33 (aggregation), FR-44, FR-46, FR-47; NFR-7, NFR-15 (server figure), NFR-24, NFR-31, NFR-32.
 - **Dependencies:** M5, M6; [ADR-0028](adr/0028-identity-local-accounts-oidc-and-opaque-tokens.md), [ADR-0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md), [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md), [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md); first provisioner (Proxmox VE).
 - **Work Packages (epic level):**
-  - E7.1 Identity and Organizations
-  - E7.2 External PostgreSQL, NATS and S3-compatible configuration (same adapters as compact; [ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md))
-  - E7.3 Packaging, upgrade and restore
-  - E7.4 Team workflows (templates, SoD, intake)
-  - E7.5 Observability and cost attribution
-  - E7.6 CLI client
-  - E7.7 Security disclosure process
-  - E7.8 Environment templates and provisioning (start on demand, idle stop, snapshot reset, provisioner plugins)
+  - E7.1 Identity and Organizations ([#43](https://github.com/rluders/amaru/issues/43))
+  - E7.2 External PostgreSQL, NATS and S3-compatible configuration (same adapters as compact; [ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md)) ([#44](https://github.com/rluders/amaru/issues/44))
+  - E7.3 Packaging, upgrade and restore ([#45](https://github.com/rluders/amaru/issues/45))
+  - E7.4 Team workflows (templates, SoD, intake) ([#42](https://github.com/rluders/amaru/issues/42))
+  - E7.5 Observability and cost attribution ([#46](https://github.com/rluders/amaru/issues/46))
+  - E7.6 CLI client ([#47](https://github.com/rluders/amaru/issues/47))
+  - E7.7 Security disclosure process ([#48](https://github.com/rluders/amaru/issues/48))
+  - E7.8 Environment templates and provisioning (start on demand, idle stop, snapshot reset, provisioner plugins) ([#49](https://github.com/rluders/amaru/issues/49))
 - **Exit criteria:**
   - Recorded install/upgrade/restore drill on a reference host.
   - Tests prove there are no cross-Organization reads.
@@ -224,11 +225,11 @@ flowchart LR
 - **Requirements:** FR-45; NFR-28, NFR-30.
 - **Dependencies:** M4 UI packages, M6 extension host; [ADR-0018](adr/0018-desktop-shell-is-tauri-v2.md) with a validation spike (sidecar, keychain, signed updater).
 - **Work Packages (epic level):**
-  - E8.1 Tauri validation spike for [ADR-0018](adr/0018-desktop-shell-is-tauri-v2.md) (sidecar, keychain, signed updater); a failure leads to a superseding ADR
-  - E8.2 Shared UI extraction (`packages/app`, `packages/ui`)
-  - E8.3 Instance and credential management
-  - E8.4 Local Platform supervision and updates
-  - E8.5 Signing and release
+  - E8.1 Tauri validation spike for [ADR-0018](adr/0018-desktop-shell-is-tauri-v2.md) (sidecar, keychain, signed updater); a failure leads to a superseding ADR ([#50](https://github.com/rluders/amaru/issues/50))
+  - E8.2 Shared UI extraction (`packages/app`, `packages/ui`) ([#51](https://github.com/rluders/amaru/issues/51))
+  - E8.3 Instance and credential management ([#52](https://github.com/rluders/amaru/issues/52))
+  - E8.4 Local Platform supervision and updates ([#53](https://github.com/rluders/amaru/issues/53))
+  - E8.5 Signing and release ([#54](https://github.com/rluders/amaru/issues/54))
 - **Exit criteria:** recorded install and run per OS; every action goes through the public API; plugins render identically to Web.
 - **Risks:** signing and notarization costs; webview differences.
 - **Note:** no Obsidian client is built ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
@@ -240,10 +241,10 @@ flowchart LR
 - **Requirements:** NFR-8, NFR-12, NFR-33.
 - **Dependencies:** M7; [ADR-0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md) (row-level tenancy), [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md) (NATS cluster), [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) at scale; vendor hosting under the commercial license ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Work Packages (epic level):**
-  - E9.1 Threat model and cross-tenant isolation test suite for [ADR-0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md)
-  - E9.2 Cloud adapters
-  - E9.3 Managed Worker pools
-  - E9.4 Operations and SLOs
+  - E9.1 Threat model and cross-tenant isolation test suite for [ADR-0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md) ([#56](https://github.com/rluders/amaru/issues/56))
+  - E9.2 Cloud adapters ([#57](https://github.com/rluders/amaru/issues/57))
+  - E9.3 Managed Worker pools ([#59](https://github.com/rluders/amaru/issues/59))
+  - E9.4 Operations and SLOs ([#58](https://github.com/rluders/amaru/issues/58))
 - **Exit criteria:** threat model reviewed; cross-tenant isolation test suite green; pilot validated against the initial targets (99.9 % API availability, RPO ≤ 15 min, RTO ≤ 4 h; NFR-33).
 - **Deferred:** billing (P3).
 

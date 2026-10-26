@@ -4,7 +4,7 @@ Status: **accepted** (2026-10-25). This is the decomposition of milestones M0–
 
 **Conventions**
 - IDs follow `WP-M<milestone>-<nn>` and are stable.
-- Each WP lists:
+- Each WP links its GitHub issue ([backlog map](../engineering/backlog-map.md), [delivery workflow](../engineering/delivery.md)) and lists:
   - **Goal**
   - **Scope**
   - **Features / decisions**
@@ -17,6 +17,7 @@ Status: **accepted** (2026-10-25). This is the decomposition of milestones M0–
 ## M0 Foundation reconciled
 
 ### WP-M0-01 Planning package review — done 2026-10-25
+- **Issue:** [#1](https://github.com/rluders/amaru/issues/1)
 - **Goal:** product-owner review of this planning package.
 - **Scope:** PRD, catalog, architecture views, roadmap and migration documents; every open question answered or delegated; every pending ADR decided.
 - **Depends on:** —
@@ -28,6 +29,7 @@ Status: **accepted** (2026-10-25). This is the decomposition of milestones M0–
 Decisions are made; these Work Packages validate them and put them into effect.
 
 ### WP-M1-01 License texts in effect
+- **Issue:** [#2](https://github.com/rluders/amaru/issues/2)
 - **Goal:** apply [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md).
 - **Scope:**
   - Legal review of the Amaru Community License 1.0 draft.
@@ -39,6 +41,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** legal review recorded.
 
 ### WP-M1-02 Storage and execution validation spike
+- **Issue:** [#3](https://github.com/rluders/amaru/issues/3)
 - **Goal:** validate [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md), [ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md) and [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md) (checks A2, A9).
 - **Scope:**
   - Bundle and supervise PostgreSQL on Windows (non-admin), macOS (signed child binary) and Linux; supervise with `embedded-postgres` v2 (local binary provider over the bundled binaries, persistent data directory, owner-pipe supervision); Unix socket on Linux/macOS, loopback port + SCRAM password on Windows. Record whether A12 holds; if not, the in-house supervisor fallback needs a note in TECHNOLOGY_BENCHMARK.
@@ -49,6 +52,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** spike test logs.
 
 ### WP-M1-03 Contract versioning rules in fixtures
+- **Issue:** [#4](https://github.com/rluders/amaru/issues/4)
 - **Goal:** apply [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md) before any new endpoint.
 - **Scope:** fixture conventions for additive changes; `buf breaking` configuration for Protobuf packages; deprecation headers; contract package `0.x` until the Local MVP release (1.0.0 at M4), URL major `/v1` from M2; TypeScript generation with `openapi-typescript` + `openapi-fetch` (pinned at M2).
 - **Depends on:** WP-M0-01.
@@ -56,6 +60,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** review against the Weave protocol history.
 
 ### WP-M1-04 Approval, Policy, roles and configuration shapes
+- **Issue:** [#5](https://github.com/rluders/amaru/issues/5)
 - **Goal:** contract shapes for [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md), [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) and [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md).
 - **Scope:**
   - Approval record and Evidence binding; invalidation.
@@ -67,6 +72,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** walkthrough of UC-1 and UC-5.
 
 ### WP-M1-05 `.amaru/` layout and importer design
+- **Issue:** [#6](https://github.com/rluders/amaru/issues/6)
 - **Goal:** apply [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md).
 - **Scope:**
   - File layout and schemas under `.amaru/`.
@@ -78,6 +84,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** data-class review against [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md).
 
 ### WP-M1-06 Worker protocol schemas
+- **Issue:** [#7](https://github.com/rluders/amaru/issues/7)
 - **Goal:** `amaru.worker.v1` Protobuf schemas for M2 contracts ([ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md), [ADR-0024](adr/0024-remote-worker-registration-identity-and-delivery.md)). Implementation is in M5.
 - **Scope:**
   - Messages from [EXECUTION_ENVIRONMENTS §3](EXECUTION_ENVIRONMENTS.md#3-worker-lifecycle-and-protocol-draft): handshake, enrollment challenge, offer, assignment, lease, events, result, cancel, secret delivery.
@@ -88,6 +95,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** review; `buf lint`.
 
 ### WP-M1-07 Inventory refresh at the baseline
+- **Issue:** [#8](https://github.com/rluders/amaru/issues/8)
 - **Goal:** a refreshed Amaru inventory at `feat/orkestra-dogfood` @ `c8a2f6e` ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)).
 - **Scope:**
   - Refresh [weave-inventory](../migration/weave-inventory.md) to the baseline commit.
@@ -99,6 +107,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 ## M2 Contracts v0
 
 ### WP-M2-01 Contracts package from the Weave protocol
+- **Issue:** [#9](https://github.com/rluders/amaru/issues/9)
 - **Goal:** `packages/contracts` adapted from Weave `protocol/`.
 - **Scope:**
   - Migration ADR.
@@ -111,6 +120,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** fixture tests.
 
 ### WP-M2-02 Generated TypeScript SDK
+- **Issue:** [#10](https://github.com/rluders/amaru/issues/10)
 - **Goal:** `packages/sdk` generated from the contracts, including an event-stream client with cursor resume.
 - **Features:** API-003.
 - **Depends on:** WP-M2-01.
@@ -121,6 +131,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** unit tests.
 
 ### WP-M2-03 Contract drift guard
+- **Issue:** [#11](https://github.com/rluders/amaru/issues/11)
 - **Goal:** the Platform cannot register a route that is not in the contract.
 - **Scope:** a test that enumerates registered routes and compares them with OpenAPI. It lands with the first Platform code in M3, so the guard ships with the API.
 - **Features:** API-001.
@@ -131,6 +142,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 ## M3 Platform core
 
 ### WP-M3-01 Domain and ports migration
+- **Issue:** [#13](https://github.com/rluders/amaru/issues/13)
 - **Goal:** Weave `runtime/internal/domain` and `ports` adapted into `services/platform`, with the architecture test.
 - **Scope:**
   - Rename identifiers.
@@ -142,6 +154,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** `make check` (OS matrix run locally or in CI once enabled).
 
 ### WP-M3-02 Storage adapter
+- **Issue:** [#14](https://github.com/rluders/amaru/issues/14)
 - **Goal:** storage ports implemented on PostgreSQL ([ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md)).
 - **Scope:**
   - Schema versioning and migrations.
@@ -153,6 +166,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests.
 
 ### WP-M3-03 Execution coordinator with embedded Worker
+- **Issue:** [#15](https://github.com/rluders/amaru/issues/15)
 - **Goal:** Weave `app` manager, steps and recovery adapted behind the Worker interface.
 - **Scope:**
   - Per-Step timeouts.
@@ -166,6 +180,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests on three OSes.
 
 ### WP-M3-04 Policy, Grants and Approval
+- **Issue:** [#16](https://github.com/rluders/amaru/issues/16)
 - **Goal:** the new authorization layer.
 - **Scope:**
   - Grants and Approval Steps with evidence binding.
@@ -178,6 +193,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests and a recorded attempt without a grant.
 
 ### WP-M3-05 Providers and context assembly
+- **Issue:** [#17](https://github.com/rluders/amaru/issues/17)
 - **Goal:** agent providers, external provider protocol, Skills and context.
 - **Scope:**
   - Claude, Codex and OpenCode providers, where Codex and OpenCode refuse unenforceable `WorkspaceWrite`.
@@ -191,6 +207,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests and recorded runs.
 
 ### WP-M3-06 Public API, events and local authentication
+- **Issue:** [#18](https://github.com/rluders/amaru/issues/18)
 - **Goal:** the HTTP API and event stream serving the M2 contracts.
 - **Scope:**
   - Work, Workflow and Agent change events.
@@ -204,6 +221,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests.
 
 ### WP-M3-07 Worktrees, configuration scopes, evidence
+- **Issue:** [#19](https://github.com/rluders/amaru/issues/19)
 - **Goal:** the remaining core pieces.
 - **Scope:**
   - Worktree isolation.
@@ -218,6 +236,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 ## M4 Local MVP
 
 ### WP-M4-01 Web shell and design system
+- **Issue:** [#21](https://github.com/rluders/amaru/issues/21)
 - **Goal:** `apps/web` built from the prototype's design system, served by the Platform.
 - **Scope:**
   - Migration ADR for the prototype dashboard assets.
@@ -231,6 +250,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** component tests and automated accessibility checks.
 
 ### WP-M4-02 Core screens
+- **Issue:** [#22](https://github.com/rluders/amaru/issues/22)
 - **Goal:** Projects, Work, Workflows (text editor), Executions (timeline, logs), Instance health, settings (providers, Policy, Local Checks).
 - **Features:** CLI-003, CLI-005, CLI-006, OBS-003, ADM-001, PRJ-004.
 - **Depends on:** WP-M4-01.
@@ -238,6 +258,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** end-to-end tests.
 
 ### WP-M4-03 Delivery loop migration
+- **Issue:** [#23](https://github.com/rluders/amaru/issues/23)
 - **Goal:** the Weave Autoloop adapted as the supervised delivery loop on the Amaru coordinator.
 - **Scope:**
   - Budgets moved into Policy.
@@ -250,6 +271,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests.
 
 ### WP-M4-04 Checks, CI and review
+- **Issue:** [#24](https://github.com/rluders/amaru/issues/24)
 - **Goal:** the validation and review chain.
 - **Scope:**
   - Local Checks bound to commits.
@@ -262,6 +284,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests.
 
 ### WP-M4-05 Forge delivery
+- **Issue:** [#25](https://github.com/rluders/amaru/issues/25)
 - **Goal:** GitHub integration through a forge port.
 - **Scope:**
   - Draft PRs, marked ready after approval.
@@ -273,6 +296,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** tests and a recorded run.
 
 ### WP-M4-06 Approval inbox, diff and cost
+- **Issue:** [#26](https://github.com/rluders/amaru/issues/26)
 - **Goal:** the human side of the flow.
 - **Scope:**
   - Inbox across Projects.
@@ -284,6 +308,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** end-to-end tests.
 
 ### WP-M4-07 Packaging and MVP validation
+- **Issue:** [#27](https://github.com/rluders/amaru/issues/27)
 - **Goal:** installable local builds and the MVP exit evidence.
 - **Scope:**
   - Signed per-OS archives (no Docker, no admin rights); native installers come with Desktop (M8).

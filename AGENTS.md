@@ -29,6 +29,7 @@ Start here: [README](README.md) · [PRD](docs/product/PRD.md) · [Architecture](
 - Tests must not require real agents, paid APIs or specialized tools; use fakes. Real-tool validation is recorded separately with date and versions.
 - Distinguish unit-tested, integration-tested, real-validated and not validated. A test you did not run is not evidence; local results are not CI.
 - Keep changes minimal and in scope; one logical change per commit.
+- Work is tracked as GitHub issues with planning IDs; branches, PR bases and closing rules follow the [delivery workflow](docs/engineering/delivery.md).
 
 ## Documentation
 - English for code, comments, commits and docs.

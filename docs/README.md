@@ -5,7 +5,7 @@
 | Product | [PRD](product/PRD.md) · [Feature catalog](product/FEATURE_CATALOG.md) · [Non-functional requirements](product/NON_FUNCTIONAL_REQUIREMENTS.md) · [Glossary](product/GLOSSARY.md) |
 | Architecture | [Architecture (hub)](architecture/ARCHITECTURE.md) · [Domain model](architecture/DOMAIN_MODEL.md) · [Extensibility](architecture/EXTENSIBILITY.md) · [Execution environments](architecture/EXECUTION_ENVIRONMENTS.md) · [Data architecture](architecture/DATA_ARCHITECTURE.md) · [Deployment](architecture/DEPLOYMENT.md) · [Clients](architecture/CLIENTS.md) · [Resilience](architecture/RESILIENCE.md) · [Technology benchmark](architecture/TECHNOLOGY_BENCHMARK.md) |
 | Decisions | [Decisions and ADR backlog](architecture/DECISIONS.md) and [ADRs](architecture/adr/) · [Open questions](architecture/OPEN_QUESTIONS.md) |
-| Delivery | [Master roadmap](architecture/ROADMAP.md) · [Work Packages](architecture/WORK_PACKAGES.md) |
+| Delivery | [Master roadmap](architecture/ROADMAP.md) · [Work Packages](architecture/WORK_PACKAGES.md) · [Delivery workflow](engineering/delivery.md) · [Backlog map](engineering/backlog-map.md) |
 | Engineering | [Conventions](engineering/CONVENTIONS.md) · [Repository layout](engineering/repository-layout.md) · [Validation](engineering/validation.md) · [Agent instructions](engineering/agent-instructions.md) |
 | Security | [Security model](security/SECURITY_MODEL.md) |
 | Migration | [Migration plan](migration/MIGRATION_PLAN.md) · [Repository assessment](migration/REPOSITORY_ASSESSMENT.md) · [Weave inventory](migration/weave-inventory.md) · [Weave prototype inventory](migration/weave-prototype-inventory.md) |
