@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalOccurrence.json",
   "title": "ApprovalOccurrence",
-  "description": "The one occurrence an Approval authorizes: (Step Execution id, Capability, resource). PROPOSED by ADR-0048 (not accepted; Q56): shape may change when the owner decides.",
+  "description": "The one occurrence an Approval authorizes: (Step Execution id, Capability, resource). Decided by ADR-0048 (accepted 2026-10-26, Q56).",
   "type": "object",
   "required": [
     "stepExecutionId",
