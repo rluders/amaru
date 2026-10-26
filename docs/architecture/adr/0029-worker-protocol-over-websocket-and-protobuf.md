@@ -9,7 +9,7 @@ deciders: Ricardo Lüders
 
 ## Context
 - Question: [Q16](../OPEN_QUESTIONS.md#q16-worker-protocol-transport). Product-owner answer: "Strong preference to use WebSocket with Protobuf (don't use gorilla/websocket)."
-- Verified 2026-10-25: `github.com/coder/websocket` is ISC, v1.8.15 (2026-06-15), actively maintained, `context.Context`-aware with concurrent writes; Weave already depends on it. `gorilla/websocket` last released v1.5.3 (2024-06) and is low-activity.
+- Verified 2026-10-25: `github.com/coder/websocket` is ISC, v1.8.15 (2026-06-15), actively maintained, `context.Context`-aware with concurrent writes; prototype already depends on it. `gorilla/websocket` last released v1.5.3 (2024-06) and is low-activity.
 - Workers run behind NAT on three OSes; Leases, heartbeats, Event streaming and resumption must survive unreliable networks ([ADR-0013](0013-outbound-pull-based-workers-with-leases.md)). Durable execution is Amaru's own ([ADR-0014](0014-durable-execution-on-own-state-machine-over-postgres.md)), so no engine-native worker protocol applies.
 
 ## Decision

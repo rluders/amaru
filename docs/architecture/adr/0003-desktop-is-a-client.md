@@ -8,7 +8,7 @@ deciders: Ricardo Lüders
 # 0003. Desktop is a client, not the owner of execution state
 
 ## Context
-Weave enforces that its Obsidian plugin "never spawns processes or holds domain logic"; the Runtime owns execution state, and the plugin survives Runtime restarts through a reconnect state machine (validated in Weave). Amaru adds a native Desktop and a Web client, and Workers on other machines. If the Desktop owned state, closing a laptop would stop work and Web/Cloud clients would need a different model.
+The prototype enforces that its Obsidian plugin "never spawns processes or holds domain logic"; the Runtime owns execution state, and the plugin survives Runtime restarts through a reconnect state machine (validated in the prototype). Amaru adds a native Desktop and a Web client, and Workers on other machines. If the Desktop owned state, closing a laptop would stop work and Web/Cloud clients would need a different model.
 
 ## Decision
 Amaru Desktop is a client of the Platform's public API, like Web and editor plugins. It may install, start, stop and supervise a **local** Platform process, but it reads and changes Platform state only through the public API. Execution state, Events, Approvals and Policy live in the Platform.

@@ -18,7 +18,7 @@ Docs that are true: no overclaiming, no contradictions, no stale status.
 2. **Status honesty.** Each behavior statement uses the [status vocabulary](../../../docs/engineering/CONVENTIONS.md#status-vocabulary). Audit for overclaiming: `rg -n -i "supports|provides|available|implemented|works" README.md docs` and confirm each hit against code or a recorded run.
 3. **Single source.** Content lives in one canonical doc under `docs/`; others link to it. Root `PRD.md` / `ARCHITECTURE.md` stay indexes.
 4. **Cross-document consistency.** Check together: PRD scope ↔ ROADMAP stages ↔ ARCHITECTURE labels ↔ DECISIONS statuses ↔ OPEN_QUESTIONS ↔ README status table. An ADR status change updates every doc that cites it.
-5. **Weave references.** Claims about Weave cite the [inventory](../../../docs/migration/weave-inventory.md) snapshot; if newer evidence is used, refresh the snapshot and its commit.
+5. **Prototype references.** Claims about the prototype cite a recorded evidence snapshot with its commit; if newer evidence is used, refresh the snapshot and its commit.
 6. **Commands.** Every command in README/AGENTS/CLAUDE/validation exists and was run.
 7. **Contradictions you cannot resolve**: do not pick silently. Record them (OPEN_QUESTIONS or the relevant doc) and ask.
 

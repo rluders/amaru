@@ -9,8 +9,8 @@ superseded-by: 0043
 # 0027. Project definitions live in Git under .amaru/; operational state lives in the Platform
 
 ## Context
-- Question: [Q13](../OPEN_QUESTIONS.md#q13-project-metadata-location). Product-owner answer: "You can choose the best approach; no need to keep compatibility with Weave."
-- Weave commits `.weave/{project.yaml,config.yaml,agents,workflows,teams,work,trust.json,settings.json}` and ignores `.weave/runtime/` (executions, Autoloop ledgers, worktrees). Committing Work Items and `trust.json` caused clone-level conflicts (a clone can import trust; ids are derived from files on disk).
+- Question: [Q13](../OPEN_QUESTIONS.md#q13-project-metadata-location). Product-owner answer: "You can choose the best approach; no need to keep compatibility with the prototype."
+- The prototype commits a per-project definition folder (`project.yaml`, `config.yaml`, `agents`, `workflows`, `teams`, `work`, `trust.json`, `settings.json`) and ignores its `runtime/` subfolder (executions, Autoloop ledgers, worktrees). Committing Work Items and `trust.json` caused clone-level conflicts (a clone can import trust; ids are derived from files on disk).
 - Remote and Cloud Platforms cannot write to a user's disk; Workflow and Agent definitions benefit from code review.
 
 ## Decision
@@ -19,7 +19,7 @@ superseded-by: 0043
 - Every Execution records the **definition revision**: commit SHA (when clean) plus a content hash of the definitions used.
 - A local Platform reads definitions from the working tree (uncommitted edits allowed, flagged as "dirty" in Evidence); remote and Cloud Platforms read them by Git fetch at a commit.
 - Nothing Amaru writes at runtime lands in the Project tree; `.amaru/` contains no runtime directory.
-- No `.weave/` compatibility. A one-shot `amaru import weave` (definitions and Work Items) is a roadmap task, not a runtime feature.
+- No compatibility with the prototype's project folder. A one-shot `amaru import legacy` (definitions and Work Items) is a roadmap task, not a runtime feature.
 
 ## Consequences
 - Two clones of a repository share definitions and never conflict on operational state.
@@ -28,7 +28,7 @@ superseded-by: 0043
 - Validation (M3): two clones against one Platform; Cloud reads definitions at a commit.
 
 ## Alternatives considered
-- **Everything in the Project (Weave)**: conflicts across clones, impossible for Cloud.
+- **Everything in the Project (the prototype)**: conflicts across clones, impossible for Cloud.
 - **Everything in the Platform**: loses review of definitions in Git.
 
 ## Approval

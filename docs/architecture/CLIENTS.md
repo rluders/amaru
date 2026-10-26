@@ -43,8 +43,8 @@ Areas are created under [ADR-0008](adr/0008-incremental-monorepo-layout.md) rule
 
 ## 2. Web client (M4)
 
-- **Stack.** React + TypeScript, with TanStack Router and Query, Tailwind and shadcn/ui. It starts from the Weave prototype dashboard (`weave` `dashboard/`: React 19, Vite, radix-nova style, oklch tokens, Geist font). See the [prototype inventory](../migration/weave-prototype-inventory.md) for what is reused or dropped.
-- **Data.** All server access goes through the generated SDK. The prototype's per-feature raw `fetch` hooks are replaced. Live updates come from the event stream with cursor resume, a pattern taken from the Weave plugin's `runtime/connection.ts`.
+- **Stack.** React + TypeScript, with TanStack Router and Query, Tailwind and shadcn/ui. It starts from the earlier prototype dashboard (React 19, Vite, radix-nova style, oklch tokens, Geist font); what is reused or dropped is decided per component.
+- **Data.** All server access goes through the generated SDK. The prototype's per-feature raw `fetch` hooks are replaced. Live updates come from the event stream with cursor resume, a pattern taken from the prototype's plugin's `runtime/connection.ts`.
 - **Serving.** The local Platform serves the built assets from the same origin as the API, which avoids CORS. In self-hosted and Cloud the same assets are served behind the Instance's TLS endpoint.
 - **Local authentication** ([ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md)):
   1. The Platform prints or opens a launch URL carrying a one-time code.

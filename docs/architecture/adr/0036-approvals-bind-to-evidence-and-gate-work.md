@@ -8,8 +8,8 @@ deciders: Ricardo Lüders
 # 0036. Approvals are human decisions bound to specific Evidence that gate Steps and Work Item acceptance
 
 ## Context
-- Question: [W1](../OPEN_QUESTIONS.md#w1-approval-model) (carried over from Weave Q2). No product-owner answer; resolved under the session's delegation.
-- Weave: `approval` steps persist pending decisions that survive restarts, an inbox lists them, inbound hooks cannot approve, the approver is anonymous. Weave prototype: Approvals link `execution_id` and `verification_run_id`, record reviewer and submitter, and reject self-approval.
+- Question: [W1](../OPEN_QUESTIONS.md#w1-approval-model) (carried over from the prototype Q2). No product-owner answer; resolved under the session's delegation.
+- the prototype: `approval` steps persist pending decisions that survive restarts, an inbox lists them, inbound hooks cannot approve, the approver is anonymous. earlier prototype: Approvals link `execution_id` and `verification_run_id`, record reviewer and submitter, and reject self-approval.
 - [ADR-0006](0006-human-authorization-for-consequential-actions.md) requires explicit human authorization for consequential actions.
 
 ## Decision
@@ -17,7 +17,7 @@ deciders: Ricardo Lüders
 - Only **human principals** with the required role ([ADR-0038](0038-roles-teams-and-separation-of-duties.md)) may decide; Agents, hooks and service accounts never approve.
 - If bound Evidence changes (new commit, new Artifact version), pending Approvals are **invalidated** and re-requested; decided Approvals stay attached to the Evidence they saw.
 - **Work Item status** remains human-set; "awaiting approval" is derived from pending gates; moving a Work Item to accepted requires an approved acceptance gate when its Work Package Policy demands one.
-- A missing decision parks only the affected Work Item (Weave autonomy invariant); the delivery loop continues with others.
+- A missing decision parks only the affected Work Item (prototype autonomy invariant); the delivery loop continues with others.
 
 ## Consequences
 - Every consequential action has an auditable, evidence-specific human decision.

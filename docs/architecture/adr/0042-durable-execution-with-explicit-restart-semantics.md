@@ -16,7 +16,7 @@ supersedes: 0014
 
 ## Decision
 Everything in ADR-0014's decision stays, restated here:
-- The Platform runs Workflows with **its own durable state machine**, adapted from the Weave coordinator. There is no external workflow engine.
+- The Platform runs Workflows with **its own durable state machine**, adapted from the prototype coordinator. There is no external workflow engine.
 - All execution state lives in PostgreSQL, written transactionally:
   - Execution and Step Execution rows with explicit states and a monotonic version for optimistic concurrency.
   - The ordered Event log per Execution (an append-only table, `seq` per Execution).
@@ -27,7 +27,7 @@ Everything in ADR-0014's decision stays, restated here:
 
 Restart semantics are replaced by this explicit rule. On start, the Platform reconciles every non-terminal Step Execution from the database:
 1. A Step **waiting** on an Approval, a timer or a Lease that is still valid keeps waiting. Nothing ran, so nothing is lost.
-2. A Step with a recorded remote job id whose Provider declares `Resumable` is **resumed** (Weave semantics).
+2. A Step with a recorded remote job id whose Provider declares `Resumable` is **resumed** (prototype semantics).
 3. A Step whose Capability is declared **idempotent** (its side effects are guarded by idempotency keys) is retried under its retry Policy, as a new Lease.
 4. Every other running Step ends **`interrupted`** with reason `platform_restarted`. It is never re-run automatically. An interruption does not consume an attempt (FR-17). A human, or a Policy rule that names the Step, resumes it explicitly.
 
@@ -41,7 +41,7 @@ The same rule applies when a Lease expires because a Worker was lost.
 
 ## Alternatives considered
 - **Retry Policy alone decides (ADR-0014 as written)**: simpler to state, but it can duplicate non-idempotent side effects.
-- **Fail every non-resumable Step (Weave `runtime_restarted`)**: safe, but it wastes idempotent work and counts the interruption as a failure.
+- **Fail every non-resumable Step (prototype `runtime_restarted`)**: safe, but it wastes idempotent work and counts the interruption as a failure.
 - **Temporal, Restate, Hatchet, DBOS, Conductor**: see ADR-0014.
 
 ## Approval

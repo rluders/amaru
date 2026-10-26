@@ -9,9 +9,9 @@ supersedes: 0027
 # 0043. Project definitions live in Git under .amaru/; Team membership and operational state live in the Platform
 
 ## Context
-- [ADR-0027](0027-project-definitions-in-git-operational-state-in-platform.md) answered [Q13](../OPEN_QUESTIONS.md#q13-project-metadata-location); the product owner delegated it: "You can choose the best approach; no need to keep compatibility with Weave". It listed **Teams** among the definitions committed under `.amaru/`.
+- [ADR-0027](0027-project-definitions-in-git-operational-state-in-platform.md) answered [Q13](../OPEN_QUESTIONS.md#q13-project-metadata-location); the product owner delegated it: "You can choose the best approach; no need to keep compatibility with prototype". It listed **Teams** among the definitions committed under `.amaru/`.
 - [ADR-0038](0038-roles-teams-and-separation-of-duties.md) later made Teams sets of humans and Agents that **gate Approvals** (required reviewer Team, separation of duties). Keeping that membership in Git would let anyone with write access to the repository add themselves to a reviewer Team. Authorization data would then follow repository permissions instead of Organization roles ([Q27](../OPEN_QUESTIONS.md#q27-where-teams-live)).
-- Weave's `.weave/teams` holds agent compositions, not human authorization.
+- the prototype's `teams` folder holds agent compositions, not human authorization.
 - Delegated in the 2026-10-25 planning prompt.
 
 ## Decision
@@ -29,8 +29,8 @@ supersedes: 0027
   - Every Execution records the definition revision: the commit SHA when the tree is clean, plus a content hash.
   - A local Platform reads the working tree, and dirty edits are flagged in Evidence. Remote and Cloud Platforms fetch at a commit.
   - Nothing Amaru writes at runtime lands in the Project tree.
-  - There is no `.weave/` compatibility, only a one-shot `amaru import weave`.
-- The importer maps Weave `teams/` (agent compositions) to Platform Teams that hold the same Agents, after the user confirms.
+  - There is no compatibility with the prototype's project folder, only a one-shot `amaru import legacy`.
+- The importer maps prototype `teams/` (agent compositions) to Platform Teams that hold the same Agents, after the user confirms.
 
 ## Consequences
 - Repository write access never grants approval authority.

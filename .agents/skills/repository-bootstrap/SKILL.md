@@ -16,7 +16,7 @@ Grow the monorepo one real component at a time, without empty scaffolds, fake co
 ## Preconditions (stop and ask if any fails)
 - The component has real content now and a documented purpose ([repository-layout](../../../docs/engineering/repository-layout.md) "introduced when" column is satisfied).
 - Any infrastructure dependency has an accepted ADR (ADR-0008).
-- Migrating Weave code requires an approved migration ADR (ADR-0007). Otherwise do not copy it.
+- Migrating prototype code requires an approved migration ADR (ADR-0007). Otherwise do not copy it.
 
 ## Workflow
 1. **Inspect state**: `git status`, `git log -1`, existing files at the target path, ignored files. Never overwrite or delete unseen content; never discard uncommitted work.
