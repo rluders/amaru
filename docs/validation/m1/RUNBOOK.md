@@ -2,7 +2,7 @@
 
 How to run the storage and execution spike natively on one operating system and produce the record that [validation](../../engineering/validation.md#cross-platform-validation-m3-and-m4) requires. Experiments: [spikes/wp-m1-02](../../../spikes/wp-m1-02/README.md). Report: [investigations](../../architecture/investigations/).
 
-A run counts for an OS only if it executes **natively on that OS**, as a **non-admin** user, on a physical machine or a full VM (WSL, Docker, Wine and cross-compilation do not count). Before the first run, add the machine or VM (OS version, architecture, kind) to [issue #3](https://github.com/rluders/amaru/issues/3).
+A run counts for an OS only if it executes **natively on that OS** on a physical machine or a full VM (WSL, Docker, Wine and cross-compilation do not count); a **non-admin** user is required for the Windows non-admin claim. GitHub-hosted runners are accepted (see below); this runbook is for a manual run, for example on a standard-user Windows 11 or a physical Mac. Before the first run, add the machine or VM (OS version, architecture, kind) to [issue #3](https://github.com/rluders/amaru/issues/3).
 
 ## Prerequisites
 - The commit to test: the head of `feat/3-wp-m1-02-storage-and-execution` (record `git rev-parse HEAD`).
@@ -40,3 +40,7 @@ SPIKE_BUNDLE=$PWD/bundle go test -count=1 -v ./internal/... 2>&1 | tee gotest.lo
 
 ## Record to commit
 One file per OS: `docs/validation/m1/<YYYY-MM-DD>-<os>-wp-m1-02.md` with: date, commit SHA, OS name/version/architecture, machine kind, tool versions (`go version`, PostgreSQL `version()` from `pg.jsonl`, `nats-server` v2.15.1, `embedded-postgres` v2.0.1), the exact commands, pass/fail counts per command, failing or skipped scenarios with the cause, who ran it. Then comment on [#3](https://github.com/rluders/amaru/issues/3) with the OS, the commit and a link, and tick the OS in the issue's checklist. A Linux record is [2026-10-26-linux-wp-m1-02.md](2026-10-26-linux-wp-m1-02.md).
+
+
+## Hosted runs
+The workflow [`spike-m1-02.yml`](../../../.github/workflows/spike-m1-02.yml) ran all of the above on GitHub-hosted runners; records: [macOS](2026-10-26-macos-wp-m1-02.md), [Windows](2026-10-26-windows-wp-m1-02.md), and a hosted-Linux section in the [Linux record](2026-10-26-linux-wp-m1-02.md). Still worth a manual run with this runbook: Windows 10/11 as a **standard user**, and macOS with signed/quarantined binaries from a downloaded installer.
