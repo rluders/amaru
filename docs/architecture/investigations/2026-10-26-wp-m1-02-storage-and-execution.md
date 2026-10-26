@@ -10,7 +10,7 @@
 | A12 `embedded-postgres` v2 as production supervisor with `LocalProvider` | **holds, with three required mitigations** (below) | not validated | not validated | the Platform adopts the mitigations; fallback not needed on Linux |
 | A2 bundled PostgreSQL, no admin rights, survives crashes | holds for crashes; **upgrades not validated** | not validated | not validated | owner runs the [runbook](../../validation/m1/RUNBOOK.md) on both |
 | A9 embedded JetStream fits compact installs | holds (footprint, restart, store loss) | not validated | not validated, **Windows file locking untested** | same |
-| ADR-0042 restart semantics | holds in 86/86 crash cases; **five rules need clarification** (below) | not validated | not validated | proposed clarification, owner decides |
+| ADR-0042 restart semantics | holds in 86/86 crash cases; **five rules need clarification** (below) | not validated | not validated | [ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md) proposed, owner accepts |
 
 ## Environment
 Linux: see [the record](../../validation/m1/2026-10-26-linux-wp-m1-02.md) (Fedora 43, x86_64, physical, non-root, go1.26.0, PostgreSQL 18.6, `embedded-postgres` v2.0.1, `nats-server` v2.15.1). macOS and Windows machines were not named; the environment table is in #3 with both rows marked "not run". Evidence level: **real-validated on Linux** for the PostgreSQL and NATS behavior and the crash matrix (real processes killed with SIGKILL, real PostgreSQL and JetStream); **not validated** elsewhere.
@@ -28,7 +28,7 @@ Setup: an installer stand-in (`spike bundle`) fetches the pinned distribution on
 | Binaries relocated, same version | pass | **not** a minor-version upgrade |
 | Root user | refused by the library ("PostgreSQL cannot run as root") | |
 
-Footprint (Linux x86_64): bundle **126.1 MB** installed (PostgreSQL 115.1 MB, supervisor 10.7 MB); **46.4 MB** as `tar.gz`; fresh data directory 49.4 MB; idle PostgreSQL process tree (10 processes) **130 MB RSS**. NFR-34's "≤ 120 MB increment" is ambiguous between installed and compressed size: installed exceeds it by 6 MB before the Platform binary, compressed is far under. **Owner decision needed** on which one NFR-34 means; the bundle also ships `psql`, `createdb` and `share/` content the Platform may not need (not tested whether they can be removed). macOS and Windows sizes are not measured.
+Footprint (Linux x86_64): bundle **126.1 MB** installed (PostgreSQL 115.1 MB, supervisor 10.7 MB); **46.4 MB** as `tar.gz`; fresh data directory 49.4 MB; idle PostgreSQL process tree (10 processes) **130 MB RSS**. NFR-34's "≤ 120 MB increment" is ambiguous between installed and compressed size: installed exceeds it by 6 MB before the Platform binary, compressed is far under. The 120 MB budget is validation [A15](../OPEN_QUESTIONS.md#validation-register) ("installer increment"), so it is read as the **compressed installer download**: 46.4 MB passes; installed size has no budget and is reported for information (reading recorded 2026-10-26, delegated by the owner; the Platform binary and the NATS +4 MiB are not yet in the figure). The bundle also ships `psql`, `createdb` and `share/` content the Platform may not need (not tested whether they can be removed). macOS and Windows sizes are not measured.
 
 ### A12 assessment: holds on Linux, three mitigations required
 Facts found in the library source (v2.0.1) and in runs:
@@ -149,7 +149,7 @@ The spike had to choose; each choice is in `internal/wf` and listed for the owne
 5. **Attempts**: restart retry of an idempotent Step and interruptions do not consume an attempt; only reported failures and timeouts of the capability path do (FR-17 only names interruption).
 Also: a resumable Step that crashed **before** its job id was recorded ends `interrupted`, not resumed.
 
-These need an ADR-0042 clarification note or a proposed amendment, which only the product owner can accept ([DECISIONS](../DECISIONS.md#convention)). Not drafted here: none of them changes the architecture, and drafting is better done with the owner's choice on points 2 and 3.
+The owner delegated the choice. The proposed answers are in [ADR-0044](../adr/0044-restart-semantics-clarifications-from-the-m1-spike.md), status `proposed`; only the product owner can accept it ([DECISIONS](../DECISIONS.md#convention)). It clarifies ADR-0042 and supersedes nothing.
 
 ## Limitations and remaining risks
 - Linux x86_64 only. Per-OS crash semantics (Windows process and file locks, macOS signing) are unknown.
