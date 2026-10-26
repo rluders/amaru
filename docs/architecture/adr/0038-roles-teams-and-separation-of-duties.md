@@ -8,8 +8,8 @@ deciders: Ricardo Lüders
 # 0038. Fixed roles, Teams of humans and Agents, and per-gate separation of duties
 
 ## Context
-- Question: [W3](../OPEN_QUESTIONS.md#w3-teams) (Weave ADR-019). Resolved under the session's delegation.
-- Weave Teams: `{members:[{agentId, role}], separationOfDuties}`, opt-in, single-user product. Weave prototype: `RequiredReviewerTeam`, self-approval rejected.
+- Question: [W3](../OPEN_QUESTIONS.md#w3-teams) (prototype ADR-019). Resolved under the session's delegation.
+- Prototype Teams: `{members:[{agentId, role}], separationOfDuties}`, opt-in, single-user product. earlier prototype: `RequiredReviewerTeam`, self-approval rejected.
 
 ## Decision
 - **Organization roles** (fixed set): Owner, Admin, Maintainer, Contributor, Viewer. Project-level role assignments may narrow or raise a member's role for that Project.

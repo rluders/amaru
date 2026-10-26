@@ -11,7 +11,7 @@ deciders: Ricardo Lüders
 - Question: [Q3](../OPEN_QUESTIONS.md#q3-database-and-persistence-strategy). Product-owner answer: "Postgres." In this session the product owner chose a bundled PostgreSQL for compact installs over a second SQLite adapter.
 - Earlier docs required compact installs to be one process with embedded storage and no Docker (NFR-1, NFR-34). A PostgreSQL server is not embeddable in-process; the intent of NFR-34 is that the user installs and operates nothing extra.
 - Evidence:
-  - The Weave prototype already uses PostgreSQL only, with 30 migrations, and refuses SQLite outside tests.
+  - The earlier prototype already uses PostgreSQL only, with 30 migrations, and refuses SQLite outside tests.
   - `fergusstrange/embedded-postgres` v2.0.1 (MIT, 2026-10-19) runs real PostgreSQL 15–18 binaries as a supervised child, with native Windows amd64 CI; by default it downloads binaries on first start (verified https://github.com/fergusstrange/embedded-postgres, 2026-10-25).
   - Row-level security ([ADR-0022](0022-cloud-tenancy-row-level-isolation-by-organization.md)), full-text search ([ADR-0030](0030-knowledge-is-lexically-indexed-project-documentation.md)) and `SKIP LOCKED` timers ([ADR-0014](0014-durable-execution-on-own-state-machine-over-postgres.md)) all need PostgreSQL features.
 
@@ -33,7 +33,7 @@ deciders: Ricardo Lüders
 ## Alternatives considered
 - **PostgreSQL for server/Cloud plus SQLite for compact**: true single process, but two adapters, two migration sets and dialect drift forever; RLS and FTS differ.
 - **Require users to install PostgreSQL or Docker locally**: worst onboarding; contradicts NFR-1.
-- **Files (Weave)**: no transactions, no multi-user, no migrations (GAP-07).
+- **Files (the prototype)**: no transactions, no multi-user, no migrations (GAP-07).
 
 ## Approval
 Proposed by: Claude (open-question resolution, 2026-10-25) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session (answer recorded in OPEN_QUESTIONS Q3; bundled compact option chosen in the same session).

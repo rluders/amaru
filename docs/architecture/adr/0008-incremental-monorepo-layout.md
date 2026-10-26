@@ -8,7 +8,7 @@ deciders: Ricardo Lüders
 # 0008. Monorepo layout introduced incrementally, by evidence
 
 ## Context
-The target product has a Go Platform, React/TS clients, a native Desktop host, shared contracts, SDKs and UI components. Creating every directory now would produce empty packages and fake scaffolds that look like progress and rot. Weave grew successfully from one Go module and one TS package.
+The target product has a Go Platform, React/TS clients, a native Desktop host, shared contracts, SDKs and UI components. Creating every directory now would produce empty packages and fake scaffolds that look like progress and rot. The prototype grew successfully from one Go module and one TS package.
 
 ## Decision
 Amaru is a single monorepo whose target layout is documented in [repository-layout](../../engineering/repository-layout.md). A top-level area (`apps/`, `services/`, `packages/`, `tools/`) or a package inside it is created only when it has real content, a documented purpose, an owner and a validation command wired into `make check`. Infrastructure dependencies (workflow engines, brokers, databases, object storage) are added only with an accepted ADR.

@@ -9,7 +9,7 @@ deciders: Ricardo Lüders
 
 ## Context
 - Question: [Q15](../OPEN_QUESTIONS.md#q15-identity-and-authentication-model). Product-owner answer: "Pick the best approach."
-- Weave prototype `auth/auth.go`: bcrypt passwords seeded equal to the username, HS256 JWT (12 h) with no refresh or revocation — a counter-example.
+- earlier prototype `auth/auth.go`: bcrypt passwords seeded equal to the username, HS256 JWT (12 h) with no refresh or revocation — a counter-example.
 - Verified 2026-10-25: `github.com/coreos/go-oidc/v3` is Apache-2.0, v3.21.0, maintained.
 - Approvals and audit need attributable identities (SEC-6); self-hosters often have an IdP; Cloud needs tenant-scoped identity ([ADR-0022](0022-cloud-tenancy-row-level-isolation-by-organization.md)).
 
@@ -32,7 +32,7 @@ deciders: Ricardo Lüders
 
 ## Alternatives considered
 - **OIDC only everywhere**: blocks small self-hosted installs without an IdP.
-- **Stateless JWT sessions**: no revocation (Weave prototype).
+- **Stateless JWT sessions**: no revocation (earlier prototype).
 - **Embedding an IdP (Dex/Keycloak)**: another service to operate.
 
 ## Approval

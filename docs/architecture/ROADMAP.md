@@ -10,14 +10,14 @@ Features are referenced by catalog ID without the `FEAT-` prefix ([feature catal
 - **M0 complete** (2026-10-25): the product owner reviewed the planning package and accepted ADRs 0002–0005 and 0008–0039; a second pass the same day closed the residual questions Q23–Q54 with ADRs 0040–0043 (superseding 0014, 0019, 0020 and 0027). No open questions remain.
 - **Tracking:** every Work Package, epic and scheduled feature has a GitHub issue ([backlog map](../engineering/backlog-map.md), [delivery workflow](../engineering/delivery.md)).
 - **Epic features (M5–M9):** each epic lists the features it owns; every feature of a milestone belongs to exactly one epic. The grouping was confirmed in the backlog refinement of 2026-10-25 (E5.7 added; ART-004 and ENV-007 moved to E5.1; PRJ-006 moved to E7.1; ART-004's S3-compatible adapter delivered by E7.2). It is refined into Work Packages when M4 is near.
-- **Next: M1** validation spikes and license texts. Weave is used as-is from its baseline commit (ADR-0032).
+- **Next: M1** validation spikes and license texts. The prototype is used as-is from its baseline commit (ADR-0032).
 
 ## Overview
 
 ```mermaid
 flowchart LR
     m0[M0 Foundation<br/>reconciled] --> m1[M1 Validation<br/>spikes]
-    wv[[Weave baseline<br/>c8a2f6e]] --> m1
+    wv[[Prototype baseline]] --> m1
     m1 --> m2[M2 Contracts v0]
     m2 --> m3[M3 Platform core<br/>migration wave 1]
     m3 --> m4((M4 Local MVP))
@@ -51,7 +51,7 @@ flowchart LR
 - **Outcome (engineering):** the documents below are complete and cross-linked; `make check` is green:
   - PRD, feature catalog, NFRs, glossary
   - architecture views, ADR-0009 … 0043 (accepted; 0014, 0019, 0020 and 0027 superseded), closed open questions
-  - this roadmap, Work Packages, repository assessment, migration plan
+  - this roadmap, Work Packages
 - **Features:** none (planning only).
 - **Dependencies:** none.
 - **Work Packages:** WP-M0-01.
@@ -60,7 +60,7 @@ flowchart LR
   - ADRs 0002–0005 and 0008–0043 accepted (done 2026-10-25).
   - License decided ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Validation:** `make check`; traceability checks described in [§ Feature traceability](#feature-traceability).
-- **Risks:** planning drifting from Weave reality, mitigated by refreshing the inventory at M1.
+- **Risks:** planning drifting from the prototype reality, mitigated by refreshing the inventory at M1.
 - **Deferred:** all implementation.
 
 ## M1 Decisions and spikes
@@ -70,13 +70,13 @@ flowchart LR
   - Storage and execution spike: bundled PostgreSQL ([ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md)) + embedded NATS JetStream ([ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md)) + own state machine with outbox ([ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md)) run the representative Workflow with forced crashes in every Step state on Windows, macOS and Linux; install footprint recorded against the NFR-34 budget (≤ 120 MB increment); `embedded-postgres` v2 validated as the supervisor (A12).
   - Worker protocol draft as Protobuf schemas (`amaru.worker.v1`, [ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md)) and the contract versioning rules in fixtures ([ADR-0025](adr/0025-api-and-protocol-versioning-policy.md)).
   - Approval, Policy, roles and configuration shapes drafted for M2 ([ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md), [ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md), [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)).
-  - A refreshed Weave inventory at the baseline `feat/orkestra-dogfood` @ `c8a2f6e` ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)); Weave findings F-27, F-39, F-40, F-41 written as Amaru acceptance tests.
+  - A refreshed prototype inventory at the pinned baseline ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)); prototype findings F-27, F-39, F-40, F-41 written as Amaru acceptance tests.
 - **License tasks (product owner, [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)):** no separate legal review of the Amaru Community License 1.0 draft (decided 2026-10-26 by the product owner); add `LICENSE` files (community license at the root before the first public release or external contribution, not a migration gate; Apache-2.0 in each contract and SDK package when it is created); CLA text and tooling; trademark search for "Amaru"; vulnerability disclosure policy (`SECURITY.md`) before the first public release.
 - **Features:** none implemented.
 - **Unblocks:** API-001, EXE-002, PRJ-005, POL-001 and REV-001.
-- **Dependencies:** M0. No Weave-side work is required.
+- **Dependencies:** M0. No prototype-side work is required.
 - **Work Packages:** WP-M1-01 … WP-M1-07.
-- **Exit criteria:** spike reports in `docs/architecture/investigations/` show the validation checks A2 and A9 pass (or a superseding ADR is accepted); MIGRATION_PLAN §5 criteria 1, 2 and 7 met for the first wave.
+- **Exit criteria:** spike reports in `docs/architecture/investigations/` show the validation checks A2 and A9 pass (or a superseding ADR is accepted); migration readiness criteria 1, 2 and 7 met for the first wave.
 - **Validation:** spike reports with crash-injection results and install footprint per OS.
 - **Risks:**
   - bundled PostgreSQL blocked on Windows/macOS (A2), mitigated by an installer-managed PostgreSQL service as fallback;
@@ -89,20 +89,20 @@ flowchart LR
   - `packages/sdk`: generated TypeScript client.
 - **Features:** API-001, API-002, API-003.
 - **Requirements:** FR-40, NFR-2.
-- **Dependencies:** M1 (versioning [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md), Approval/Policy [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md)/[ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), metadata split [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)). Adapting Weave `protocol/` requires its migration ADR (ADR-0011).
+- **Dependencies:** M1 (versioning [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md), Approval/Policy [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md)/[ADR-0037](adr/0037-one-policy-evaluates-capabilities-grants-and-approvals.md), metadata split [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)). Adapting prototype `protocol/` requires its migration ADR (ADR-0011).
 - **Work Packages:** WP-M2-01 … WP-M2-03.
 - **Exit criteria:**
-  - Every Weave route needed for M3/M4 is in the contract.
-  - A drift test compares server routes with the spec (it fails today on Weave's `/work-packages/{id}/autoloop`).
+  - Every prototype route needed for M3/M4 is in the contract.
+  - A drift test compares server routes with the spec (it fails today on the prototype's `/work-packages/{id}/autoloop`).
   - The SDK generation staleness check is in `make check`.
 - **Validation:** fixture tests in both languages.
 - **Risks:** freezing too early. Mitigation: the URL major is `/v1` from M2, while the contract package stays `0.x` and may change incompatibly until the Local MVP release; it becomes `1.0.0` at M4, and from then on ADR-0025's additive-only rule applies.
 - **Deferred:** plugin manifest schema (M6), identity endpoints (M7).
 
 ## M3 Platform core
-- **Objective:** the Amaru Platform running headless: the Weave Runtime core adapted, plus Policy, Approval, storage and the embedded Worker interface.
+- **Objective:** the Amaru Platform running headless: the prototype Runtime core adapted, plus Policy, Approval, storage and the embedded Worker interface.
 - **Outcome (engineering):**
-  - `services/platform` passes the ported Weave behavior tests, the architecture test and the crash-injection suite.
+  - `services/platform` passes the ported prototype behavior tests, the architecture test and the crash-injection suite.
   - Work, Workflows and Executions are driven through the API on PostgreSQL with the NATS bus and outbox.
 - **Features:** PRJ-001, PRJ-002, PRJ-003, PRJ-005, WRK-001, WRK-002, WRK-003, WFL-001, WFL-002, WFL-003, WFL-004, EXE-001, EXE-002, EXE-003, EXE-004, EXE-005, EXE-006, API-005, AGT-001, AGT-002, AGT-003, AGT-004, SKL-001, SKL-002, CAP-001, CAP-002, CAP-003, CAP-004, CAP-005, ENV-001, ENV-010, REV-001, REV-003, ART-001, ART-002, ART-003, OBS-001, IAM-001, POL-001, POL-002, POL-003, POL-004, POL-005, POL-006, POL-007, OPS-002, OPS-003.
 - **Requirements:** FR-1, FR-2, FR-10 … FR-13, FR-20 … FR-24, FR-30, FR-31; NFR-3, NFR-4, NFR-5, NFR-6, NFR-9, NFR-11, NFR-35.
@@ -114,10 +114,10 @@ flowchart LR
   - Ungranted Capability use is refused.
   - Approval waits survive restarts.
   - Codex and OpenCode refuse unenforceable confinement.
-  - No Obsidian, Weave or vendor identifiers remain in the core packages.
+  - No Obsidian, prototype or vendor identifiers remain in the core packages.
 - **Validation:** `make check` with fakes, run natively on Linux, macOS and Windows; a recorded headless run per OS with a real agent provider. Without hosted CI, the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules define the per-OS checks, the evidence and when a missing OS blocks exit.
 - **Risks:**
-  - Weave file-store semantics vs PostgreSQL transactions (store is reimplemented with Weave tests as specification);
+  - Prototype file-store semantics vs PostgreSQL transactions (store is reimplemented with prototype tests as specification);
   - Windows process-tree semantics (GAP-05);
   - scope creep into delivery-loop changes, which stay in M4.
 - **Deferred:** remote Workers, parallel branches, retries (M5).
@@ -133,7 +133,7 @@ flowchart LR
   6. merges on GitHub themselves.
 - **Features:** PRJ-004, WRK-004, WRK-005, VAL-001, VAL-002, VAL-003, REV-002, REV-004, REV-005, REV-006, OBS-002, OBS-003, CLI-001, CLI-002, CLI-003, CLI-004, CLI-005, CLI-006, CLI-007, INT-001, INT-002, OPS-001, ADM-001.
 - **Requirements:** FR-4, FR-16, FR-17, FR-25, FR-33 (per step), FR-34, FR-41; NFR-1, NFR-13, NFR-14, NFR-26, NFR-37, NFR-38.
-- **Dependencies:** M3; local Web authentication per [ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md); migration ADR for the Weave prototype's dashboard assets (license settled by [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
+- **Dependencies:** M3; local Web authentication per [ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md); migration ADR for the earlier prototype's dashboard assets (license settled by [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Work Packages:** WP-M4-01 … WP-M4-07.
 - **Exit criteria:**
   - PRD §12 criteria met.
@@ -144,10 +144,10 @@ flowchart LR
 - **Validation:** unit, contract, end-to-end browser tests; recorded manual runs per OS, per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules.
 - **Risks:**
   - browser-to-loopback security;
-  - prototype UI carrying unbacked pages (NFR-38);
+  - Prototype UI carrying unbacked pages (NFR-38);
   - the delivery loop still needing humans often (acceptable: supervised by design).
 - **Deferred:** Desktop, remote Workers, plugins, multi-user.
-- **At exit:** the Weave Obsidian plugin is replaced for daily use; the owner may archive `weave-obsidian` ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
+- **At exit:** the prototype's Obsidian plugin is replaced for daily use; the owner may archive the prototype ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
 
 ## M5 Remote execution and execution hardening
 - **Objective:** Steps run on other machines safely; execution becomes robust beyond one process.
@@ -266,9 +266,9 @@ All decisions are taken (2026-10-25). What remains on the path are **validations
 
 | Item | Blocks | Owner | Notes |
 |---|---|---|---|
-| License texts and LICENSE files ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)) | Every migration (M2 contracts adapt from Weave, M3, M4 dashboard) | Product owner (+ legal) | Highest schedule risk; the decision itself is made |
+| License texts and LICENSE files ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)) | Every migration (M2 contracts adapt from the prototype, M3, M4 dashboard) | Product owner (+ legal) | Highest schedule risk; the decision itself is made |
 | Storage/execution spike: bundled PostgreSQL, embedded NATS, crash suite (A2, A9) | M3 | Engineering | Failure → superseding ADR |
-| Weave inventory refresh at `c8a2f6e` ([ADR-0032](adr/0032-migration-baseline-is-orkestra-dogfood-c8a2f6e.md)) | First migration ADR | Engineering | No Weave-side work required |
+| Prototype inventory refresh at the pinned baseline ([ADR-0032](adr/0032-migration-baseline-is-a-pinned-commit.md)) | First migration ADR | Engineering | No prototype-side work required |
 | Local Web auth security review ([ADR-0034](adr/0034-local-web-client-authentication-with-launch-code-and-cookie.md)) | M4 | Engineering | |
 | Remote Worker + UE5 pilot (A5, A8) | M5 exit | Engineering | |
 | Plugin toolchain spike: Javy + Amaru Javy plugin, plugin-host process (A10) | M6 | Engineering | |
@@ -278,8 +278,8 @@ All decisions are taken (2026-10-25). What remains on the path are **validations
 
 - **Cycles.** The milestone graph is acyclic. Feature dependencies never point to a later milestone; this is checked by script, see the next section.
 - **Gaps.**
-  - M3 requires migration ADRs. They are not gated by the root LICENSE file (decided 2026-10-26 by the product owner); ADR-0026 resolves relicensing of Weave code.
-  - M4 adapts the Weave prototype UI, which has no LICENSE file; the copyright holder's consent is recorded in [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md).
+  - M3 requires migration ADRs. They are not gated by the root LICENSE file (decided 2026-10-26 by the product owner); ADR-0026 resolves relicensing of the prototype code.
+  - M4 adapts the earlier prototype UI, which has no LICENSE file; the copyright holder's consent is recorded in [ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md).
 - **Not planned (P2/P3).** All P2/P3 features without a milestone are in the catalog's Backlog or "—", by design.
 
 ## Feature traceability
@@ -308,7 +308,7 @@ Every P0 and P1 feature maps to exactly one milestone above. The lists per miles
 | ID | Risk | Likelihood / impact | Mitigation | Owner |
 |---|---|---|---|---|
 | R1 | Root LICENSE text not added before the first public release or external contribution (decision made in ADR-0026) | Low / High | README states all rights reserved until it exists; migration is not gated by it (2026-10-26) | Product owner |
-| R2 | Weave evolves faster than the inventory | High / Medium | Refresh inventory at M1 and per migration ADR; fixed baseline `c8a2f6e` (ADR-0032) | Engineering |
+| R2 | The prototype evolves faster than the inventory | High / Medium | Refresh inventory at M1 and per migration ADR; fixed baseline commit (ADR-0032) | Engineering |
 | R3 | Bundled PostgreSQL and embedded NATS bloat or destabilize compact installs | Medium / High | M1 spike with footprint per OS (A2, A9); NFR-34; fallback in the validation register | Engineering |
 | R4 | Delivery loop waste persists (Cycle 7: 6 wasted runs) | Medium / High | WRK-005, OBS-002, M4 exit criterion on runs per accepted change | Engineering |
 | R5 | Browser-based local UI security flaws | Medium / High | ADR-0034 controls (launch code, Host/Origin/CSRF checks) and security review before M4 | Engineering |
@@ -317,7 +317,7 @@ Every P0 and P1 feature maps to exactly one milestone above. The lists per miles
 | R8 | Plugin sandboxing harder than expected | Medium / Medium | Wasm-only `logic` in a separate plugin-host process with a small host API (ADR-0040); slots-only UI in v1; heavy work in `worker-adapter` | Engineering |
 | R9 | Agent vendor CLIs change behavior | High / Medium | Captured-output tests; provider health checks | Engineering |
 | R10 | Scope creep toward the full vision before M4 | Medium / High | P0 definition; out-of-scope list; milestone exit reviews | Product owner |
-| R11 | Two codebases diverge during migration | Medium / Medium | Component-by-component migration; Weave freezes migrated components | Both |
+| R11 | Two codebases diverge during migration | Medium / Medium | Component-by-component migration; prototype freezes migrated components | Both |
 | R12 | Interactive tools (Unreal Editor) are unstable or need a desktop session that automation cannot hold | High / Medium | Session and editor health checks; refuse Steps when unhealthy; snapshot reset (ENV-011, ENV-014) | Engineering |
 | R13 | Specialized Environments are costly (GPU time, engine and OS licenses, idle VMs) | Medium / Medium | Idle stop, cost attribution per Environment, explicit license-seat limits in the template | Product owner |
 
@@ -328,7 +328,7 @@ The 2026-10-24 outline used Stages 0–8. They map as follows:
 | Former stage | Now |
 |---|---|
 | 0 Foundation | M0 |
-| 1 Complete Weave cycles | Dropped: Weave is used as-is from `c8a2f6e`; its findings became Amaru acceptance tests (ADR-0032) |
+| 1 Complete prototype cycles | Dropped: The prototype is used as-is from the pinned baseline; its findings became Amaru acceptance tests (ADR-0032) |
 | 2 Architecture study | Done in M0 (Q1–Q54 closed 2026-10-25); M1 validates with spikes |
 | 3 Contracts | M2 |
 | 8 Migration | Distributed: migration ADRs per component in M2, M3, M4 instead of a final stage |

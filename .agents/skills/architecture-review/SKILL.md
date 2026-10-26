@@ -11,12 +11,12 @@ Catch boundary violations and unexamined trade-offs before they become code or a
 ## When to use
 - A new or changed proposal in `docs/architecture/` or an ADR.
 - A change that adds a component, a dependency, a contract field, or crosses Platform / Worker / Client / Provider boundaries.
-- Before a migration ADR that moves Weave code.
+- Before a migration ADR that moves prototype code.
 
 Not for: style review, small in-component changes.
 
 ## Inputs
-The proposal or diff; [ARCHITECTURE.md](../../../docs/architecture/ARCHITECTURE.md); [DECISIONS.md](../../../docs/architecture/DECISIONS.md); relevant [OPEN_QUESTIONS](../../../docs/architecture/OPEN_QUESTIONS.md); Weave evidence if cited ([inventory](../../../docs/migration/weave-inventory.md)).
+The proposal or diff; [ARCHITECTURE.md](../../../docs/architecture/ARCHITECTURE.md); [DECISIONS.md](../../../docs/architecture/DECISIONS.md); relevant [OPEN_QUESTIONS](../../../docs/architecture/OPEN_QUESTIONS.md); prototype evidence if cited.
 
 ## Workflow
 1. **State the change** in two sentences: what moves where, and why.

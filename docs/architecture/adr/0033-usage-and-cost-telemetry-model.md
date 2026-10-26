@@ -9,7 +9,7 @@ deciders: Ricardo Lüders
 
 ## Context
 - Question: [Q20](../OPEN_QUESTIONS.md#q20-cost-and-usage-telemetry-model). Product-owner answer: "You can decide."
-- Weave `domain.Usage` is `{Credits, Quantity, Unit, DurationMS}` with no tokens or currency; the Claude provider drops `usage` and `total_cost_usd` (finding F-41). Providers report different things: tokens, credits, nothing.
+- Prototype `domain.Usage` is `{Credits, Quantity, Unit, DurationMS}` with no tokens or currency; the Claude provider drops `usage` and `total_cost_usd` (finding F-41). Providers report different things: tokens, credits, nothing.
 - PRD principle 9 and FR-33 require visible cost, attributable to accepted work.
 
 ## Decision

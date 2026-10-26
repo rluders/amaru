@@ -8,7 +8,7 @@ deciders: Ricardo Lüders
 # 0002. One Platform, multiple deployment models
 
 ## Context
-The product direction names Amaru Cloud (managed) and Amaru Self-hosted (user-operated), plus the local single-user use that Weave serves today ([PRD §6](../../product/PRD.md#6-product-surfaces-and-deployment-models)). Separate products per deployment would fork the domain model and contracts.
+The product direction names Amaru Cloud (managed) and Amaru Self-hosted (user-operated), plus the local single-user use that prototype serves today ([PRD §6](../../product/PRD.md#6-product-surfaces-and-deployment-models)). Separate products per deployment would fork the domain model and contracts.
 
 ## Decision
 There is one Amaru Platform with one domain model and one set of public contracts. Local, self-hosted and Cloud are **deployments** of it that differ only through adapters (storage, identity provider, Worker placement, observability backends) and configuration — never through divergent domain logic or contract shapes.
@@ -21,7 +21,7 @@ There is one Amaru Platform with one domain model and one set of public contract
 
 ## Alternatives considered
 - *Separate Cloud product*: faster Cloud iteration, but two domain models and duplicated contracts.
-- *Cloud-only*: conflicts with local/self-hosted direction and with Weave's local-first users.
+- *Cloud-only*: conflicts with local/self-hosted direction and with the prototype's local-first users.
 
 ## Approval
 Proposed by: Claude (bootstrap, 2026-10-24) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session that resolved all open questions (explicit acceptance of every pending ADR).

@@ -10,7 +10,7 @@ deciders: Ricardo Lüders
 ## Context
 - Question: [Q10](../OPEN_QUESTIONS.md#q10-remote-execution-environments). Product-owner answer: "VMs and remote machines need to be registered by workspace or projects; configuration should be provided manually by the user. You can spike and decide the best approach." Workspace = Organization ([ADR-0022](0022-cloud-tenancy-row-level-isolation-by-organization.md)).
 - [ADR-0013](0013-outbound-pull-based-workers-with-leases.md): Workers connect outbound and hold Leases. Transport: [ADR-0029](0029-worker-protocol-over-websocket-and-protobuf.md).
-- Weave's Provider contract (`weave.provider/v1`, `Resumable`, `Detachable`) is the protocol seed; Windows process-tree termination is unvalidated in Weave (GAP-05).
+- The prototype's Provider contract (stdio provider protocol, `Resumable`, `Detachable`) is the protocol seed; Windows process-tree termination is unvalidated in the prototype (GAP-05).
 - Assumption A5: a Worker run inside an interactive user session satisfies Windows/UE5 use cases.
 
 ## Decision

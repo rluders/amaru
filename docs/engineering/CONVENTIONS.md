@@ -14,11 +14,11 @@ Every statement about behavior uses one of these, explicitly when it could be mi
 | **Implemented and verified** | Code exists in this repo and a named check ran and passed. |
 | **Implemented, not validated** | Code exists; no test or recorded run proves the behavior. |
 | **Proposed** | Designed, recommended or decided (doc, proposed or accepted ADR) but not built. An accepted ADR is a decision, not an implementation. |
-| **Exists in Weave** / **[Weave]** | Built in `rluders/weave-obsidian`, not in Amaru. |
+| **Exists in the prototype** / **[Prototype]** | Built in an earlier internal prototype, not in Amaru. |
 | **Open** | Unresolved; tracked in [OPEN_QUESTIONS](../architecture/OPEN_QUESTIONS.md). |
 | **Requires decision** | Waiting on a human. |
 
-Never describe planned or Weave behavior as available in Amaru.
+Never describe planned or prototype behavior as available in Amaru.
 
 ## Markdown
 - One `#` title per file; numbered `##` sections in long reference docs so anchors are stable.
