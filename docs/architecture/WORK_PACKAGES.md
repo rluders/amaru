@@ -327,7 +327,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 
 ## Cross-package feature dependencies
 
-Status: **proposed** (2026-10-26), pending product-owner review. The Work Package order above stays the accepted baseline; this section records how catalog dependencies that cross it are resolved, and the changes it makes to that order (ART-003 only).
+Status: **accepted** as planning guidance (2026-10-25, product-owner review of PR #223). The Work Package order above stays the accepted baseline; this section records how catalog dependencies that cross it are resolved, and the changes it makes to that order (ART-003 only). Rationale: every soft dependency below is built against a port that an earlier Work Package already delivers, the only hard dependency against the order (ART-003) changes the order instead of being softened, and the resulting issue graph has no cycle (including blockers inherited through parents) and no issue blocked by a later milestone.
 
 Where a catalog dependency crosses Work Packages against their order, it is resolved here (backlog refinement, 2026-10-25). *Hard* means the dependent cannot be built or accepted without the other feature; *soft* means it is built against an existing port or contract with fakes, and the other feature is needed only for the real-validation run ([catalog §1](../product/FEATURE_CATALOG.md#1-how-to-read-this-catalog)).
 
@@ -346,6 +346,7 @@ Reversing WP-M4-03 and WP-M4-04/05 was considered and rejected: in the migration
 Rules for further resolutions (see also [delivery §4](../engineering/delivery.md#4-dependencies)):
 - Classify first, then sequence. A hard dependency against the order changes the order (as for ART-003); a soft one keeps it and names the Work Package that holds the real-validation run.
 - A dependency is soft only if the port or contract it is built against already exists in an earlier Work Package; otherwise it is hard.
+- A soft dependency lets implementation start earlier; it does not waive integration testing against the real feature or the parent Work Package's *Done when*.
 - A sub-issue inherits its parent's blockers: never link a Work Package to a sub-issue of a Work Package it blocks.
 
 ## Coverage check
