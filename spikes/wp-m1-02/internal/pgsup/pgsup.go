@@ -50,6 +50,11 @@ type Instance struct {
 // Nothing is downloaded: the provider is LocalProvider and the supervisor path
 // is explicit.
 func Start(ctx context.Context, b Bundle, stateDir string) (*Instance, error) {
+	// PostgreSQL sees absolute paths; the socket length check must too.
+	stateDir, err := filepath.Abs(stateDir)
+	if err != nil {
+		return nil, err
+	}
 	if err := os.MkdirAll(stateDir, 0o700); err != nil {
 		return nil, err
 	}
