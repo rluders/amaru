@@ -28,7 +28,7 @@ Decisions that rest on assumptions name how they are checked. Each check is a ro
 | A8 | Unreal MCP servers expose enough editor functionality for useful agent work. | [ADR-0035](adr/0035-agents-run-beside-environment-hosted-tools.md) | M5 UE5 pilot | Fall back to command-line engine Capabilities (build, test, commandlets). |
 | A9 | Embedded NATS JetStream fits compact installs (footprint, Windows file locking). | [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md) | M1 spike | Replace the embedded bus in compact mode with an in-process implementation of the `Bus` port. |
 | A10 | Javy-built QuickJS Wasm in a separate plugin-host process performs well enough for plugin `logic` (cold start < 50 ms, memory cap enforced, crash isolated), and Javy keeps supporting WASI-free modules. | [ADR-0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md) | M6 spike | Move heavy logic to `worker-adapter` components; revisit the toolchain or runtime. |
-| A11 | The name "Amaru" is clear for use as a trademark. | [Q34](#q34-product-name-and-trademark) | Before the first public release (owner task, WP-M1-01) | Rename through an ADR before any public release. |
+| A11 | The name "Amaru" is clear for use as a trademark. | [Q34](#q34-product-name-and-trademark) | Before the first public release (owner task, WP-M1-01) | Rename through an ADR before any public release. **Status 2026-10-26: not confirmed.** A preliminary public-source search found no register result (registers not searchable by the agent) and found other software named Amaru, one in developer tooling for AI agents: [name search](investigations/2026-10-26-amaru-name-search.md). |
 | A12 | `embedded-postgres` v2, built mainly for tests, works as a production supervisor with `LocalProvider` over bundled binaries. | [Q28](#q28-postgresql-supervisor-library) | M1 spike | In-house supervisor of the same bundled binaries (start, health, stop, kill on owner death). |
 | A13 | Container start-up per Lease is cheap relative to Step time. | [ADR-0041](adr/0041-isolation-tiers-for-plugins-providers-and-steps.md) | M5 | A per-Execution warm pool within one Organization, through a new ADR. |
 | A14 | The initial numeric targets (Lease and heartbeat, timeouts, slots, replay window, latency, scale, retention) fit real use. | [Q43](#q43-retention-and-redaction-defaults), [Q44](#q44-initial-numeric-operating-targets) | The milestone named per target in [NFRs](../product/NON_FUNCTIONAL_REQUIREMENTS.md) | Change the number in the NFR document with its evidence; the requirement stays. |
@@ -229,7 +229,7 @@ Implicit questions found in the planning documents during the second sweep. The 
 
 ### Q34. Product name and trademark
 - **Question:** The name "Amaru" waits on a trademark search.
-- **Decision:** The product is named Amaru. The search is an owner validation task before the first public release. A conflict leads to a rename through an ADR. → validation A11, WP-M1-01
+- **Decision:** The product is named Amaru. The search is an owner validation task before the first public release. A conflict leads to a rename through an ADR. Preliminary search 2026-10-26 (not a clearance; official registers not searched; overlaps found): [name search](investigations/2026-10-26-amaru-name-search.md). Owner decision pending. → validation A11, WP-M1-01
 
 ### Q35. Desktop sidecar bundling
 - **Question:** ADR-0018 bundles the Platform as a sidecar, but the architecture and client views called local supervision "optional".
