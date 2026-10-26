@@ -30,4 +30,4 @@ spike-vet:
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:
 	@test -n "$$SPIKE_BUNDLE" || { echo "set SPIKE_BUNDLE to a directory made by: spike bundle -out DIR"; exit 2; }
-	cd $(SPIKE) && go test -count=1 ./...
+	cd $(SPIKE) && go test -count=1 ./... && go build -o spike ./cmd/spike && ./spike pg -bundle "$$SPIKE_BUNDLE" -state "$$(mktemp -d)/pg" && ./spike nats && ./spike matrix -bundle "$$SPIKE_BUNDLE" -work "$$(mktemp -d)/mx" -fuzz 3

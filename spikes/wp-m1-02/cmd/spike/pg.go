@@ -283,6 +283,8 @@ func relocate(ctx context.Context, b pgsup.Bundle, state string) result {
 
 // helpers
 
+func alive(pid int) bool { return pgsup.Alive(pid) }
+
 func postmasterPID(state string) int {
 	b, err := os.ReadFile(filepath.Join(state, "data", "postmaster.pid"))
 	if err != nil {

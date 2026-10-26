@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	ep "github.com/fergusstrange/embedded-postgres/v2"
@@ -34,6 +36,9 @@ type Instance struct {
 	URL       string
 	StartedIn time.Duration
 	Socket    bool
+	// WaitedPrevious is how long Start waited for a postmaster of a previous
+	// owner (killed or crashed) to exit before it could use the data directory.
+	WaitedPrevious time.Duration
 }
 
 // Start runs PostgreSQL with a persistent data directory in stateDir. On
@@ -77,12 +82,28 @@ func Start(ctx context.Context, b Bundle, stateDir string) (*Instance, error) {
 			return nil, err
 		}
 	}
+	// A kill during the first start (initdb, createdb) leaves a half-built
+	// cluster that the library cannot recover (observed). The marker is written
+	// only after the first successful start; without it the data directory holds
+	// no user data and is rebuilt.
+	marker := filepath.Join(stateDir, "initialized")
+	if _, err := os.Stat(marker); err != nil {
+		waitPrevious(filepath.Join(stateDir, "data", "postmaster.pid"), 30*time.Second)
+		if err := os.RemoveAll(filepath.Join(stateDir, "data")); err != nil {
+			return nil, err
+		}
+	}
+	waited := waitPrevious(filepath.Join(stateDir, "data", "postmaster.pid"), 30*time.Second)
 	db := ep.NewDatabase(cfg)
 	t0 := time.Now()
 	if err := db.StartContext(ctx); err != nil {
 		return nil, fmt.Errorf("start postgres: %w", err)
 	}
-	return &Instance{DB: db, URL: db.ConnectionURL(), StartedIn: time.Since(t0), Socket: sock}, nil
+	if err := os.WriteFile(marker, nil, 0o600); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return &Instance{DB: db, URL: db.ConnectionURL(), StartedIn: time.Since(t0), Socket: sock, WaitedPrevious: waited}, nil
 }
 
 func (i *Instance) Close() error { return i.DB.Close() }
@@ -97,4 +118,26 @@ func password(path string) (string, error) {
 	}
 	pw := hex.EncodeToString(raw)
 	return pw, os.WriteFile(path, []byte(pw), 0o600)
+}
+
+// waitPrevious blocks while the postmaster named in postmaster.pid is alive.
+// After a hard kill of the owner, the supervisor still has to shut that
+// postmaster down; starting a new one on the same data directory before it
+// exits fails with: lock file "postmaster.pid" already exists (observed, see
+// the investigation report). It never kills anything.
+func waitPrevious(pidFile string, max time.Duration) time.Duration {
+	b, err := os.ReadFile(pidFile)
+	if err != nil {
+		return 0
+	}
+	first, _, _ := strings.Cut(string(b), "\n")
+	pid, err := strconv.Atoi(strings.TrimSpace(first))
+	if err != nil {
+		return 0
+	}
+	t0 := time.Now()
+	for Alive(pid) && time.Since(t0) < max {
+		time.Sleep(25 * time.Millisecond)
+	}
+	return time.Since(t0)
 }
