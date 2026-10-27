@@ -37,3 +37,7 @@ Fresh import with provenance ([ADR-0049](../../docs/architecture/adr/0049-adapt-
 - `CapabilityOffer`, `CapabilityInfo` (provider offers, availability): Provider work (FEAT-CAP-002/005).
 - `MediaTypeFor` and the media-type constants: output hashing and file handling, not catalog.
 - `StepExecution` content fields (capability, files, usage, agent snapshot, verdict, ...): arrive with FEAT-AGT-004 (#114), FEAT-CAP-001 (#111) and the Approval work.
+- `ports/ports.go`, `ports/fakes/fakes.go`: marked Adapt by ADR-0049 but not moved in WP-M3-01. No feature of the Work Package names them and nothing in the core has a consumer yet; each port is reviewed against the boundary rules when the first consumer arrives (storage, WP-M3-02; coordinator, WP-M3-03). Moving them earlier would be scaffolding without a use.
+- `team.go`, `project.go`, `workflow.go`, `workflow_template.go`, `provider.go`, `artifact.go`, `output.go`, `event.go`: Adapt per ADR-0049, no WP-M3-01 feature covers them. They move with the feature that needs them (Workflows, Providers, change events: WRK-003).
+- `hook.go`, `trust.go`, `grant.go`, `settings.go`, `playbook.go`: requires a human decision (ADR-0049 item 4); unmoved.
+- `autoloop.go`, `intake.go`, `localcheck.go`, `commit.go`: deferred to M4 (ADR-0049 item 4); unmoved.
