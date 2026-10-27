@@ -22,6 +22,7 @@ import (
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/porttest"
 	"github.com/rluders/amaru/services/platform/internal/store/migrations"
+	"github.com/rluders/amaru/services/platform/internal/worker/inproc"
 )
 
 var dbSeq atomic.Int64
@@ -84,4 +85,10 @@ func TestCrashInjectionWithPostgres(t *testing.T) {
 	coordtest.CrashInjection(t,
 		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+// The coordinator's Worker-interface contract against the real store, over both kinds of link.
+func TestAssignmentWithPostgres(t *testing.T) {
+	newStore := func(t *testing.T) ports.ExecutionStore { return NewExecutionStore(migratedDB(t)) }
+	coordtest.AssignmentSuite(t, newStore, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }

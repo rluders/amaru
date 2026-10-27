@@ -47,7 +47,7 @@ func lease(valid bool) func(*domain.StepExecution) error {
 		if !valid {
 			exp = now.Add(-time.Minute)
 		}
-		return s.Lease("worker-1", exp)
+		return s.Lease("worker-1", "attempt-"+s.ID, exp)
 	}
 }
 

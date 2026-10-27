@@ -32,3 +32,6 @@ deciders: Ricardo Lüders
 
 ## Approval
 Proposed by: Claude (open-question resolution, 2026-10-25) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session (answer recorded in OPEN_QUESTIONS Q16).
+
+## Amendment 2026-10-27: the embedded Worker's in-process transport carries Go messages that mirror the Protobuf ones
+"The same Protobuf messages through an in-process transport" is implemented as Go structs in the Platform's Worker port (`services/platform/internal/ports/worker.go`) that mirror `amaru.worker.v1` field for field, so the Platform core takes no Protobuf dependency. A test reads `worker.proto` and fails when a mirrored message or enum drifts, or when a field is neither carried nor listed as not carried yet. The WebSocket adapter maps between the Protobuf messages and the same structs. Chosen by the product owner in the WP-M3-03 session, 2026-10-27 (option "Domain-level port", [#145](https://github.com/rluders/amaru/issues/145)). Wire behavior is unchanged.

@@ -100,8 +100,9 @@ func insertStep(ctx context.Context, tx *sql.Tx, ord int, st domain.StepExecutio
 	}
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO step_executions (id, execution_id, ord, version, state, reason, started_at, ended_at, error_code, error_message,
-		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent,
+		   capability, inputs, attempt_id, fence_token)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
 		append([]any{st.ID, st.ExecutionID, ord, st.Version}, args...)...)
 	return err
 }
@@ -130,7 +131,8 @@ func stepArgs(st domain.StepExecution) ([]any, error) {
 		agent = b
 	}
 	return []any{string(st.State), st.Reason, nullTime(st.StartedAt), nullTime(st.EndedAt), code, msg,
-		st.Idempotent, job, resumable, owner, leaseExp, agent}, nil
+		st.Idempotent, job, resumable, owner, leaseExp, agent,
+		st.Capability, st.InputsJSON, nullString(st.AttemptID), int64(st.FenceToken)}, nil
 }
 
 func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (ports.ExecutionChange, error) {
@@ -192,7 +194,8 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 		err = tx.QueryRowContext(ctx,
 			`UPDATE step_executions SET version = version + 1, state = $4, reason = $5, started_at = $6, ended_at = $7,
 			   error_code = $8, error_message = $9, idempotent = $10, remote_job_id = $11, remote_job_resumable = $12,
-			   lease_owner = $13, lease_expires_at = $14, agent = $15
+			   lease_owner = $13, lease_expires_at = $14, agent = $15,
+			   capability = $16, inputs = $17, attempt_id = $18, fence_token = $19
 			 WHERE id = $1 AND execution_id = $2 AND version = $3 RETURNING version`,
 			append([]any{st.ID, st.ExecutionID, st.Version}, args...)...).Scan(&st.Version)
 		if err != nil {
@@ -220,6 +223,10 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 // missOrStale turns "no row matched" into ErrNotFound (no such row) or ErrConflict (stale version).
 // table is a fixed name from this file, never caller input.
 func (s *ExecutionStore) missOrStale(ctx context.Context, tx *sql.Tx, err error, what, table, id string, read int64) error {
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code == uniqueViolation {
+		return fmt.Errorf("%w: %s %s", domain.ErrExists, what, id)
+	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("postgres: commit %s %s: %w", what, id, err)
 	}
@@ -261,7 +268,8 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 
 	rows, err := tx.QueryContext(ctx,
 		`SELECT id, execution_id, version, state, reason, started_at, ended_at, error_code, error_message,
-		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent
+		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent,
+		   capability, inputs, attempt_id, fence_token
 		 FROM step_executions WHERE execution_id = $1 ORDER BY ord`, id)
 	if err != nil {
 		return domain.Execution{}, nil, fmt.Errorf("postgres: get steps: %w", err)
@@ -275,14 +283,18 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 		var code, msg, job, owner sql.NullString
 		var resumable bool
 		var agent []byte
+		var attempt sql.NullString
+		var fence int64
 		if err := rows.Scan(&st.ID, &st.ExecutionID, &st.Version, &state, &st.Reason, &started, &ended, &code, &msg,
-			&st.Idempotent, &job, &resumable, &owner, &leaseExp, &agent); err != nil {
+			&st.Idempotent, &job, &resumable, &owner, &leaseExp, &agent,
+			&st.Capability, &st.InputsJSON, &attempt, &fence); err != nil {
 			return domain.Execution{}, nil, fmt.Errorf("postgres: get steps: %w", err)
 		}
 		st.State, st.StartedAt, st.EndedAt = domain.StepState(state), timePtr(started), timePtr(ended)
 		if code.Valid {
 			st.Error = &domain.ExecError{Code: code.String, Message: msg.String}
 		}
+		st.AttemptID, st.FenceToken = attempt.String, uint64(fence)
 		if job.Valid {
 			st.RemoteJob = &domain.RemoteJob{ID: job.String, Resumable: resumable}
 		}
@@ -355,4 +367,40 @@ func (s *ExecutionStore) Events(ctx context.Context, id string) ([]domain.Execut
 		return nil, fmt.Errorf("postgres: events: %w", err)
 	}
 	return out, nil
+}
+
+func (s *ExecutionStore) Queued(ctx context.Context, limit int) ([]ports.StepRef, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT st.execution_id, st.id FROM step_executions st JOIN executions e ON e.id = st.execution_id
+		 WHERE st.state = 'queued' AND e.state NOT IN ('succeeded', 'failed', 'cancelled')
+		 ORDER BY e.created_at, e.id COLLATE "C", st.ord LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("postgres: queued steps: %w", err)
+	}
+	defer rows.Close()
+	out := []ports.StepRef{}
+	for rows.Next() {
+		var r ports.StepRef
+		if err := rows.Scan(&r.ExecutionID, &r.StepID); err != nil {
+			return nil, fmt.Errorf("postgres: queued steps: %w", err)
+		}
+		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("postgres: queued steps: %w", err)
+	}
+	return out, nil
+}
+
+func (s *ExecutionStore) ByAttempt(ctx context.Context, attemptID string) (ports.StepRef, error) {
+	var r ports.StepRef
+	err := s.db.QueryRowContext(ctx,
+		`SELECT execution_id, id FROM step_executions WHERE attempt_id = $1`, attemptID).Scan(&r.ExecutionID, &r.StepID)
+	if errors.Is(err, sql.ErrNoRows) || attemptID == "" {
+		return ports.StepRef{}, fmt.Errorf("%w: attempt %q", domain.ErrNotFound, attemptID)
+	}
+	if err != nil {
+		return ports.StepRef{}, fmt.Errorf("postgres: step by attempt: %w", err)
+	}
+	return r, nil
 }

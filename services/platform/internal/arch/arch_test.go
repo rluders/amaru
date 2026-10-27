@@ -160,3 +160,41 @@ func TestStorageDoesNotTouchFiles(t *testing.T) {
 		t.Fatal("no storage package found; wrong root?")
 	}
 }
+
+// onlyModuleImports: for each package prefix, the module packages (under internal/) it may import;
+// everything else in the module is refused. The Worker side and the coordinator meet only through
+// ports (FEAT-ENV-001: the embedded Worker talks to the coordinator through the Worker interface,
+// like a remote one), and neither reaches a store or an adapter.
+var onlyModuleImports = map[string][]string{
+	"internal/worker/embedded": {"internal/ports"},
+	"internal/worker/inproc":   {"internal/ports"},
+	"internal/coordinator":     {"internal/domain", "internal/ports"},
+}
+
+func TestWorkerAndCoordinatorMeetOnlyThroughPorts(t *testing.T) {
+	root := filepath.Join("..", "..")
+	checked := 0
+	for _, pkg := range packages(t, root) {
+		allowed, ok := onlyModuleImports[pkg]
+		if !ok {
+			continue
+		}
+		checked++
+		for _, im := range imports(t, filepath.Join(root, filepath.FromSlash(pkg))) {
+			if !strings.HasPrefix(im, module+"/") {
+				continue
+			}
+			rel := strings.TrimPrefix(im, module+"/")
+			ok := false
+			for _, a := range allowed {
+				ok = ok || under(rel, a)
+			}
+			if !ok {
+				t.Errorf("%s imports %s: allowed module imports are %v", pkg, rel, allowed)
+			}
+		}
+	}
+	if checked != len(onlyModuleImports) {
+		t.Fatalf("checked %d of %d packages; a package moved?", checked, len(onlyModuleImports))
+	}
+}

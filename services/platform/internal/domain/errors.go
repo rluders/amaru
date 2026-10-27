@@ -47,3 +47,7 @@ var ErrNotFound = errors.New("not found")
 // ErrExists is returned (wrapped) when a record with the same identity is already stored. Test
 // with errors.Is.
 var ErrExists = errors.New("already exists")
+
+// ErrStaleLease is returned (wrapped) when a Worker acts for an attempt that no longer holds the
+// Step: its Lease ended, or a newer attempt holds a higher fencing token. Test with errors.Is.
+var ErrStaleLease = errors.New("stale lease")
