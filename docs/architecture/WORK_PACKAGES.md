@@ -186,6 +186,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Features:** EXE-002, EXE-003, EXE-005, EXE-006, WFL-001, WFL-002, WFL-003, WFL-004, ENV-001, CAP-004.
 - **Depends on:** WP-M3-01, WP-M3-02.
 - **Done when:** the crash-injection suite passes and a cancel on Windows kills the process tree.
+- **Dependency candidate (not adopted):** [`rluders/lane`](https://github.com/rluders/lane) v2.1.0 (start-up, health and graceful shutdown of service components; one dependency, `golang.org/x/sync`) for the Platform composition root, which first appears with the embedded Worker ([#145](https://github.com/rluders/amaru/issues/145)). Adopting it needs an ADR, a pinned version and a resolved license (GitHub reports none for the repository; the owner decides) before any import. `Coordinator.Reconcile` stays a plain function either way.
 - **Validation:** tests on Linux, macOS and Windows per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules; the Windows process-tree cancel is a native Windows run.
 
 ### WP-M3-04 Policy, Grants and Approval
@@ -199,6 +200,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Features:** POL-001, POL-002, POL-003, POL-004, REV-001, REV-003, PRJ-003.
 - **Depends on:** WP-M1-04, WP-M3-03.
 - **Done when:** ungranted use is refused before start, and approval waits survive restarts.
+- **Dependency candidate (not adopted):** [`rluders/canery`](https://github.com/rluders/canery) v2.0.0 (subject–action–resource–scope authorization kernel; standard library only) for evaluating Grants and Policy. It cannot be imported by `internal/domain` (the architecture test bans third-party imports there); it would sit behind a port in an adapter or policy package. Adopting it needs an ADR, a pinned version and a resolved license (GitHub reports none for the repository; the owner decides). It also depends on the deferred disposition of `hook`, `trust`, `grant`, `settings` and `playbook` ([ADR-0049](adr/0049-adapt-the-prototype-domain-and-ports-into-services-platform.md) item 4).
 - **Validation:** tests and a recorded attempt without a grant.
 
 ### WP-M3-05 Providers and context assembly
