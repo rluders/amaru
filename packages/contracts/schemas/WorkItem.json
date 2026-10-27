@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
     "id",
+    "key",
     "packageId",
     "title",
     "intent",
@@ -31,6 +32,9 @@
     },
     "id": {
       "$ref": "WorkItemId.json"
+    },
+    "key": {
+      "$ref": "WorkKey.json"
     },
     "packageId": {
       "$ref": "WorkPackageId.json"

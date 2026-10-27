@@ -6,5 +6,7 @@
   "providerPreference": [],
   "status": "active",
   "createdAt": "2026-10-01T12:00:00Z",
-  "updatedAt": "2026-10-01T12:00:00Z"
+  "updatedAt": "2026-10-01T12:00:00Z",
+  "revision": 1,
+  "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 }

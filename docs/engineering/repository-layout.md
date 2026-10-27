@@ -20,6 +20,7 @@ amaru/
 │   ├── security/           security model
 ├── spikes/wp-m1-02/        Go module: WP-M1-02 validation experiments (throwaway, not the Platform)
 ├── packages/contracts/     versioned API, event, Provider and Worker contracts, shared fixtures, route-drift guard (Go module, Protobuf, TypeScript test tooling)
+├── services/platform/      Go module: Platform core, domain state machines and architecture test so far (WP-M3-01; nothing else of the Platform exists yet)
 ├── packages/sdk/           TypeScript SDK generated from the OpenAPI contract, plus the event-stream client (own pnpm lockfile)
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
@@ -30,7 +31,7 @@ There is **no LICENSE file** yet: the license is decided in [ADR-0026](../archit
 
 | Path | Purpose | Introduced when (evidence required) |
 |---|---|---|
-| `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves prototype Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-earlier-internal-runtime.md)). |
+| `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | **Created** by WP-M3-01 under [ADR-0049](../architecture/adr/0049-adapt-the-prototype-domain-and-ports-into-services-platform.md); only the domain state machines and the architecture test exist. API, storage, coordinator and Worker arrive with their own Work Packages. |
 | `apps/web` | Web client served by the Platform | [M4](../architecture/ROADMAP.md#m4-local-mvp): Web is the MVP client ([ADR-0010](../architecture/adr/0010-local-mvp-client-is-a-web-ui.md)). |
 | `packages/plugin-sdk` | Plugin author SDK and manifest schema | M6: implements [ADR-0041](../architecture/adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)–[ADR-0021](../architecture/adr/0021-plugin-packaging-signing-permissions-and-compatibility.md). |
 | `packages/ui`, `packages/app` | Shared design system and product screens | When Desktop (M8) needs to share them; until then inside `apps/web`. |

@@ -10,7 +10,9 @@
     "instructions",
     "providerPreference",
     "providerId",
-    "resolution"
+    "resolution",
+    "revision",
+    "hash"
   ],
   "additionalProperties": false,
   "properties": {
@@ -63,6 +65,24 @@
     },
     "resolution": {
       "$ref": "AgentResolution.json"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Revision of the Agent definition this snapshot was taken from."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hash of that revision (Agent.hash), so the definition is identified by content as well as by number."
+    },
+    "skills": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "SkillUse.json"
+      },
+      "description": "Skills injected into the Step's context, in injection order. Name, version and content hash identify what ran without storing Skill history."
     }
   }
 }

@@ -1,11 +1,11 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "items": {
-    "WI-001": {
+    "01K10000000000000000000001": {
       "phase": "validating",
       "attempt": 2,
       "checkout": {
-        "path": ".amaru/runtime/worktrees/WI-001",
+        "path": ".amaru/runtime/worktrees/01K10000000000000000000001",
         "branch": "amaru/wi-001-x",
         "base": "main"
       },
@@ -43,7 +43,7 @@
           }
         ],
         "handled": [
-          "WI-001:def:0123456789abcdef:1"
+          "01K10000000000000000000001:def:0123456789abcdef:1"
         ]
       },
       "excluded": [

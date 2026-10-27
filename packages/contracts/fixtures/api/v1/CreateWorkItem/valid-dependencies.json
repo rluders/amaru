@@ -1,8 +1,8 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "title": "HUD",
   "dependsOn": [
-    "WI-001"
+    "01K10000000000000000000001"
   ],
   "workflowId": "WF-001"
 }

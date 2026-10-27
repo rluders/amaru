@@ -1,4 +1,5 @@
 {
   "id": "qa-agent",
-  "name": "x"
+  "name": "x",
+  "expectedRevision": 1
 }

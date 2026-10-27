@@ -1,0 +1,75 @@
+[
+  {
+    "id": "code.test",
+    "title": "Run a software project's tests",
+    "description": "Runs the project's static checks and tests. The exit codes are the verdict; the report lists each command.",
+    "inputs": [
+      {"name": "module", "kind": "text", "description": "Directory of the module, relative to the run root (default: the root)"},
+      {"name": "packages", "kind": "text", "description": "Package pattern (default: ./...)"}
+    ],
+    "outputs": [
+      {"name": "report", "kind": "file", "mediaTypes": ["application/json"], "description": "Test report"}
+    ]
+  },
+  {
+    "id": "mcp.call",
+    "title": "Call a tool on an MCP server",
+    "description": "Runs one allow-listed tool of a configured MCP server. The server and its tools are configured outside the project definition.",
+    "inputs": [
+      {"name": "server", "kind": "text", "required": true, "description": "Id of a configured server"},
+      {"name": "tool", "kind": "text", "required": true, "description": "Tool name; must be allowed for that server"},
+      {"name": "arguments", "kind": "text", "description": "JSON object of tool arguments"}
+    ],
+    "outputs": [
+      {"name": "result", "kind": "file", "mediaTypes": ["application/json"], "description": "Tool result as JSON"},
+      {"name": "text", "kind": "file", "mediaTypes": ["text/markdown"], "description": "Text content of the result"}
+    ]
+  },
+  {
+    "id": "asset.upload",
+    "title": "Upload an asset to storage",
+    "description": "Copies a file to the configured asset storage and records its stable URL on the output.",
+    "inputs": [
+      {"name": "file", "kind": "file", "required": true, "description": "File to upload"}
+    ],
+    "outputs": [
+      {"name": "asset", "kind": "file", "description": "Uploaded copy; its url is the storage location"}
+    ]
+  },
+  {
+    "id": "doc.convert",
+    "title": "Convert a document",
+    "description": "Markdown, HTML, Word, OpenDocument, EPUB, reStructuredText, LaTeX or plain text, converted locally.",
+    "inputs": [
+      {"name": "file", "kind": "file", "required": true, "mediaTypes": ["text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.oasis.opendocument.text", "application/epub+zip", "application/x-tex"], "description": "Document to convert"},
+      {"name": "format", "kind": "enum", "required": true, "enum": ["html", "docx", "odt", "epub", "md", "txt", "rst"]}
+    ],
+    "outputs": [
+      {"name": "document", "kind": "file", "mediaTypes": ["text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.oasis.opendocument.text", "application/epub+zip", "application/x-tex"], "description": "Converted document"}
+    ]
+  },
+  {
+    "id": "image.convert",
+    "title": "Convert an image",
+    "description": "Raster image format conversion (first frame of an animation unless the target is gif), converted locally.",
+    "inputs": [
+      {"name": "file", "kind": "file", "required": true, "mediaTypes": ["image/*"], "description": "Image to convert (png, jpg, webp, gif, bmp, tiff)"},
+      {"name": "format", "kind": "enum", "required": true, "enum": ["png", "jpg", "webp", "gif"]}
+    ],
+    "outputs": [
+      {"name": "image", "kind": "file", "mediaTypes": ["image/*"], "description": "Converted image"}
+    ]
+  },
+  {
+    "id": "media.transcode",
+    "title": "Transcode audio or video",
+    "description": "Audio, video and animated GIF conversion, converted locally.",
+    "inputs": [
+      {"name": "file", "kind": "file", "required": true, "mediaTypes": ["audio/*", "video/*", "image/gif"], "description": "Media to convert"},
+      {"name": "format", "kind": "enum", "required": true, "enum": ["mp4", "webm", "gif", "mp3", "wav", "ogg", "flac", "m4a"]}
+    ],
+    "outputs": [
+      {"name": "media", "kind": "file", "mediaTypes": ["audio/*", "video/*", "image/gif"], "description": "Converted media"}
+    ]
+  }
+]

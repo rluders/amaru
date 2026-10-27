@@ -206,7 +206,7 @@ export interface paths {
         };
         get: operations["listWorkPackages"];
         put?: never;
-        /** @description The Platform assigns the id (WP-001, WP-002, …). New packages start as `planned`. */
+        /** @description The Platform assigns the id (a ULID). New packages start as `planned`. */
         post: operations["createWorkPackage"];
         delete?: never;
         options?: never;
@@ -245,7 +245,7 @@ export interface paths {
         };
         get: operations["listWorkItems"];
         put?: never;
-        /** @description The Platform assigns the id (WI-001, … global in the project). Errors - invalid_request, not_found (unknown package). */
+        /** @description The Platform assigns the id (a ULID) and the display key (`<PROJECTKEY>-<n>`, unique per Instance). Errors - invalid_request, not_found (unknown package). */
         post: operations["createWorkItem"];
         delete?: never;
         options?: never;
@@ -386,10 +386,11 @@ export interface paths {
         get: operations["getAgent"];
         put?: never;
         post?: never;
-        /** @description Removes `.Amaru/agents/<id>.json`. Errors - not_found, conflict (a Workflow step still refers to the Agent; disable it instead). */
+        /** @description Removes `.Amaru/agents/<id>.json`; recorded revisions are kept. Errors - not_found, conflict (a Workflow step still refers to the Agent - disable it instead - or `expectedRevision` is stale). */
         delete: operations["deleteAgent"];
         options?: never;
         head?: never;
+        /** @description The body names the `expectedRevision` the caller read. Errors - not_found, invalid_request, conflict (the Agent is at another revision, or is deleted). */
         patch: operations["updateAgent"];
         trace?: never;
     };
@@ -775,7 +776,10 @@ export interface components {
             code: string;
             message: string;
         };
-        /** WorkItemId */
+        /**
+         * WorkItemId
+         * @description Stable internal id of a Work Item: a ULID. Never reused.
+         */
         WorkItemId: string;
         /** WorkflowId */
         WorkflowId: string;
@@ -802,6 +806,16 @@ export interface components {
          */
         AgentResolution: "preference" | "fallback" | "default";
         /**
+         * SkillUse
+         * @description Audit record of one Skill injected into a Step's context.
+         */
+        SkillUse: {
+            name: components["schemas"]["AgentId"];
+            version: string;
+            /** @description SHA-256 of the Skill body. */
+            hash: string;
+        };
+        /**
          * ResolvedAgent
          * @description Snapshot of the Agent a step ran with, recorded when the run is planned. A full copy: the run stays reconstructable after the Agent changes.
          */
@@ -822,6 +836,12 @@ export interface components {
             providerPreference: components["schemas"]["ProviderId"][];
             providerId: components["schemas"]["ProviderId"];
             resolution: components["schemas"]["AgentResolution"];
+            /** @description Revision of the Agent definition this snapshot was taken from. */
+            revision: number;
+            /** @description Hash of that revision (Agent.hash), so the definition is identified by content as well as by number. */
+            hash: string;
+            /** @description Skills injected into the Step's context, in injection order. Name, version and content hash identify what ran without storing Skill history. */
+            skills?: components["schemas"]["SkillUse"][];
         };
         /**
          * TeamRole
@@ -1379,7 +1399,10 @@ export interface components {
             commitInclude?: string[];
             localChecks?: components["schemas"]["LocalChecksPolicy"];
         };
-        /** WorkPackageId */
+        /**
+         * WorkPackageId
+         * @description Stable internal id of a Work Package: a ULID. Never reused.
+         */
         WorkPackageId: string;
         /**
          * WorkPackageStatus
@@ -1440,14 +1463,22 @@ export interface components {
             blockedBy?: components["schemas"]["IssueDep"][];
         };
         /**
+         * WorkKey
+         * @description Display key of a Work Item, <PROJECTKEY>-<n>, unique per Instance. For people to read and cite; the ULID id is the identity. Format proposed, not decided.
+         */
+        WorkKey: string;
+        /**
          * WorkItemStatus
          * @enum {unknown}
          */
         WorkItemStatus: "todo" | "in_progress" | "blocked" | "done";
-        /** WorkOwner */
+        /**
+         * WorkOwner
+         * @description The responsible human. Agents and Teams are assignees, not owners (DOMAIN_MODEL section 7).
+         */
         WorkOwner: {
             /** @enum {unknown} */
-            kind: "human" | "agent";
+            kind: "human";
             label?: string;
         };
         /** WorkItem */
@@ -1456,6 +1487,7 @@ export interface components {
             workflowId?: components["schemas"]["WorkflowId"];
             external?: components["schemas"]["IssueRef"];
             id: components["schemas"]["WorkItemId"];
+            key: components["schemas"]["WorkKey"];
             packageId: components["schemas"]["WorkPackageId"];
             title: string;
             intent: string;
@@ -1629,6 +1661,10 @@ export interface components {
             status: components["schemas"]["AgentStatus"];
             createdAt: components["schemas"]["Timestamp"];
             updatedAt: components["schemas"]["Timestamp"];
+            /** @description Revision of this definition; starts at 1 and grows by one per recorded change. Deleting and recreating continue the same sequence. */
+            revision: number;
+            /** @description SHA-256 of the canonical definition without timestamps. Equal hashes mean equal definitions. */
+            hash: string;
         };
         /** AgentList */
         AgentList: components["schemas"]["Agent"][];
@@ -1655,7 +1691,7 @@ export interface components {
         };
         /**
          * UpdateAgent
-         * @description Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted).
+         * @description Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted). `expectedRevision` is required.
          */
         UpdateAgent: {
             worktreeWrite?: boolean;
@@ -1673,6 +1709,8 @@ export interface components {
             /** @description Empty string clears the model. */
             model?: string;
             status?: components["schemas"]["AgentStatus"];
+            /** @description The revision the caller read. If the Agent has moved on, the update is rejected with `conflict` (lost-update guard). */
+            expectedRevision: number;
         };
         /** TeamMember */
         TeamMember: {
@@ -2846,7 +2884,9 @@ export interface operations {
     };
     deleteAgent: {
         parameters: {
-            query?: never;
+            query: {
+                expectedRevision: number;
+            };
             header?: never;
             path: {
                 /** @description Id returned by POST /projects. */
