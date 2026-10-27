@@ -1,0 +1,16 @@
+{
+  "id": "01J00000000000000000000008",
+  "seq": 8,
+  "type": "team.changed",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_1",
+  "data": {
+    "ids": [
+      "release-team"
+    ]
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_1"
+  }
+}

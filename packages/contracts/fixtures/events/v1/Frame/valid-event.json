@@ -1,0 +1,14 @@
+{
+  "id": "01J0Q8Z3X50000000000000115",
+  "seq": 15,
+  "type": "platform.state",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "platform",
+    "id": "platform"
+  },
+  "data": {
+    "state": "ready"
+  }
+}

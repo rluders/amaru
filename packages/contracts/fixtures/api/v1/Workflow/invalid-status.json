@@ -1,0 +1,11 @@
+{
+  "id": "WF-001",
+  "name": "x",
+  "description": "",
+  "status": "running",
+  "type": "pipeline",
+  "steps": [],
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "requestId": "01J0Q8Z3X50000000000000010",
+  "decision": "deny",
+  "reasons": [
+    {
+      "code": "policy.explicit_deny",
+      "ruleId": "rule_no_force_push",
+      "source": "rule",
+      "message": "Denied by an explicit rule."
+    }
+  ],
+  "matchedGrantId": null,
+  "evaluatedAt": "2026-10-26T09:00:00Z"
+}

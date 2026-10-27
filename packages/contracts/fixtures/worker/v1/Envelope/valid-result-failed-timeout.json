@@ -1,0 +1,10 @@
+{
+  "messageId": "12",
+  "result": {
+    "attemptId": "att_2",
+    "fencingToken": "4",
+    "outcome": "RESULT_OUTCOME_FAILED",
+    "errorCode": "timeout",
+    "errorDetail": "Step exceeded its deadline"
+  }
+}

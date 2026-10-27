@@ -1,0 +1,9 @@
+{
+  "name": "x",
+  "steps": [
+    {
+      "name": "a",
+      "type": "magic"
+    }
+  ]
+}

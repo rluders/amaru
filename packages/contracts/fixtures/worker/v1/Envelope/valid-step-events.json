@@ -1,0 +1,14 @@
+{
+  "messageId": "10",
+  "stepEvents": {
+    "attemptId": "att_2",
+    "fencingToken": "4",
+    "events": [
+      {
+        "workerOrdinal": "1",
+        "type": "log",
+        "message": "checkout complete"
+      }
+    ]
+  }
+}

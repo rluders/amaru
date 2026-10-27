@@ -1,0 +1,12 @@
+{
+  "deliveryLoop": {
+    "enabled": true,
+    "maxAttempts": 2,
+    "reviewWorkflowId": "WF-002",
+    "repository": "example-app",
+    "base": "feat/example-branch",
+    "requireChecks": true,
+    "maxRepairs": 1,
+    "refreshBase": true
+  }
+}

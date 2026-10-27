@@ -1,0 +1,26 @@
+{
+  "messageId": "7",
+  "ackId": "6",
+  "assignment": {
+    "executionId": "exe_01",
+    "stepId": "implement",
+    "attemptId": "att_2",
+    "capability": "agent.run",
+    "inputsJson": "eyJwcm9tcHQiOiJpbXBsZW1lbnQifQ==",
+    "revision": {
+      "repository": "example/app",
+      "commitSha": "0123456789abcdef0123456789abcdef01234567"
+    },
+    "deadline": "2026-10-26T09:30:00Z",
+    "lease": {
+      "leaseId": "lease_9",
+      "fencingToken": "4",
+      "expiresAt": "2026-10-26T09:01:00Z"
+    },
+    "idempotencyKey": "idem_01",
+    "capabilityIdempotent": false,
+    "grantIds": [
+      "01J0Q8Z3X50000000000000020"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "godot-developer",
+  "name": "Godot developer",
+  "role": "Developer",
+  "instructions": "i",
+  "requestedCapabilities": [
+    "scene.inspect"
+  ],
+  "providerPreference": [
+    "claude"
+  ],
+  "model": "opus",
+  "status": "active"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "meshy",
+  "kind": "tool",
+  "name": "Meshy",
+  "capabilities": [
+    "mesh.from_image"
+  ],
+  "secrets": [
+    "api_key"
+  ],
+  "network": true,
+  "connection": {
+    "enabled": false,
+    "secrets": {
+      "api_key": true
+    }
+  },
+  "status": {
+    "available": false,
+    "reason": "disabled: enable it in the Platform settings"
+  }
+}

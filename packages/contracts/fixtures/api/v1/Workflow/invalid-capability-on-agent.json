@@ -1,0 +1,19 @@
+{
+  "id": "WF-001",
+  "name": "Bad",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "A",
+      "type": "agent",
+      "prompt": "x",
+      "capability": "model.validate"
+    }
+  ],
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

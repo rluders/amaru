@@ -1,0 +1,14 @@
+{
+  "id": "01J00000000000000000000007",
+  "seq": 7,
+  "type": "agent.changed",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_1",
+  "data": {
+    "ids": []
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_1"
+  }
+}

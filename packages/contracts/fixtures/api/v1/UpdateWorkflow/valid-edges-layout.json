@@ -1,0 +1,16 @@
+{
+  "edges": [
+    {
+      "from": "step-1",
+      "to": "step-2"
+    }
+  ],
+  "layout": {
+    "nodes": {
+      "step-1": {
+        "x": 1,
+        "y": 2
+      }
+    }
+  }
+}

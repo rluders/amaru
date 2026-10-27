@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "requestId": "01J0Q8Z3X50000000000000010",
+  "decision": "require_approval",
+  "reasons": [
+    {
+      "code": "policy.grant_matched",
+      "source": "grant",
+      "message": "Covered by an active Grant."
+    }
+  ],
+  "evaluatedAt": "2026-10-26T09:00:00Z"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "WF-001",
+  "name": "Generate LODs",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z",
+  "steps": [
+    {
+      "name": "x",
+      "type": "tool"
+    }
+  ]
+}

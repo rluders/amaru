@@ -1,0 +1,13 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "queued",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "workflowId": "WF-001",
+  "workItemId": "WI-001",
+  "input": {
+    "prompt": "Workflow: x"
+  }
+}

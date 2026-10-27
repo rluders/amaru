@@ -1,0 +1,4 @@
+{
+  "protocol": "amaru.provider/v1",
+  "method": "describe"
+}

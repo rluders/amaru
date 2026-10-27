@@ -1,0 +1,16 @@
+{
+  "id": "01J00000000000000000000042",
+  "seq": 42,
+  "type": "work.item.changed",
+  "time": "2026-10-05T12:02:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "id": "WI-002",
+    "packageId": "WP-001",
+    "status": "done"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

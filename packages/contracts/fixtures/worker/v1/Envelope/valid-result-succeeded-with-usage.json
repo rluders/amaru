@@ -1,0 +1,33 @@
+{
+  "messageId": "11",
+  "result": {
+    "attemptId": "att_2",
+    "fencingToken": "4",
+    "outcome": "RESULT_OUTCOME_SUCCEEDED",
+    "outputs": [
+      {
+        "role": "diff",
+        "path": "out/change.diff"
+      }
+    ],
+    "usage": [
+      {
+        "provider": "example-llm",
+        "model": "model-x",
+        "inputTokens": {
+          "source": "USAGE_SOURCE_REPORTED",
+          "value": "1200"
+        },
+        "outputTokens": {
+          "source": "USAGE_SOURCE_UNKNOWN"
+        },
+        "cost": {
+          "source": "USAGE_SOURCE_ESTIMATED",
+          "amount": "0.0132",
+          "currency": "USD",
+          "priceTableVersion": "2026-10-01"
+        }
+      }
+    ]
+  }
+}

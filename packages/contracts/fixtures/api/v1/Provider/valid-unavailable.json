@@ -1,0 +1,12 @@
+{
+  "id": "blender",
+  "kind": "tool",
+  "name": "Blender",
+  "capabilities": [
+    "tool.blender"
+  ],
+  "status": {
+    "available": false,
+    "reason": "executable not found"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "WF-001",
+  "name": "Godot",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Inspect",
+      "type": "agent",
+      "prompt": "Inspect the current player scene.",
+      "agentId": "godot-developer"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Bad",
+  "type": "task",
+  "status": "draft",
+  "steps": [
+    {
+      "name": "Do",
+      "type": "agent",
+      "prompt": "x",
+      "input": {
+        "file": "a.blend"
+      }
+    }
+  ]
+}

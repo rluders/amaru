@@ -1,0 +1,26 @@
+{
+  "id": "WI-007",
+  "packageId": "WP-001",
+  "title": "#7 Wire the inventory",
+  "intent": "Wire the inventory.",
+  "status": "todo",
+  "owner": {
+    "kind": "agent"
+  },
+  "external": {
+    "provider": "github",
+    "repo": "acme/game",
+    "number": 7,
+    "updatedAt": "2026-10-01T12:00:00Z",
+    "state": "open",
+    "blockedBy": [
+      {
+        "repo": "acme/game",
+        "number": 3,
+        "state": "merged"
+      }
+    ]
+  },
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

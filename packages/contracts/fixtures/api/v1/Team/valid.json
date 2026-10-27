@@ -1,0 +1,17 @@
+{
+  "id": "release-team",
+  "name": "Release team",
+  "members": [
+    {
+      "agentId": "writer-agent",
+      "role": "author"
+    },
+    {
+      "agentId": "qa-agent",
+      "role": "reviewer"
+    }
+  ],
+  "separationOfDuties": true,
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

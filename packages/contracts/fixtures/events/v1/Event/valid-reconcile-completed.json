@@ -1,0 +1,21 @@
+{
+  "id": "01J00000000000000000000043",
+  "seq": 43,
+  "type": "reconcile.completed",
+  "time": "2026-10-05T12:10:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "scope": "intake",
+    "ok": true,
+    "partial": false,
+    "created": 0,
+    "updated": 1,
+    "unchanged": 12,
+    "errors": 0,
+    "durationMs": 840
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "mesh.from_image",
+    "title": "Generate 3D model from an image",
+    "inputs": [
+      {
+        "name": "image",
+        "kind": "file",
+        "mediaTypes": [
+          "image/*"
+        ],
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "model",
+        "kind": "file",
+        "mediaTypes": [
+          "model/gltf-binary"
+        ]
+      }
+    ],
+    "builtin": true,
+    "providers": [
+      {
+        "providerId": "meshy",
+        "name": "Meshy",
+        "available": false,
+        "spec": {
+          "id": "mesh.from_image",
+          "title": "Generate 3D model from an image",
+          "inputs": [
+            {
+              "name": "image",
+              "kind": "file",
+              "required": true
+            },
+            {
+              "name": "ai_model",
+              "kind": "enum",
+              "enum": [
+                "latest",
+                "meshy-6"
+              ]
+            }
+          ],
+          "outputs": [
+            {
+              "name": "model",
+              "kind": "file"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "vendor.thing",
+    "title": "Custom",
+    "inputs": [],
+    "outputs": [],
+    "builtin": false,
+    "providers": []
+  }
+]

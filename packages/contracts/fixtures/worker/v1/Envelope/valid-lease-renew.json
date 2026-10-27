@@ -1,0 +1,7 @@
+{
+  "messageId": "8",
+  "leaseRenew": {
+    "attemptId": "att_2",
+    "fencingToken": "4"
+  }
+}

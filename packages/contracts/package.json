@@ -1,0 +1,21 @@
+{
+  "name": "@amaru/contracts-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript half of the contract fixture suite (API-002). Not published; the SDK is WP-M2-02.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@bufbuild/protobuf": "2.16.0",
+    "@types/node": "22.20.5",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "typescript": "5.9.3"
+  }
+}

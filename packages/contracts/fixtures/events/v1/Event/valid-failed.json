@@ -1,0 +1,19 @@
+{
+  "id": "01J00000000000000000000006",
+  "seq": 6,
+  "type": "execution.failed",
+  "time": "2026-10-01T12:00:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "state": "failed",
+    "error": {
+      "code": "exit_nonzero",
+      "message": "exit 1"
+    }
+  },
+  "executionId": "exe_01",
+  "resource": {
+    "type": "execution",
+    "id": "exe_01"
+  }
+}

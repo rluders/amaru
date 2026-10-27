@@ -1,0 +1,33 @@
+{
+  "id": "hello",
+  "kind": "tool",
+  "name": "Hello provider",
+  "capabilities": [
+    "hello.cube"
+  ],
+  "specs": [
+    {
+      "id": "hello.cube",
+      "title": "Make a cube",
+      "inputs": [
+        {
+          "name": "size",
+          "kind": "number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "kind": "file",
+          "mediaTypes": [
+            "model/gltf+json"
+          ]
+        }
+      ]
+    }
+  ],
+  "status": {
+    "available": true,
+    "version": "0.1.0"
+  }
+}

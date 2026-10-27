@@ -1,0 +1,50 @@
+{
+  "id": "exe_02",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "meshy",
+  "state": "succeeded",
+  "createdAt": "2026-10-02T12:00:00Z",
+  "startedAt": "2026-10-02T12:00:01Z",
+  "endedAt": "2026-10-02T12:02:00Z",
+  "workflowId": "WF-002",
+  "input": {
+    "prompt": "Workflow: Mesh pipeline"
+  },
+  "outputs": [
+    "generated/WF-002/exe_02/step-1/model.glb"
+  ],
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "Generate",
+      "type": "tool",
+      "capability": "mesh.from_image",
+      "executable": true,
+      "state": "succeeded",
+      "startedAt": "2026-10-02T12:00:01Z",
+      "endedAt": "2026-10-02T12:02:00Z",
+      "providerId": "meshy",
+      "input": {
+        "image": "refs/crate.png"
+      },
+      "outputs": [
+        "generated/WF-002/exe_02/step-1/model.glb"
+      ],
+      "files": [
+        {
+          "role": "model",
+          "path": "generated/WF-002/exe_02/step-1/model.glb",
+          "mediaType": "model/gltf-binary",
+          "sha256": "abababababababababababababababababababababababababababababababab",
+          "bytes": 1024
+        }
+      ],
+      "external": {
+        "providerId": "meshy",
+        "jobId": "018a210d-8ba4-705c",
+        "submittedAt": "2026-10-02T12:00:02Z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "protocol": "amaru.provider/v1",
+  "method": "run",
+  "capability": "mesh.from_text",
+  "input": {
+    "prompt": "a crate"
+  },
+  "projectRoot": "/home/u/Game",
+  "outputDir": "generated/WF-001/exe_1/step-1",
+  "resume": {
+    "jobId": "job-1"
+  }
+}

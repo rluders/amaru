@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "requestId": "01J0Q8Z3X50000000000000010",
+  "principal": {
+    "kind": "agent",
+    "id": "agent_impl",
+    "sponsor": "user_01"
+  },
+  "capability": "PR Create",
+  "resource": {
+    "type": "pull_request",
+    "repository": "example/app",
+    "number": 12
+  },
+  "scope": {
+    "projectId": "prj_01"
+  },
+  "context": {
+    "executionId": "exe_01",
+    "stepExecutionId": "se_01",
+    "trigger": {
+      "kind": "delivery_loop"
+    },
+    "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

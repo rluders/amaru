@@ -1,0 +1,5 @@
+{
+  "name": "Sign off",
+  "type": "approval",
+  "prompt": "Ship it?"
+}

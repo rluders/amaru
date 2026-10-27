@@ -1,0 +1,7 @@
+{
+  "messageId": "9",
+  "leaseRevoked": {
+    "attemptId": "att_2",
+    "reason": "lease expired"
+  }
+}

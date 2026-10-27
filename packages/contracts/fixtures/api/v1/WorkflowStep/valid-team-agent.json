@@ -1,0 +1,7 @@
+{
+  "name": "Draft",
+  "type": "agent",
+  "prompt": "Write",
+  "teamId": "release-team",
+  "role": "author"
+}

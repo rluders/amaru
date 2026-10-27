@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "requestId": "01J0Q8Z3X50000000000000010",
+  "decision": "require_approval",
+  "reasons": [
+    {
+      "code": "policy.default_require_approval",
+      "source": "default",
+      "message": "scm.pr.create requires approval by default."
+    }
+  ],
+  "matchedGrantId": null,
+  "evaluatedAt": "2026-10-26T09:00:00Z",
+  "approval": {
+    "gateKind": "step_approval",
+    "minRole": "maintainer",
+    "bindTo": [
+      "diff",
+      "check_result"
+    ]
+  }
+}

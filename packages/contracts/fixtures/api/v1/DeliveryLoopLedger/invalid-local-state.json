@@ -1,0 +1,18 @@
+{
+  "packageId": "WP-001",
+  "items": {
+    "WI-001": {
+      "phase": "validating",
+      "attempt": 1,
+      "local": {
+        "source": "hosted",
+        "headSha": "a",
+        "configHash": "b",
+        "state": "green",
+        "runs": 1,
+        "repairs": 0
+      }
+    }
+  },
+  "decisions": []
+}

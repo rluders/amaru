@@ -1,0 +1,17 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "running",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "A",
+      "type": "agent",
+      "executable": true,
+      "state": "done"
+    }
+  ]
+}

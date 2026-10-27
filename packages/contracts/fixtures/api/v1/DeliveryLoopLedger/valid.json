@@ -1,0 +1,59 @@
+{
+  "packageId": "WP-001",
+  "items": {
+    "WI-001": {
+      "phase": "done",
+      "attempt": 2,
+      "runs": [
+        {
+          "kind": "implement",
+          "attempt": 1,
+          "executionId": "exe_01",
+          "state": "failed",
+          "error": {
+            "code": "runtime_restarted",
+            "message": "Runtime stopped"
+          },
+          "abandoned": true
+        },
+        {
+          "kind": "implement",
+          "attempt": 2,
+          "executionId": "exe_02",
+          "state": "succeeded"
+        },
+        {
+          "kind": "review",
+          "attempt": 2,
+          "executionId": "exe_03",
+          "state": "succeeded"
+        }
+      ],
+      "checkout": {
+        "path": ".amaru/runtime/worktrees/WI-001",
+        "branch": "amaru/wi-001-run-state",
+        "base": "main"
+      },
+      "pr": {
+        "number": 1,
+        "url": "https://github.com/a/b/pull/1",
+        "branch": "amaru/wi-001-run-state",
+        "state": "merged",
+        "commit": "abc"
+      }
+    }
+  },
+  "decisions": [
+    {
+      "at": "2026-10-05T12:00:00Z",
+      "triggerType": "work.package.changed",
+      "triggerSeq": 3,
+      "source": "event",
+      "workItemId": "WI-001",
+      "action": "run_workflow",
+      "reason": "dependencies done: none",
+      "executionId": "exe_01"
+    }
+  ],
+  "completedAt": "2026-10-05T13:00:00Z"
+}

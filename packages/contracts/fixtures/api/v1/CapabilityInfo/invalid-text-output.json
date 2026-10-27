@@ -1,0 +1,13 @@
+{
+  "id": "x.y",
+  "title": "t",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "o",
+      "kind": "text"
+    }
+  ],
+  "builtin": false,
+  "providers": []
+}

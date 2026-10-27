@@ -1,0 +1,17 @@
+{
+  "id": "01J0Q8Z3X50000000000000114",
+  "seq": 14,
+  "type": "result.rejected_stale",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "step_execution",
+    "id": "se_01"
+  },
+  "data": {
+    "attemptId": "att_2",
+    "presentedToken": 3,
+    "currentToken": 0
+  },
+  "executionId": "exe_01"
+}

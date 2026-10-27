@@ -1,0 +1,7 @@
+{
+  "capability": "asset.generate",
+  "input": {
+    "prompt": "x",
+    "artifactId": "Assets/Player.md"
+  }
+}

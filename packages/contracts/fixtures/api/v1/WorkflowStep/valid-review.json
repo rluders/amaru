@@ -1,0 +1,7 @@
+{
+  "name": "Review",
+  "type": "review",
+  "teamId": "release-team",
+  "role": "reviewer",
+  "reviews": "step-1"
+}

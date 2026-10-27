@@ -1,0 +1,17 @@
+{
+  "id": "01J00000000000000000000041",
+  "seq": 41,
+  "type": "pr.merged",
+  "time": "2026-10-05T12:01:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "repo": "a/b",
+    "number": 3,
+    "action": "merged",
+    "source": "guess"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

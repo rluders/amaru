@@ -1,0 +1,15 @@
+{
+  "packageId": "WP-007",
+  "items": {
+    "WI-013": {
+      "phase": "blocked",
+      "attempt": 1,
+      "base": {
+        "sha": "b2",
+        "state": "rebased",
+        "at": "2026-10-12T16:58:00Z"
+      }
+    }
+  },
+  "decisions": []
+}

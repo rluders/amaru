@@ -12,9 +12,9 @@ Fresh import with provenance, as decided in [ADR-0047](../../docs/architecture/a
 | `protocol/events.schema.json` (22 `$defs`) | `485adbc03d53fd01c7c249ac640017932efee60e` | Adapted: 15 kept, 3 dropped, base replaced | `schemas/events/*.json` |
 | `protocol/provider.schema.json` (6 `$defs`) | `60ac9313143e2f17fdb8d841b8a5e389e222da33` | Adapted | `schemas/provider/*.json` |
 | `protocol/openapi.yaml` (56 paths) | `1eafb129ffaf2bb20a5ac6cf5ee3bea3fba27830` | Adapted: 25 paths kept, 4 added, rest dropped | `openapi/openapi.yaml` |
-| `protocol/fixtures/**` (271 files) | tree of `protocol/fixtures` at the same commit | **Not imported in this change.** Re-validated against the adapted schemas and imported in API-002 ([#117](https://github.com/rluders/amaru/issues/117)); fixtures of removed shapes are dropped, not edited to pass | — |
+| `protocol/fixtures/**` (271 files) | tree of `protocol/fixtures` at the same commit | Re-validated against the adapted schemas in API-002 ([#117](https://github.com/rluders/amaru/issues/117)): 208 imported with the recorded transforms below, 63 dropped; see "Fixtures" | `fixtures/` |
 
-The conversion was a one-time scripted transformation followed by hand edits; the script is not part of this repository. Everything under `schemas/`, `openapi/` and `proto/` is hand-maintained from here on.
+The conversions (schemas, then fixtures) were one-time scripted transformations followed by hand edits; the scripts are not part of this repository. Everything under `schemas/`, `openapi/` and `proto/` is hand-maintained from here on.
 
 ## Renames applied (glossary term map, ADR-0047 §5)
 
@@ -45,6 +45,18 @@ The conversion was a one-time scripted transformation followed by hand edits; th
 | Intake (`IntakePolicy`, `IntakeReport`, `Eligibility`, `…/intake/sync`) | Tracker integration (INT-001) is not in M2. `IssueRef` stays as the Work Item's external link. |
 | Provider enable and secret routes (`PATCH /providers/{id}`, `PUT …/secrets/{name}`) | Secret handling is a separate security design; read-only `GET /providers` stays. |
 | Placeholder-image generator (`GenerateSpec`), `ResolvedAgent` snapshot MCP fields, plugin/Obsidian-specific discovery | Prototype-only. |
+
+## Fixtures (API-002)
+
+All 271 prototype fixtures were run against the adapted schemas. A fixture was imported only if its outcome (valid or invalid) held after the transforms; none was edited to force an outcome. Imported files carry their prototype path in `source` in `fixtures/manifest.json`.
+
+| Result | Count | Why |
+|---|---|---|
+| Imported | 208 | The outcome held after the transforms below. |
+| Dropped: the type was removed | 49 | Fixtures of `McpServer*`, `McpImport*`, `McpToolList`, `SetMcpAllowedTools`, `ConnectorValidation`/`ValidateConnector`, `Playbook*`, `TrustPlaybook`, `Skill*`, `WorkflowTemplate`/`InstantiateWorkflowTemplate`/`InstantiateReport`, `SetProviderSecret`, `UpdateProvider`, `PendingApproval*`, `ApprovalDecision` (see "Not carried over"; the last three were replaced by `Approval`). |
+| Dropped: the shape was removed | 14 | Agent `skills` and `playbooks` pins, Artifact `generate`, Work Item `eligibility`, Work Package `intake`, asset, hook and usage-unit cases, a Step with agent skills. Fixtures with an optional removed field (`skills`, `playbooks`) were imported with that field deleted. Invalid fixtures that would now fail only because of a removed field were dropped, so every imported invalid fixture fails for the reason its name gives. |
+
+Transforms applied before validating (the same rename rules as the schemas): `Autoloop` → `DeliveryLoop` and `autoloop` → `deliveryLoop` (including `autoloop.decision` → `delivery_loop.decision`); `weaveConfig` → `config`; `runtimeVersion` → `platformVersion`; `workspace` → `checkout`; step state `unsupported` → `refused`; event type `runtime.state` → `platform.state`; every event gained `id` (a ULID derived from `seq`) and `resource`; a bare event array became `{events: [...]}`; the prototype `usage` objects (`credits`, `durationMs`) were deleted because the shape is gone (new usage fixtures replace them); three values naming the prototype (a branch, a repository name, a settings sentence) were replaced by neutral ones. 107 fixtures are new (Approval, Policy, Principal, Grant, usage, WRK-003 events, Step timeout and interruption, Worker envelope).
 
 ## Added by Amaru (not migrated)
 

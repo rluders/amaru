@@ -1,0 +1,25 @@
+{
+  "id": "01J00000000000000000000040",
+  "seq": 40,
+  "type": "delivery_loop.decision",
+  "time": "2026-10-05T12:00:00Z",
+  "projectId": "prj_01",
+  "executionId": "exe_07",
+  "data": {
+    "packageId": "WP-001",
+    "decision": {
+      "at": "2026-10-05T12:00:00Z",
+      "triggerSeq": 39,
+      "triggerType": "execution.completed",
+      "source": "event",
+      "workItemId": "WI-002",
+      "action": "run_workflow",
+      "reason": "dependencies done: WI-001",
+      "executionId": "exe_07"
+    }
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}
