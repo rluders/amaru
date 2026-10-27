@@ -46,3 +46,6 @@ The same rule applies when a Lease expires because a Worker was lost.
 
 ## Approval
 Proposed by: Claude (second-pass open-question resolution, 2026-10-25) · Approved by: Ricardo Lüders on 2026-10-25, planning prompt that delegated every remaining decision (status "accepted, delegated" confirmed in the same session).
+
+## Amendment 2026-10-27: resume and abandon of interrupted and timed_out Steps
+An `interrupted` Step is resumed or abandoned only by a human, or by a Policy rule that names the Step. Resuming moves it to `queued` with reason `resumed` and spends no attempt; abandoning moves it to `cancelled`. The Execution waits meanwhile instead of failing. Nothing re-runs it automatically. Recorded in [DOMAIN_MODEL §5.2](../DOMAIN_MODEL.md#52-step-execution). Decided by Claude under the product owner's delegation ("I leave the human decisions for you", "go"), 2026-10-27; it takes effect as the owner's reading when this change merges.

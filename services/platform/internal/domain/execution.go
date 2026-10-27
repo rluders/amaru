@@ -65,7 +65,8 @@ func (e *Execution) Start(now time.Time) error {
 	return nil
 }
 
-// Wait moves running → waiting: a Step awaits an Approval or a Worker.
+// Wait moves running → waiting: a Step awaits an Approval, a Worker, or a person to resume or
+// cancel an interrupted or timed-out Step (ADR-0042, ADR-0044).
 func (e *Execution) Wait() error { return e.move(ExecRunning, ExecWaiting) }
 
 // Resume moves waiting → running: the Approval was given or a Worker leased the Step.

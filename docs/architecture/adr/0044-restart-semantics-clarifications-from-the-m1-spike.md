@@ -35,3 +35,6 @@ Also: a `Resumable` Step that was interrupted **before** its remote job id was r
 
 ## Approval
 Proposed by: Claude (M1 spike, 2026-10-26) · Approved by: Ricardo Lüders on 2026-10-26, in the WP-M1-02 session ("Merge, accept 44 and 45, close. We are good.")
+
+## Amendment 2026-10-27: resume and abandon of interrupted and timed_out Steps
+`timed_out` is a Step state with the same exits as `interrupted`: resumed (`queued`) or abandoned (`cancelled`) by a human, or by a Policy rule that names the Step. It is never retried automatically and spends no attempt. Recorded in [DOMAIN_MODEL §5.2](../DOMAIN_MODEL.md#52-step-execution). Decided by Claude under the product owner's delegation ("I leave the human decisions for you", "go"), 2026-10-27; it takes effect as the owner's reading when this change merges.
