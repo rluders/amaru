@@ -34,8 +34,8 @@ deciders: Ricardo Lüders (product owner)
    | Source | Disposition | Target / note |
    |---|---|---|
    | `fsstore/fsstore.go` (Execution snapshot and event log) | **Reimplement** | Execution, Step and Event storage on PostgreSQL (FEAT-EXE-002 persistence part, #129). Atomic replace becomes a transaction; append-only `events.jsonl` becomes an ordered Event table; "corrupt data is skipped" is not carried (a database row is valid or absent) |
-   | `fsstore/work.go`, `fsstore/team.go` | **Reimplement** | Work Packages, Work Items and Teams as Platform state ([ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)); the file readers are also the reference for the legacy importer (`amaru import legacy`, [LEGACY_IMPORTER](../LEGACY_IMPORTER.md)) |
-   | `fsstore/agent.go`, `fsstore/workflow.go`, `fsstore/workflow_template.go` | **Reference only** | Agents and Workflows are project definitions in Git (`.amaru/`, [ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)), not database rows; the readers inform the legacy importer only |
+   | `fsstore/work.go`, `fsstore/team.go` | **Reimplement** | Work Packages, Work Items and Teams as Platform state ([ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)); the file readers are a behavioral reference only |
+   | `fsstore/agent.go`, `fsstore/workflow.go`, `fsstore/workflow_template.go` | **Reference only** | Agents and Workflows are project definitions in Git (`.amaru/`, [ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md)), not database rows; the readers are a reference only |
    | `fsstore/{autoloop,hooks,settings,trust}.go` | **Deferred / requires human decision** | M4 delivery loop and undecided shapes, as in ADR-0049 item 4. Not moved |
    | `projectfs/projectfs.go` | **Not moved by this ADR** | project-file writing belongs to the `.amaru/` layout work (WP-M1-05); its symlink-escape and write tests are cited as specification for that writer |
    | `userstore/userstore.go` | **Not moved by this ADR** | per-user secrets, settings and consents map to configuration scopes and Policy (WP-M3-04, WP-M3-07); needs its own decision |
@@ -61,9 +61,9 @@ deciders: Ricardo Lüders (product owner)
 ## Consequences
 - **Easier:** no file-format debt or dual storage; one schema, one dialect, tenancy from the first migration; the prototype tests give a behavioral checklist.
 - **Harder:** nothing is reused, so the adapter, schema and migration tooling are new work; the specification is only as good as 33 tests, and the PostgreSQL failure modes (concurrent writers, partial failure) need new tests.
-- **Security and compatibility:** no secrets or personal data are transferred (`userstore` is excluded). Amaru promises no storage compatibility with the prototype files; the legacy importer is the bridge ([LEGACY_IMPORTER](../LEGACY_IMPORTER.md)).
+- **Security and compatibility:** no secrets or personal data are transferred (`userstore` is excluded). Amaru promises no storage compatibility with the prototype files; there is no importer (see the amendment below).
 - **Maintenance:** the storage adapters have a single owner (the Platform owner); the prototype copy is frozen and not a second source of truth.
-- **Follow-up:** the ADR-0015 claim about prototype PostgreSQL code needs correcting or sourcing (record in OPEN_QUESTIONS if it stays unverified). `projectfs`, `userstore`, `fsscan`, `autoloop`, `hooks`, `settings` and `trust` each need a decision or migration ADR before they move. The importer has no sub-issue under #14 yet.
+- **Follow-up:** the ADR-0015 claim about prototype PostgreSQL code needs correcting or sourcing (record in OPEN_QUESTIONS if it stays unverified). `projectfs`, `userstore`, `fsscan`, `autoloop`, `hooks`, `settings` and `trust` each need a decision or migration ADR before they move.
 
 ## Alternatives considered
 - **Port the file stores and add PostgreSQL later:** keeps working code but violates ADR-0015 (no file-store adapter) and creates a second storage path to retire.
@@ -72,3 +72,6 @@ deciders: Ricardo Lüders (product owner)
 
 ## Approval
 Proposed by: Claude (migration ADR draft for #76, 2026-10-27). Approved by: Ricardo Lüders (product owner) on 2026-10-27, in the WP-M3-02 session after reviewing PR #268 ("Approved, you can also merge it"). The Deferred, Reference-only and Not-moved rows of item 4 were reviewed as drafted and stay unmoved; the criterion 6 gap is accepted with the ADR. The open follow-ups (the ADR-0015 statement about prototype PostgreSQL code, and a sub-issue for the legacy importer) were not decided in the approval.
+
+## Amendment 2026-10-27: no importer for the prototype
+The product owner decided on 2026-10-27 that the earlier internal implementation was a PoC and is a reference only. Amaru ships no importer for it (no `amaru import legacy`), so statements here about an importer no longer apply. Definitions and state are created fresh in Amaru. Approved by: Ricardo Lüders (product owner), in the WP-M3-02 session.

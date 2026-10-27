@@ -29,8 +29,7 @@ supersedes: 0027
   - Every Execution records the definition revision: the commit SHA when the tree is clean, plus a content hash.
   - A local Platform reads the working tree, and dirty edits are flagged in Evidence. Remote and Cloud Platforms fetch at a commit.
   - Nothing Amaru writes at runtime lands in the Project tree.
-  - There is no compatibility with the prototype's project folder, only a one-shot `amaru import legacy`.
-- The importer maps prototype `teams/` (agent compositions) to Platform Teams that hold the same Agents, after the user confirms.
+  - There is no compatibility with the prototype's project folder, and no importer (see the amendment below).
 
 ## Consequences
 - Repository write access never grants approval authority.
@@ -43,3 +42,6 @@ supersedes: 0027
 
 ## Approval
 Proposed by: Claude (second-pass open-question resolution, 2026-10-25) · Approved by: Ricardo Lüders on 2026-10-25, planning prompt that delegated every remaining decision (status "accepted, delegated" confirmed in the same session).
+
+## Amendment 2026-10-27: no importer for the prototype
+The product owner decided on 2026-10-27 that the earlier internal implementation was a PoC and is a reference only. Amaru ships no importer for it (no `amaru import legacy`), so statements here about an importer no longer apply. Definitions and state are created fresh in Amaru. Approved by: Ricardo Lüders (product owner), in the WP-M3-02 session.

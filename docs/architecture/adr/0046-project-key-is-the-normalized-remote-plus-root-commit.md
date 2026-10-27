@@ -22,7 +22,6 @@ deciders: Ricardo Lüders
 ## Consequences
 - Clone location, path spelling and credentials do not change a Project's identity; two clones share operational state.
 - A transferred or renamed remote yields a new key until the user links the alias; this is manual by design.
-- The importer ([LEGACY_IMPORTER](../LEGACY_IMPORTER.md)) maps prototype repository entries to `.amaru/repositories.yaml`.
 - Revisit if root-commit disambiguation proves unreliable (for example rewritten history) at the M3 two-clone validation.
 
 ## Alternatives considered
@@ -35,3 +34,6 @@ Proposed by: Claude (WP-M1-05, 2026-10-26) · Approved by: Ricardo Lüders on 20
 
 ## Amendment 2026-10-27: ssh is the canonical transport
 The original text lowercased the scheme but left open whether `https://host/acme/app` and `git@host:acme/app` are the same Project. The product owner decided: "always ssh over https". The normalized remote therefore has the form `ssh://<host>/<path>`: `https`, `http`, `git` and scp-like (`user@host:path`) remotes map onto it, and the port of a web or git-protocol URL is dropped because it says nothing about the ssh port. An explicit ssh port other than 22 is kept. One repository cloned over https and over ssh now has one key. Implemented in `services/platform` (`domain.NormalizeRemote`, unit-tested); nothing else changes in the Decision. Approved by: Ricardo Lüders, 2026-10-27, in the WP-M3-02 session.
+
+## Amendment 2026-10-27: no importer for the prototype
+The product owner decided on 2026-10-27 that the earlier internal implementation was a PoC and is a reference only. Amaru ships no importer for it (no `amaru import legacy`), so statements here about an importer no longer apply. Definitions and state are created fresh in Amaru. Approved by: Ricardo Lüders (product owner), in the WP-M3-02 session.
