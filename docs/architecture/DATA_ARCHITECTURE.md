@@ -45,6 +45,7 @@ Storage ports stay in domain code so tests use fakes; production has one adapter
 
 - A state transition, its Event and the messages it causes are written in one PostgreSQL transaction; messages leave through the outbox relay to NATS, so clients never see an Event for a state that did not commit and consumers deduplicate by id.
 - Every persisted record carries a schema version. Loaders refuse unknown future versions and migrate older ones explicitly (FEAT-OPS-002).
+  - *Implemented, unit-tested on Linux (#177):* the migration runner in `services/platform/internal/store/migrations` records every applied migration (version, content hash) in `amaru_schema_revisions`, refuses a database newer than the build, refuses an edited applied file and applies each file with its revision row in one transaction under an advisory lock. No table exists yet; per-record schema versions for each persisted format come with each adapter.
 - Artifacts are written before the Step that produced them is marked succeeded. Their hashes are computed by the Platform.
 - Definitions edited outside Amaru (files under `.amaru/` changed on disk or in Git) are detected and produce change Events (FEAT-WRK-003); every Execution records the definition revision (commit SHA + content hash).
 
