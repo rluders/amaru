@@ -11,7 +11,7 @@ Planning IDs mapped to their GitHub issues in [rluders/amaru](https://github.com
 | M1 | `WP-M1-02` | [#3](https://github.com/rluders/amaru/issues/3) | — | WP-M1-02 Storage and execution validation spike |
 | M1 | `WP-M1-03` | [#4](https://github.com/rluders/amaru/issues/4) | — | WP-M1-03 Contract versioning rules in fixtures |
 | M1 | `WP-M1-04` | [#5](https://github.com/rluders/amaru/issues/5) | — | WP-M1-04 Approval, Policy, roles and configuration shapes |
-| M1 | `WP-M1-05` | [#6](https://github.com/rluders/amaru/issues/6) | — | WP-M1-05 `.amaru/` layout and importer design |
+| M1 | `WP-M1-05` | [#6](https://github.com/rluders/amaru/issues/6) | — | WP-M1-05 `.amaru/` layout design |
 | M1 | `WP-M1-06` | [#7](https://github.com/rluders/amaru/issues/7) | — | WP-M1-06 Worker protocol schemas |
 | M1 | `WP-M1-07` | [#8](https://github.com/rluders/amaru/issues/8) | — | WP-M1-07 Inventory refresh at the baseline |
 | M1 | `OWN-legal-review` | [#65](https://github.com/rluders/amaru/issues/65) | [#2](https://github.com/rluders/amaru/issues/2) | Legal review of the Amaru Community License 1.0 draft |

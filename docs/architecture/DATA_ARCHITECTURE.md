@@ -25,7 +25,7 @@ Status: **accepted** (2026-10-25), not implemented. Storage decisions: [ADR-0015
     - the per-project runtime folder, with `executions/<id>/{execution.json,events.jsonl}` and the delivery-loop ledgers: gitignored operational state.
     - user state dir: credentials and grants.
   - **Gaps:** no schema migrations; work files are read only at startup.
-- **The earlier prototype** uses PostgreSQL, with 30 sequential SQL migrations applied by a custom runner (`store/migrations.go`). Artifacts are kept on the local filesystem (`ArtifactRoot`). SQLite is test-only.
+- **PostgreSQL in a predecessor: unverified.** An earlier claim that a prototype used PostgreSQL with 30 migrations, custom runner and `ArtifactRoot` could not be confirmed. The Runtime at `c8a2f6e` is file-based, with no `database/sql` or `pgx` ([ADR-0050](adr/0050-reimplement-the-prototype-stores-as-postgresql-adapters.md)). Treat it as no evidence for or against the PostgreSQL decision.
 
 ## 3. Store roles (decided)
 
@@ -45,6 +45,7 @@ Storage ports stay in domain code so tests use fakes; production has one adapter
 
 - A state transition, its Event and the messages it causes are written in one PostgreSQL transaction; messages leave through the outbox relay to NATS, so clients never see an Event for a state that did not commit and consumers deduplicate by id.
 - Every persisted record carries a schema version. Loaders refuse unknown future versions and migrate older ones explicitly (FEAT-OPS-002).
+  - *Implemented, unit-tested and PostgreSQL-tested on Linux (#177):* the migration runner in `services/platform/internal/store/migrations` runs goose-format files from an embedded directory (sha256 manifest `migrations.sum`), records versions in `amaru_schema_migrations`, refuses a database newer than the build and a file older than an applied one, and applies each file with its version row in one transaction under an advisory lock. No table exists yet; per-record schema versions for each persisted format come with each adapter.
 - Artifacts are written before the Step that produced them is marked succeeded. Their hashes are computed by the Platform.
 - Definitions edited outside Amaru (files under `.amaru/` changed on disk or in Git) are detected and produce change Events (FEAT-WRK-003); every Execution records the definition revision (commit SHA + content hash).
 
@@ -70,6 +71,6 @@ Retention is an Organization Policy setting per data class ([ADR-0017](adr/0017-
 
 Moving prototype project data into Amaru is a migration concern. It requires:
 - no runtime compatibility with the prototype's project folder ([ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md));
-- a one-shot importer (`amaru import legacy`) for definitions and Work Items, scheduled in the roadmap; layout and design (Proposed): [AMARU_DIRECTORY](AMARU_DIRECTORY.md), [LEGACY_IMPORTER](LEGACY_IMPORTER.md);
+- no importer for the prototype: it was a PoC and is a reference only (decision 2026-10-27); layout and design (Proposed): [AMARU_DIRECTORY](AMARU_DIRECTORY.md);
 - Prototype operational history stays read-only in the prototype; it is not imported;
 - no live dual-write.

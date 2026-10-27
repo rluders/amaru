@@ -1,6 +1,6 @@
 # The `.amaru/` Directory, Project Identity and Execution Provenance
 
-Status: **Proposed** (2026-10-26), not implemented, not validated. Design deliverable of [WP-M1-05](WORK_PACKAGES.md#wp-m1-05-amaru-layout-and-importer-design) ([#6](https://github.com/rluders/amaru/issues/6)). It applies the accepted [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) and [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md). It does not create `.amaru/`, a schema file, a parser or a migration. The importer that fills this layout is designed in [LEGACY_IMPORTER](LEGACY_IMPORTER.md).
+Status: **Proposed** (2026-10-26), not implemented, not validated. Design deliverable of [WP-M1-05](WORK_PACKAGES.md#wp-m1-05-amaru-layout-design) ([#6](https://github.com/rluders/amaru/issues/6)). It applies the accepted [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) and [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md). It does not create `.amaru/`, a schema file, a parser or a migration. There is no importer for the prototype: it was a PoC and is a reference only (amended 2026-10-27).
 
 The two points the first draft left open (§5.1 repository key, §3.4 Linked repository) are decided by the accepted [ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md). Everything else follows from accepted ADRs.
 
@@ -11,7 +11,7 @@ The two points the first draft left open (§5.1 repository key, §3.4 Linked rep
 - Authorization data never lives in Git: Team membership, Approval authority, Grants and trust decisions are Platform-owned.
 - Secrets are referenced by **name** only ([ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)).
 - Every file carries `schemaVersion`; loaders refuse unknown future versions ([DATA_ARCHITECTURE §4](DATA_ARCHITECTURE.md#4-consistency-rules)).
-- Files are edited by humans, by Amaru clients (atomic temp file + rename, as in [TECHNOLOGY_BENCHMARK](TECHNOLOGY_BENCHMARK.md)) or by the importer. The Platform reads them; it writes only on an explicit user action through a client or `amaru import legacy`.
+- Files are edited by humans, by Amaru clients (atomic temp file + rename, as in [TECHNOLOGY_BENCHMARK](TECHNOLOGY_BENCHMARK.md)). The Platform reads them; it writes only on an explicit user action through a client.
 
 ## 2. Layout
 
@@ -43,7 +43,7 @@ Common rules for every file below:
 | Fields (proposed) | `schemaVersion`; `project.name`; `defaults.workflow`; `checks[]` = `{name, command[], dir, timeoutSec}` with an optional `maxRuns`; `knowledge.globs[]`; `webhooks.outbound[]` = `{id, url, events[], secret}` (`secret` = name). |
 | Stays in Platform | Policy, egress consent for each URL, Provider connections, retention, Organization defaults, locked keys. Project config may only **tighten** security-relevant keys. |
 | Validation | Schema; `command` is an argv array, never a shell string; `dir` is project-relative with no `..`; `timeoutSec` bounded by the Organization maximum. |
-| Import | Prototype `config.yaml` holds only a schema version; checks, settings and outbound hooks are mapped by the importer ([LEGACY_IMPORTER §3](LEGACY_IMPORTER.md#3-entity-mapping)). |
+| Import | None. Written fresh in Amaru; the prototype `config.yaml` is a reference only. |
 
 ### 3.2 `workflows/<id>.yaml`
 | Aspect | Specification |
@@ -54,7 +54,7 @@ Common rules for every file below:
 | References | `capability` names a Capability, never a vendor or tool ([AGENTS.md](../../AGENTS.md)). `agent` is an Agent id (Project or Organization). `team` is a Team **slug**. |
 | Stays in Platform | Execution state, Step state, Approvals, Lease assignments. |
 | Validation | Schema; unique step ids; edges reference existing steps and form a DAG; every `agent` resolves; every `team` slug exists (§6); `reviews` points to an earlier step. |
-| Import | From the prototype Workflow file; see importer mapping. |
+| Import | None. Written fresh in Amaru; the prototype Workflow file is a reference only. |
 
 ### 3.3 `agents/<id>.yaml` and `templates/<id>.yaml`
 | Aspect | Specification |
@@ -84,7 +84,7 @@ Common rules for every file below:
 
 | Case | Behavior |
 |---|---|
-| `schemaVersion` missing | Invalid. (Legacy files without it are handled only by the importer, never by the loader.) |
+| `schemaVersion` missing | Invalid. (There is no legacy format to load.) |
 | `schemaVersion` greater than the loader supports | Refuse to load; the Project is `definitions-unsupported`; no Execution starts. Message names the file and the version. |
 | `schemaVersion` older, supported | Load through an explicit in-memory migration; never rewrite the file implicitly. |
 | Unknown field, same major | **Warn** and ignore at load; **fail** in `amaru`'s strict check mode used by CI and before an Execution starts. A typo must not silently disable a gate. |
@@ -106,7 +106,7 @@ Evidence level: **not validated**. No parser or fixtures exist; fixtures arrive 
 | B | Remote URL only | Simple | Rename/transfer breaks identity; mirrors collide |
 | C | `project.id` ULID generated by Amaru and stored in `.amaru/config.yaml` | Survives remote changes and works with no remote | Copy-paste of a repo duplicates the id; forces a committed id |
 
-**Decided ([ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md), accepted):** A, with C as a fallback for repositories with no remote (the id is generated on `attach` and committed after review). Alias handling: if a second remote normalizes differently, the user links it to the Project explicitly; Amaru never merges Projects automatically. Closed as [Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
+**Decided ([ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md), accepted):** A, with C as a fallback for repositories with no remote (the id is generated on `attach` and committed after review). Alias handling: if a second remote normalizes differently, the user links it to the Project explicitly; Amaru never merges Projects automatically. Amended 2026-10-27: the remote is normalized to `ssh://host/path`, so https and ssh clones share one key ([ADR-0046](adr/0046-project-key-is-the-normalized-remote-plus-root-commit.md)). Closed as [Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
 
 ### 5.2 Clone record (Platform)
 A **clone** is one working copy that registered with a Platform. Record: `cloneId` (ULID), `projectKey`, `hostLabel`, `rootPath` (absolute, Platform-only), `registeredAt`, last observed `HEAD` and branch, last seen dirty flag. Many clones per Project. Clone records are operational state; no clone information is committed. Operational state (Work Items, Executions, Approvals) is keyed by Project, so two clones never conflict on it.
@@ -170,4 +170,4 @@ Review is a document review. No automated check enforces it yet; a lint for secr
 
 ## 8. Related
 
-[ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) · [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md) · [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) · [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md) · [DOMAIN_MODEL](DOMAIN_MODEL.md) · [LEGACY_IMPORTER](LEGACY_IMPORTER.md) · [WP-M1-05](WORK_PACKAGES.md#wp-m1-05-amaru-layout-and-importer-design) (#6) · [WP-M1-02 report](investigations/2026-10-26-wp-m1-02-storage-and-execution.md) (#3) · WP-M3-01/WP-M3-02 consume this design.
+[ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) · [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md) · [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) · [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md) · [DOMAIN_MODEL](DOMAIN_MODEL.md) · [WP-M1-05](WORK_PACKAGES.md#wp-m1-05-amaru-layout-design) (#6) · [WP-M1-02 report](investigations/2026-10-26-wp-m1-02-storage-and-execution.md) (#3) · WP-M3-01/WP-M3-02 consume this design.

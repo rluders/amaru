@@ -19,7 +19,7 @@ superseded-by: 0043
 - Every Execution records the **definition revision**: commit SHA (when clean) plus a content hash of the definitions used.
 - A local Platform reads definitions from the working tree (uncommitted edits allowed, flagged as "dirty" in Evidence); remote and Cloud Platforms read them by Git fetch at a commit.
 - Nothing Amaru writes at runtime lands in the Project tree; `.amaru/` contains no runtime directory.
-- No compatibility with the prototype's project folder. A one-shot `amaru import legacy` (definitions and Work Items) is a roadmap task, not a runtime feature.
+- No compatibility with the prototype's project folder, and no importer (see the amendment below).
 
 ## Consequences
 - Two clones of a repository share definitions and never conflict on operational state.
@@ -33,3 +33,6 @@ superseded-by: 0043
 
 ## Approval
 Proposed by: Claude (open-question resolution, 2026-10-25) · Approved by: Ricardo Lüders on 2026-10-25, product-owner planning session (decision delegated to Claude in OPEN_QUESTIONS Q13 and accepted in the same session).
+
+## Amendment 2026-10-27: no importer for the prototype
+The product owner decided on 2026-10-27 that the earlier internal implementation was a PoC and is a reference only. Amaru ships no importer for it (no `amaru import legacy`), so statements here about an importer no longer apply. Definitions and state are created fresh in Amaru. Approved by: Ricardo Lüders (product owner), in the WP-M3-02 session.

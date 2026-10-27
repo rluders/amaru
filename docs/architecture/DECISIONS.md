@@ -51,7 +51,7 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0020](adr/0020-plugin-logic-runs-in-quickjs-on-wazero.md) | TypeScript plugin logic runs in QuickJS compiled to WebAssembly on wazero | superseded | 2026-10-25 |
 | [0021](adr/0021-plugin-packaging-signing-permissions-and-compatibility.md) | Plugins are signed OCI-distributed packages with declared permissions and engine ranges | accepted | 2026-10-25 |
 | [0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md) | Cloud tenancy is shared infrastructure with row-level isolation per Organization | accepted | 2026-10-25 |
-| [0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md) | Self-hosted ships as an OCI image with Atlas-authored migrations and operator-owned backup | accepted | 2026-10-25 |
+| [0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md) | Self-hosted ships as an OCI image with Atlas-authored migrations and operator-owned backup | superseded | 2026-10-25 |
 | [0024](adr/0024-remote-worker-registration-identity-and-delivery.md) | Remote Workers are enrolled per Organization with key-based identity and per-Lease delivery | accepted | 2026-10-25 |
 | [0025](adr/0025-api-and-protocol-versioning-policy.md) | APIs and protocols are versioned by major with additive-only changes | accepted | 2026-10-25 |
 | [0026](adr/0026-fair-code-community-license-with-commercial-licensing.md) | Amaru uses a fair-code community license with separate commercial licensing | accepted | 2026-10-25 |
@@ -78,6 +78,8 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0047](adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md) | Adapt the prototype protocol into packages/contracts by fresh import with provenance | accepted | 2026-10-26 |
 | [0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md) | Approval reuse and validity, uncovered Capabilities and Triggers, and Policy defaults and tightening | accepted | 2026-10-26 |
 | [0049](adr/0049-adapt-the-prototype-domain-and-ports-into-services-platform.md) | Adapt the prototype domain, ports and architecture test into services/platform by fresh import with provenance | accepted | 2026-10-26 |
+| [0050](adr/0050-reimplement-the-prototype-stores-as-postgresql-adapters.md) | Reimplement the prototype stores as PostgreSQL adapters, with the prototype tests as specification | accepted | 2026-10-27 |
+| [0051](adr/0051-migrations-run-with-goose-over-an-embedded-directory-with-a-sha256-manifest.md) | Migrations are goose-format files run with goose over an embedded directory with a sha256 manifest | accepted | 2026-10-27 |
 
 ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-25 in the planning session that closed every question in [OPEN_QUESTIONS](OPEN_QUESTIONS.md). Where the owner delegated a question ("you can decide"), the ADR's Approval section says so. ADRs 0040–0043 were accepted the same day under the owner's delegation in a second planning pass that closed the residual questions Q23–Q54; they supersede 0020, 0019, 0014 and 0027 respectively, which stay in the log as `superseded`. ADRs 0044 and 0045 were drafted by an agent from the WP-M1-02 spike and accepted by the product owner on 2026-10-26.
 

@@ -18,7 +18,6 @@ This document is the hub. Detailed views:
 | Workers and remote environments | [EXECUTION_ENVIRONMENTS](EXECUTION_ENVIRONMENTS.md) |
 | Data classes and storage criteria | [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md) |
 | `.amaru/` layout, Project identity, Execution provenance (Proposed) | [AMARU_DIRECTORY](AMARU_DIRECTORY.md) |
-| One-shot legacy importer (Proposed) | [LEGACY_IMPORTER](LEGACY_IMPORTER.md) |
 | Topologies and operations | [DEPLOYMENT](DEPLOYMENT.md) |
 | Web and Desktop | [CLIENTS](CLIENTS.md) |
 | Failure and recovery | [RESILIENCE](RESILIENCE.md) |
@@ -426,7 +425,7 @@ No architecture question is open; Q1–Q54 were closed on 2026-10-25 ([OPEN_QUES
 | Plugin logic | Javy-built QuickJS Wasm on wazero in a separate plugin-host process | [0040](adr/0040-plugin-logic-runs-in-a-separate-plugin-host-process-built-with-javy.md) |
 | Plugin distribution | Signed OCI packages, declared permissions, engine ranges | [0021](adr/0021-plugin-packaging-signing-permissions-and-compatibility.md) |
 | Tenancy | Row-level isolation per Organization (RLS) | [0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md) |
-| Self-hosted | OCI image, Atlas-authored migrations, operator-owned backup | [0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md) |
+| Self-hosted | OCI image, goose-format migrations, operator-owned backup | [0023](adr/0023-self-hosted-oci-image-atlas-migrations-operator-owned-backup.md) (superseded), [0051](adr/0051-migrations-run-with-goose-over-an-embedded-directory-with-a-sha256-manifest.md) |
 | Remote Workers | Enrollment per Organization, Ed25519 identity, per-Lease delivery | [0024](adr/0024-remote-worker-registration-identity-and-delivery.md) |
 | Versioning | Major versions, additive-only, 12-month overlap | [0025](adr/0025-api-and-protocol-versioning-policy.md) |
 | License | Fair-code community license + commercial; Apache-2.0 SDKs | [0026](adr/0026-fair-code-community-license-with-commercial-licensing.md) |

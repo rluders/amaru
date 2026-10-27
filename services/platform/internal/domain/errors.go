@@ -40,3 +40,10 @@ var ErrDependenciesNotDone = errors.New("dependencies are not done")
 // ErrDependencyCycle is returned (wrapped, and also matching ErrInvalid) when a dependency edit
 // would make a Work Item depend on itself through others. Test with errors.Is.
 var ErrDependencyCycle = errors.New("dependency cycle")
+
+// ErrNotFound is returned (wrapped) when a stored record does not exist. Test with errors.Is.
+var ErrNotFound = errors.New("not found")
+
+// ErrExists is returned (wrapped) when a record with the same identity is already stored. Test
+// with errors.Is.
+var ErrExists = errors.New("already exists")

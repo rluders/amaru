@@ -74,18 +74,17 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Validation:** walkthrough of UC-1 and UC-5.
 - **Deliverables:** [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (Proposed draft; evidence level: not validated).
 
-### WP-M1-05 `.amaru/` layout and importer design
+### WP-M1-05 `.amaru/` layout design
 - **Issue:** [#6](https://github.com/rluders/amaru/issues/6)
 - **Goal:** apply [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md).
 - **Scope:**
   - File layout and schemas under `.amaru/`.
   - Two-clone and Cloud behavior as decided in [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md): a Project is keyed by repository; each Execution records which clone, the commit SHA, the content hash and a definition snapshot; Cloud fetches at a commit.
   - Team references by slug and their validation.
-  - Design of the one-shot `amaru import legacy` (definitions and Work Items).
 - **Depends on:** WP-M1-02.
-- **Done when:** layout and importer design are documented.
+- **Done when:** the layout design is documented.
 - **Validation:** data-class review against [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md).
-- **Deliverables (Proposed, not validated):** [AMARU_DIRECTORY](AMARU_DIRECTORY.md) (layout, schemas, Project/clone/Execution provenance, data-class review) and [LEGACY_IMPORTER](LEGACY_IMPORTER.md) (mapping, conflicts, idempotency, recovery). Open decision: [Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
+- **Deliverables (Proposed, not validated):** [AMARU_DIRECTORY](AMARU_DIRECTORY.md) (layout, schemas, Project/clone/Execution provenance, data-class review). Open decision: [Q55](OPEN_QUESTIONS.md#q55-project-key-and-linked-repository-placement).
 
 ### WP-M1-06 Worker protocol schemas
 - **Issue:** [#7](https://github.com/rluders/amaru/issues/7)
@@ -170,10 +169,9 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Scope:**
   - Schema versioning and migrations.
   - Start-up lock.
-  - Importer for the prototype definitions, Work Packages, Work Items and Teams (`amaru import legacy`).
 - **Features:** PRJ-005, OPS-002, EXE-002 (persistence part).
 - **Depends on:** WP-M1-02, WP-M1-05, WP-M3-01.
-- **Done when:** adapter conformance tests and migration tests pass, and a prototype project-definition fixture imports.
+- **Done when:** adapter conformance tests and migration tests pass. There is no importer for the prototype (decision 2026-10-27).
 - **Validation:** tests.
 
 ### WP-M3-03 Execution coordinator with embedded Worker

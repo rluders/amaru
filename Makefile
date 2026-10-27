@@ -7,7 +7,7 @@ CONTRACTS := packages/contracts
 SDK       := packages/sdk
 PLATFORM  := services/platform
 
-.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts spike-m1-02 platform-test
+.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts spike-m1-02 platform-test platform-test-pg
 
 check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts platform-test
 
@@ -59,7 +59,13 @@ sdk-ts:
 # Platform core (WP-M3-01): vet and tests, which include the architecture test. Vet also runs for the two other OSes
 # (early signal only; the OS evidence is a native run on each, see docs/engineering/validation.md).
 platform-test:
-	cd $(PLATFORM) && go vet ./... && GOOS=windows go vet ./... && GOOS=darwin GOARCH=arm64 go vet ./... && go test -count=1 ./...
+	cd $(PLATFORM) && go vet ./... && GOOS=windows go vet ./... && GOOS=darwin GOARCH=arm64 go vet ./... && go vet -tags pg ./... && go test -count=1 ./...
+
+# PostgreSQL-backed adapter tests (build tag pg). Not part of `make check`: they need a server whose role may
+# create databases. Linux only so far; see docs/engineering/validation.md.
+platform-test-pg:
+	@test -n "$$AMARU_TEST_PG" || { echo "set AMARU_TEST_PG to a PostgreSQL DSN, e.g. postgres://user:pass@127.0.0.1:5432/postgres?sslmode=disable"; exit 2; }
+	cd $(PLATFORM) && go test -count=1 -tags pg ./...
 
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:
