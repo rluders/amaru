@@ -169,7 +169,11 @@ func TestDeleteNeverRewritesHistory(t *testing.T) {
 	if at, gone := h.Deleted(); !gone || !at.Equal(t0.Add(time.Hour)) {
 		t.Errorf("deleted = %v, %v", at, gone)
 	}
-	after, _ := json.Marshal(h.Versions())
+	vs := h.Versions()
+	if len(vs) != 3 || !vs[2].Deleted || vs[2].Revision != 3 {
+		t.Fatalf("delete should append a tombstone revision: %+v", vs)
+	}
+	after, _ := json.Marshal(vs[:2])
 	if !bytes.Equal(before, after) {
 		t.Error("deleting changed recorded versions")
 	}
@@ -179,11 +183,44 @@ func TestDeleteNeverRewritesHistory(t *testing.T) {
 	if _, _, err := h.Update(2, AgentPatch{Name: &n}, t0); !errors.Is(err, ErrDeleted) {
 		t.Errorf("edit after delete: want ErrDeleted, got %v", err)
 	}
-	if err := h.Delete(2, t0); !errors.Is(err, ErrDeleted) {
+	if err := h.Delete(3, t0); !errors.Is(err, ErrDeleted) {
 		t.Errorf("second delete: want ErrDeleted, got %v", err)
 	}
-	if _, ok := h.Version(3); ok {
-		t.Error("Version(3) should not exist")
+	if _, ok := h.Version(4); ok {
+		t.Error("Version(4) should not exist")
+	}
+}
+
+// A deleted id can be created again (a definition file can reappear in Git). It continues the same
+// history, so (id, revision) never names two definitions.
+func TestRecreateContinuesTheHistory(t *testing.T) {
+	h, _ := NewAgentHistory(okAgent(), t0)
+	if _, err := h.Recreate(1, okAgent(), t0); !errors.Is(err, ErrInvalid) {
+		t.Errorf("recreate a live agent: want ErrInvalid, got %v", err)
+	}
+	h.Delete(1, t0.Add(time.Hour))
+	if _, err := h.Recreate(1, okAgent(), t0); !errors.Is(err, ErrConflict) {
+		t.Errorf("stale recreate: want ErrConflict, got %v", err)
+	}
+	other := okAgent()
+	other.ID = "someone-else"
+	if _, err := h.Recreate(2, other, t0); !errors.Is(err, ErrInvalid) {
+		t.Errorf("recreate under another id: want ErrInvalid, got %v", err)
+	}
+	t2 := t0.Add(2 * time.Hour)
+	v, err := h.Recreate(2, okAgent(), t2)
+	if err != nil || v.Revision != 3 || v.Deleted || !v.Definition.CreatedAt.Equal(t2) {
+		t.Fatalf("recreate: %+v err=%v", v, err)
+	}
+	if _, gone := h.Deleted(); gone {
+		t.Error("recreated agent still reads as deleted")
+	}
+	if first, _ := h.Version(1); first.Hash != v.Hash || first.Revision == v.Revision {
+		t.Errorf("same content, distinct revisions expected: %+v vs %+v", first, v)
+	}
+	n := "again"
+	if _, _, err := h.Update(3, AgentPatch{Name: &n}, t2); err != nil {
+		t.Errorf("edit after recreate: %v", err)
 	}
 }
 

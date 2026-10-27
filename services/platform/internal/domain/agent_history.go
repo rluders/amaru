@@ -11,8 +11,10 @@ import (
 // AgentVersion is one immutable revision of an Agent definition. A Step snapshots the Agent it ran
 // with (FEAT-AGT-004), and Revision and Hash let a reader tie that snapshot to this record.
 type AgentVersion struct {
-	Revision   int       `json:"revision"` // 1, 2, 3 ... with no gaps
-	Hash       string    `json:"hash"`     // see HashAgent
+	Revision int    `json:"revision"` // 1, 2, 3 ... with no gaps
+	Hash     string `json:"hash"`     // see HashAgent
+	// Deleted marks a tombstone: the Agent was deleted at RecordedAt. Definition is the last one it had.
+	Deleted    bool      `json:"deleted,omitempty"`
 	RecordedAt time.Time `json:"recordedAt"`
 	Definition Agent     `json:"definition"`
 }
@@ -36,10 +38,11 @@ func HashAgent(a Agent) string {
 
 // AgentHistory is the append-only record of one Agent id: every revision it ever had and, once
 // deleted, when. Deleting never removes or alters a revision, so a run that references one stays
-// reconstructable. The id is immutable and is not reused after deletion.
+// reconstructable. The id is immutable. Deleting appends a tombstone revision, and creating the Agent
+// again appends a further revision to the same history, so a (id, revision) pair always names one
+// definition and a Step snapshot is never ambiguous.
 type AgentHistory struct {
-	versions  []AgentVersion
-	deletedAt *time.Time
+	versions []AgentVersion
 }
 
 // NewAgentHistory records the first revision of a validated Agent. CreatedAt and UpdatedAt are set
@@ -78,10 +81,10 @@ func (h *AgentHistory) Versions() []AgentVersion {
 
 // Deleted reports whether the Agent is deleted and when.
 func (h *AgentHistory) Deleted() (time.Time, bool) {
-	if h.deletedAt == nil {
-		return time.Time{}, false
+	if head := h.Head(); head.Deleted {
+		return head.RecordedAt, true
 	}
-	return *h.deletedAt, true
+	return time.Time{}, false
 }
 
 func (h *AgentHistory) at(i int) AgentVersion {
@@ -139,12 +142,36 @@ func (h *AgentHistory) Replace(expected int, next Agent, now time.Time) (AgentVe
 	return h.Head(), true, nil
 }
 
-// Delete marks the Agent deleted, made against revision expected. No revision is removed or
-// changed; the Agent just accepts no further edits.
+// Delete appends a tombstone revision, made against revision expected. No earlier revision is
+// removed or changed; the Agent just accepts no edits until it is created again.
 func (h *AgentHistory) Delete(expected int, now time.Time) error {
 	if err := h.guard(expected); err != nil {
 		return err
 	}
-	h.deletedAt = &now
+	head := h.Head()
+	head.Revision, head.RecordedAt, head.Deleted = len(h.versions)+1, now, true
+	h.versions = append(h.versions, head)
 	return nil
+}
+
+// Recreate brings a deleted Agent back under the same id, as a new revision of the same history.
+// CreatedAt and UpdatedAt are set to now. The Agent must be deleted, and expected is the tombstone's
+// revision.
+func (h *AgentHistory) Recreate(expected int, a Agent, now time.Time) (AgentVersion, error) {
+	if head := len(h.versions); expected != head {
+		return AgentVersion{}, fmt.Errorf("%w: agent %s is at revision %d, edit was made against %d", ErrConflict, h.ID(), head, expected)
+	}
+	if _, gone := h.Deleted(); !gone {
+		return AgentVersion{}, invalid("agent %s is not deleted", h.ID())
+	}
+	if a.ID != h.ID() {
+		return AgentVersion{}, invalid("agent id is immutable")
+	}
+	a = a.clone()
+	a.CreatedAt, a.UpdatedAt = now, now
+	if err := a.Validate(); err != nil {
+		return AgentVersion{}, err
+	}
+	h.versions = append(h.versions, AgentVersion{Revision: len(h.versions) + 1, Hash: HashAgent(a), RecordedAt: now, Definition: a})
+	return h.Head(), nil
 }
