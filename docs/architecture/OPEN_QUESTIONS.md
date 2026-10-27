@@ -275,7 +275,7 @@ Implicit questions found in the planning documents during the second sweep. The 
 
 ### Q37. Work Item identifiers
 - **Question:** How are Work Items identified across Projects and Instances (FEAT-WRK-001 risk)?
-- **Decision:** A ULID internally and a display key `<PROJECTKEY>-<n>` unique per Instance. Links across Instances use the Instance URL plus the ULID. Imported prototype `WI-001` numbers are kept as aliases. → [DOMAIN_MODEL §3](DOMAIN_MODEL.md#3-entities-and-responsibilities), FEAT-WRK-001
+- **Decision:** A ULID internally and a display key `<PROJECTKEY>-<n>` unique per Instance. Links across Instances use the Instance URL plus the ULID. → [DOMAIN_MODEL §3](DOMAIN_MODEL.md#3-entities-and-responsibilities), FEAT-WRK-001
 
 ### Q38. Workflow version storage, two clones and Cloud
 - **Question:** Where are old Workflow versions kept once definitions live in Git? How do two clones and Cloud read them?
@@ -347,7 +347,7 @@ Implicit questions found in the planning documents during the second sweep. The 
 ### Q46. Local command-line scope and `amaru backup`
 - **Question:** The CLI was planned for M7, but launch codes, migrations, backup and import are needed earlier. ADR-0023 says Amaru ships no backup system.
 - **Decision:**
-  - The Platform binary ships local operator subcommands from M3/M4: `open`, `migrate`, `backup`, `import legacy`, `admin check`, `worker` and `plugin-host`.
+  - The Platform binary ships local operator subcommands from M3/M4: `open`, `migrate`, `backup`, `admin check`, `worker` and `plugin-host`.
   - FEAT-CLI-012 at M7 is the remote API client.
   - `amaru backup` is supported for compact installs only; server backup stays with the operator.
   → [DEPLOYMENT §4](DEPLOYMENT.md#4-resolved-deployment-points), FEAT-CLI-012

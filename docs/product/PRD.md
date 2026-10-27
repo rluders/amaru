@@ -72,7 +72,7 @@ Organization, Instance, Project, Work Package, Work Item, Workflow, Step, Execut
 | **Amaru Self-hosted** | The Platform operated by the user or their organization: compact, small-organization or distributed. | Proposed for M7 ([deployment](../architecture/DEPLOYMENT.md)). |
 | **Amaru Cloud** | The Platform operated as a managed service. | Proposed for M9. |
 | **Plugins** | Packages of UI, sandboxed TypeScript logic, services and Worker/local adapters. | Proposed for M6 ([extensibility](../architecture/EXTENSIBILITY.md)). The prototype has an external provider protocol. |
-| **Command-line client** | Scripting and automation over the public API. | Proposed for M7 (FEAT-CLI-012). Local operator subcommands of the Platform binary (`amaru open`, `migrate`, `backup`, `import legacy`, `admin check`, `worker`, `plugin-host`) ship with the Platform from M3/M4 ([DEPLOYMENT](../architecture/DEPLOYMENT.md)). |
+| **Command-line client** | Scripting and automation over the public API. | Proposed for M7 (FEAT-CLI-012). Local operator subcommands of the Platform binary (`amaru open`, `migrate`, `backup`, `admin check`, `worker`, `plugin-host`) ship with the Platform from M3/M4 ([DEPLOYMENT](../architecture/DEPLOYMENT.md)). |
 | **Editor integrations** | Clients over the same contracts. | The prototype Obsidian plugin is retired and has no Amaru successor ([ADR-0031](../architecture/adr/0031-obsidian-plugin-is-retired.md)); other editor integrations would be Plugins. |
 
 A local, single-user deployment (Platform + embedded Worker + Web client on the engineer's machine) is the first target.

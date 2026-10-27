@@ -18,7 +18,6 @@ This document is the hub. Detailed views:
 | Workers and remote environments | [EXECUTION_ENVIRONMENTS](EXECUTION_ENVIRONMENTS.md) |
 | Data classes and storage criteria | [DATA_ARCHITECTURE](DATA_ARCHITECTURE.md) |
 | `.amaru/` layout, Project identity, Execution provenance (Proposed) | [AMARU_DIRECTORY](AMARU_DIRECTORY.md) |
-| One-shot legacy importer (Proposed) | [LEGACY_IMPORTER](LEGACY_IMPORTER.md) |
 | Topologies and operations | [DEPLOYMENT](DEPLOYMENT.md) |
 | Web and Desktop | [CLIENTS](CLIENTS.md) |
 | Failure and recovery | [RESILIENCE](RESILIENCE.md) |
