@@ -14,13 +14,18 @@ const (
 
 func TestNormalizeRemote(t *testing.T) {
 	cases := map[string]string{
-		"https://GitHub.com/acme/app.git":          "https://github.com/acme/app",
-		"https://github.com/acme/app/":             "https://github.com/acme/app",
-		"https://user:tok@github.com/acme/app.git": "https://github.com/acme/app",
-		"HTTPS://github.com/acme/App":              "https://github.com/acme/App", // path case is kept
+		"https://GitHub.com/acme/app.git":          "ssh://github.com/acme/app",
+		"https://github.com/acme/app/":             "ssh://github.com/acme/app",
+		"https://user:tok@github.com/acme/app.git": "ssh://github.com/acme/app",
+		"HTTPS://github.com/acme/App":              "ssh://github.com/acme/App", // path case is kept
+		"http://github.com/acme/app":               "ssh://github.com/acme/app",
+		"git://github.com/acme/app.git":            "ssh://github.com/acme/app",
+		"https://git.example:8443/acme/app":        "ssh://git.example/acme/app", // web port is not the ssh port
 		"ssh://git@Host.example/acme/app.git":      "ssh://host.example/acme/app",
+		"ssh://git@host.example:22/acme/app":       "ssh://host.example/acme/app",
+		"ssh://git@host.example:2222/acme/app":     "ssh://host.example:2222/acme/app",
 		"git@github.com:acme/app.git":              "ssh://github.com/acme/app",
-		"  https://github.com/acme/app  ":          "https://github.com/acme/app",
+		"  https://github.com/acme/app  ":          "ssh://github.com/acme/app",
 	}
 	for in, want := range cases {
 		got, err := NormalizeRemote(in)
@@ -41,8 +46,9 @@ func TestProjectKeyIgnoresCloneSpelling(t *testing.T) {
 		t.Fatal(err)
 	}
 	b, _ := NewProjectKey("https://user:secret@GITHUB.com/acme/app/", rootA)
-	if a != b {
-		t.Fatalf("keys differ: %q vs %q", a, b)
+	c, _ := NewProjectKey("git@github.com:acme/app.git", rootA)
+	if a != b || a != c {
+		t.Fatalf("keys differ: %q, %q, %q", a, b, c)
 	}
 	if strings.Contains(string(b), "secret") {
 		t.Fatalf("key carries a credential: %q", b)
@@ -75,7 +81,7 @@ func TestProjectKeyValid(t *testing.T) {
 		t.Fatalf("derived key %q is not valid", good)
 	}
 	for _, k := range []ProjectKey{"", "id:", "id:short", "https://github.com/acme/app", "/home/me/app#" + ProjectKey(rootA),
-		"https://GitHub.com/acme/app#" + ProjectKey(rootA)} { // not in normalized form
+		"https://github.com/acme/app#" + ProjectKey(rootA), "ssh://GitHub.com/acme/app#" + ProjectKey(rootA)} { // not in normalized form
 		if k.Valid() {
 			t.Errorf("key %q reported valid", k)
 		}

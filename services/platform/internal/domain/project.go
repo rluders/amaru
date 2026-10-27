@@ -28,11 +28,10 @@ type ProjectKey string
 
 // NewProjectKey derives the key of a repository with a remote. The remote is normalized as
 // ADR-0046 states: scheme and host lowercased; credentials, a ".git" suffix and a trailing slash
-// removed. An scp-like remote (user@host:path) is read as ssh://host/path. The root commit is a
-// full lowercase hex SHA-1 or SHA-256 object name.
-//
-// Different transports of one repository (https and ssh) yield different keys: ADR-0046 does not
-// say they are equal, and the user links such aliases explicitly.
+// removed. The transport is not part of the identity: the owner decided (2026-10-27) that ssh is
+// the canonical form, so https, http, git and scp-like (user@host:path) remotes of one repository
+// all normalize to ssh://host/path. The root commit is a full lowercase hex SHA-1 or SHA-256
+// object name.
 func NewProjectKey(remote, rootCommit string) (ProjectKey, error) {
 	norm, err := NormalizeRemote(remote)
 	if err != nil {
@@ -74,7 +73,19 @@ func NormalizeRemote(remote string) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("%w: remote %q has no repository path", ErrInvalid, remote)
 	}
-	return strings.ToLower(u.Scheme) + "://" + strings.ToLower(u.Host) + path, nil
+	scheme, host := strings.ToLower(u.Scheme), strings.ToLower(u.Hostname())
+	switch scheme {
+	case "http", "https", "git", "ssh":
+		// The port of a web or git-protocol URL says nothing about the ssh port, so it is dropped.
+		// An explicit ssh port other than the default 22 is part of where the repository lives.
+		if port := u.Port(); scheme == "ssh" && port != "" && port != "22" {
+			host += ":" + port
+		}
+		scheme = "ssh"
+	default:
+		host = strings.ToLower(u.Host)
+	}
+	return scheme + "://" + host + path, nil
 }
 
 // Valid reports whether the key has one of the two forms.
