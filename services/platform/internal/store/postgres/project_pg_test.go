@@ -1,0 +1,69 @@
+//go:build pg
+
+package postgres
+
+// PostgreSQL-backed tests. They run only with `-tags pg` and AMARU_TEST_PG set to the DSN of a
+// server whose role may create databases (see internal/store/migrations/runner_pg_test.go). Each
+// test uses its own database, migrated with the embedded migrations.
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"net/url"
+	"os"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/rluders/amaru/services/platform/internal/ports"
+	"github.com/rluders/amaru/services/platform/internal/ports/porttest"
+	"github.com/rluders/amaru/services/platform/internal/store/migrations"
+)
+
+var dbSeq atomic.Int64
+
+// migratedDB returns a connection to a new database at the current schema; it is dropped on cleanup.
+func migratedDB(t *testing.T) *sql.DB {
+	t.Helper()
+	dsn := os.Getenv("AMARU_TEST_PG")
+	if dsn == "" {
+		t.Skip("AMARU_TEST_PG is not set")
+	}
+	admin, err := sql.Open("pgx", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { admin.Close() })
+	name := fmt.Sprintf("amaru_pg_%d_%d", os.Getpid(), dbSeq.Add(1))
+	if _, err := admin.Exec("CREATE DATABASE " + name); err != nil {
+		t.Fatal(err)
+	}
+	u, err := url.Parse(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	u.Path = "/" + name
+	db, err := sql.Open("pgx", u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		db.Close()
+		_, _ = admin.Exec("DROP DATABASE IF EXISTS " + name + " WITH (FORCE)")
+	})
+	dir, err := migrations.OpenDir(migrations.Embedded())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := migrations.NewRunner(db, dir, 10*time.Second).Apply(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	return db
+}
+
+func TestProjectStoreConformance(t *testing.T) {
+	porttest.ProjectStore(t, func(t *testing.T) ports.ProjectStore { return NewProjectStore(migratedDB(t)) })
+}

@@ -132,3 +132,31 @@ func TestCoreIsPure(t *testing.T) {
 		t.Fatal("no core package found; wrong root?")
 	}
 }
+
+// storageNoFiles: the storage ports, their fakes and the PostgreSQL adapter reach the database and
+// memory only. They import no package that opens files, so nothing Amaru stores can land in a
+// Project tree (ADR-0043, FEAT-PRJ-005).
+var storageNoFiles = []string{"internal/ports", "internal/store/postgres"}
+
+var fileStd = map[string]bool{"os": true, "path/filepath": true, "io/fs": true, "io/ioutil": true, "embed": true}
+
+func TestStorageDoesNotTouchFiles(t *testing.T) {
+	root := filepath.Join("..", "..")
+	checked := 0
+	for _, pkg := range packages(t, root) {
+		for _, prefix := range storageNoFiles {
+			if !under(pkg, prefix) {
+				continue
+			}
+			checked++
+			for _, im := range imports(t, filepath.Join(root, filepath.FromSlash(pkg))) {
+				if fileStd[im] {
+					t.Errorf("%s imports %s: storage must not read or write files", pkg, im)
+				}
+			}
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no storage package found; wrong root?")
+	}
+}
