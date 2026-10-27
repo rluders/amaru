@@ -1,0 +1,24 @@
+{
+  "name": "@amaru/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Generated TypeScript SDK for the Amaru public API (WP-M2-02). Not published; the Apache-2.0 LICENSE is an owner action.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.ts",
+    "check:generated": "node scripts/generate.ts --check",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

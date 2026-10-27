@@ -71,6 +71,7 @@ docs/engineering/   conventions, repository layout, validation, agent instructio
 docs/security/      security model
 tools/doccheck/     offline documentation checker (Go, standard library only)
 packages/contracts/ versioned API, event, Provider and Worker contracts (OpenAPI, JSON Schema, Protobuf) shared fixtures and the route-drift guard
+packages/sdk/       TypeScript SDK generated from the OpenAPI contract, with an event-stream client (cursor resume)
 ```
 
 Application, service and package directories are added only when they have real content ([repository layout](docs/engineering/repository-layout.md)).

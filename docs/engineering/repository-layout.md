@@ -20,6 +20,7 @@ amaru/
 │   ├── security/           security model
 ├── spikes/wp-m1-02/        Go module: WP-M1-02 validation experiments (throwaway, not the Platform)
 ├── packages/contracts/     versioned API, event, Provider and Worker contracts, shared fixtures, route-drift guard (Go module, Protobuf, TypeScript test tooling)
+├── packages/sdk/           TypeScript SDK generated from the OpenAPI contract, plus the event-stream client (own pnpm lockfile)
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```
 
@@ -29,7 +30,6 @@ There is **no LICENSE file** yet: the license is decided in [ADR-0026](../archit
 
 | Path | Purpose | Introduced when (evidence required) |
 |---|---|---|
-| `packages/sdk` | Client SDK generated from contracts (TS first) | M2: contracts exist; the Web client needs it. |
 | `services/platform` | Go Platform (API, domain, coordinator, embedded Worker) | [M3](../architecture/ROADMAP.md#m3-platform-core): M1 validation spike passed and a migration ADR moves prototype Runtime code here ([ADR-0011](../architecture/adr/0011-platform-adapted-from-earlier-internal-runtime.md)). |
 | `apps/web` | Web client served by the Platform | [M4](../architecture/ROADMAP.md#m4-local-mvp): Web is the MVP client ([ADR-0010](../architecture/adr/0010-local-mvp-client-is-a-web-ui.md)). |
 | `packages/plugin-sdk` | Plugin author SDK and manifest schema | M6: implements [ADR-0041](../architecture/adr/0041-isolation-tiers-for-plugins-providers-and-steps.md)–[ADR-0021](../architecture/adr/0021-plugin-packaging-signing-permissions-and-compatibility.md). |
@@ -48,6 +48,9 @@ WP-M1-02 ([#3](https://github.com/rluders/amaru/issues/3)) must validate bundled
 
 ## Why `packages/contracts` exists now
 WP-M2-01 ([#9](https://github.com/rluders/amaru/issues/9)): the contract must exist, versioned and checkable, before the Platform, SDK or Workers that depend on it. It was introduced with the accepted migration ADR ([ADR-0047](../architecture/adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md)) and holds OpenAPI, JSON Schemas, the Worker Protobuf and a route-drift guard. It is a separate Go module (the guard reads YAML, which the standard library cannot, so it pins `gopkg.in/yaml.v3`); `make contracts-test`, `make contracts-proto` and `make contracts-ts` are in `make check`. The shared fixtures (API-002, [#117](https://github.com/rluders/amaru/issues/117)) are validated in Go and TypeScript, which adds a Node toolchain inside the package: a `package.json` and committed pnpm lockfile for test tooling only, not a workspace (a workspace comes with a second Node package, such as the SDK in WP-M2-02). Its [README](../../packages/contracts/README.md) states what is and is not there; the package `LICENSE` is added by the product owner, not by agents.
+
+## Why `packages/sdk` exists now
+WP-M2-02 ([#10](https://github.com/rluders/amaru/issues/10)): the Web client (M4) and the plugin SDK build on a typed client, and the contract (WP-M2-01) it is generated from now exists. The content is real: generated types, a typed HTTP client and an event-stream client with tests. It is a second Node package next to the test tooling in `packages/contracts`, and the two share no dependency except `typescript` and `@types/node`, so each keeps its own pnpm lockfile; a pnpm workspace is added when a package needs another's code at build time (recorded as a decision for the owner in the PR of #10).
 
 ## Why `tools/doccheck` exists now
 The bootstrap's deliverable is documentation whose value depends on staying consistent: links, ADR statuses and Skill adapters. Off-the-shelf link checkers (markdownlint, lychee) are not installed here and would not check the ADR index or the Skill symlink scheme. A stdlib-only Go tool adds no dependencies, matches the Platform's planned language, and has unit tests.
