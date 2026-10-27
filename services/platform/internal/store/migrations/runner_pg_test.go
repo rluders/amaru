@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"ariga.io/atlas/sql/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -81,7 +80,7 @@ func hasTable(t *testing.T, db *sql.DB, name string) bool {
 func revisionCount(t *testing.T, db *sql.DB) int {
 	t.Helper()
 	var n int
-	if err := db.QueryRow(`SELECT count(*) FROM ` + revisionsTable).Scan(&n); err != nil {
+	if err := db.QueryRow(`SELECT count(*) FROM ` + versionsTable + ` WHERE version_id > 0`).Scan(&n); err != nil {
 		t.Fatal(err)
 	}
 	return n
@@ -101,8 +100,8 @@ func TestApplyFreshDatabase(t *testing.T) {
 	if err != nil || len(st.Pending) != 2 || st.Current != "" {
 		t.Fatalf("fresh status = %+v, %v", st, err)
 	}
-	if hasTable(t, db, revisionsTable) {
-		t.Fatal("Status created the revisions table; it must not write")
+	if hasTable(t, db, versionsTable) {
+		t.Fatal("Status created the version table; it must not write")
 	}
 
 	st, err = r.Apply(ctx)
@@ -114,10 +113,6 @@ func TestApplyFreshDatabase(t *testing.T) {
 	}
 	if !hasTable(t, db, "a") || !hasTable(t, db, "b") || revisionCount(t, db) != 2 {
 		t.Fatal("tables or revision rows missing")
-	}
-	var h string
-	if err := db.QueryRow(`SELECT hash FROM `+revisionsTable+` WHERE version=$1`, v1).Scan(&h); err != nil || h == "" {
-		t.Fatalf("stored hash = %q, %v", h, err)
 	}
 }
 
@@ -188,7 +183,7 @@ func TestFailingMigrationRollsBackAndCanBeRetried(t *testing.T) {
 		t.Fatal("the first statement of the failed file stayed")
 	}
 	var n int
-	if e := db.QueryRow(`SELECT count(*) FROM `+revisionsTable+` WHERE version=$1`, v2).Scan(&n); e != nil || n != 0 {
+	if e := db.QueryRow(`SELECT count(*) FROM `+versionsTable+` WHERE version_id=$1`, v2).Scan(&n); e != nil || n != 0 {
 		t.Fatalf("revision of the failed file = %d, %v; want none", n, e)
 	}
 	if revisionCount(t, db) != 1 {
@@ -200,15 +195,18 @@ func TestFailingMigrationRollsBackAndCanBeRetried(t *testing.T) {
 	}
 }
 
-func TestEditedAppliedFileIsRefused(t *testing.T) {
+func TestOlderPendingFileIsRefused(t *testing.T) {
 	db := testDB(t)
 	ctx := context.Background()
-	if _, err := runnerFor(t, db, map[string]string{v1 + "_a.sql": fileA}).Apply(ctx); err != nil {
+	if _, err := runnerFor(t, db, map[string]string{v2 + "_b.sql": fileB}).Apply(ctx); err != nil {
 		t.Fatal(err)
 	}
-	edited := runnerFor(t, db, map[string]string{v1 + "_a.sql": fileA + "-- changed after release\n"})
-	if _, err := edited.Apply(ctx); !errors.Is(err, ErrHistoryChanged) {
-		t.Fatalf("err = %v, want ErrHistoryChanged", err)
+	late := runnerFor(t, db, map[string]string{v1 + "_a.sql": fileA, v2 + "_b.sql": fileB})
+	if _, err := late.Apply(ctx); !errors.Is(err, ErrOutOfOrder) {
+		t.Fatalf("err = %v, want ErrOutOfOrder", err)
+	}
+	if hasTable(t, db, "a") {
+		t.Fatal("the out-of-order file ran")
 	}
 }
 
@@ -238,15 +236,14 @@ func TestConcurrentPlatformsMigrateOnce(t *testing.T) {
 
 func TestLockTimeout(t *testing.T) {
 	db := testDB(t)
-	drv, err := postgres.Open(db)
+	holder, err := db.Conn(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	unlock, err := drv.Lock(context.Background(), lockName, time.Second)
-	if err != nil {
+	defer holder.Close()
+	if _, err := holder.ExecContext(context.Background(), `SELECT pg_advisory_lock($1)`, lockID); err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = unlock() }()
 
 	d, err := OpenDir(fixture(t, map[string]string{v1 + "_a.sql": fileA}))
 	if err != nil {

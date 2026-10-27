@@ -7,31 +7,24 @@ import (
 )
 
 func TestPlan(t *testing.T) {
-	dir := map[string]string{v1: "h1", v2: "h2"}
+	dir := []string{v1, v2}
 	cases := []struct {
 		name    string
-		dir     map[string]string
-		applied []Applied
+		dir     []string
+		applied []string
 		want    Status
 		err     error
 	}{
 		{"fresh database applies everything in order", dir, nil,
 			Status{Latest: v2, Pending: []string{v1, v2}}, nil},
-		{"partly migrated applies the rest", dir, []Applied{{v1, "h1"}},
+		{"partly migrated applies the rest", dir, []string{v1},
 			Status{Current: v1, Latest: v2, Applied: []string{v1}, Pending: []string{v2}}, nil},
-		{"up to date has nothing pending", dir, []Applied{{v2, "h2"}, {v1, "h1"}},
+		{"up to date has nothing pending", dir, []string{v2, v1},
 			Status{Current: v2, Latest: v2, Applied: []string{v1, v2}}, nil},
 		{"empty directory and fresh database", nil, nil, Status{}, nil},
-		{"a recorded revision without a stored hash is not compared", dir, []Applied{{v1, ""}, {v2, ""}},
-			Status{Current: v2, Latest: v2, Applied: []string{v1, v2}}, nil},
-		{"database newer than the build", map[string]string{v1: "h1"}, []Applied{{v1, "h1"}, {v2, "h2"}},
-			Status{Current: v2, Latest: v1, Applied: []string{v1, v2}}, ErrSchemaNewer},
-		{"database migrated, build knows no migration", nil, []Applied{{v1, "h1"}},
-			Status{Current: v1, Applied: []string{v1}}, ErrSchemaNewer},
-		{"applied file was edited", dir, []Applied{{v1, "other"}},
-			Status{Current: v1, Latest: v2}, ErrHistoryChanged},
-		{"a file was added before the applied one", map[string]string{v1: "h1", v2: "h2"}, []Applied{{v2, "h2"}},
-			Status{Current: v2, Latest: v2, Applied: []string{v2}, Pending: []string{v1}}, ErrHistoryChanged},
+		{"database newer than the build", []string{v1}, []string{v1, v2}, Status{}, ErrSchemaNewer},
+		{"database migrated, build knows no migration", nil, []string{v1}, Status{}, ErrSchemaNewer},
+		{"a file was added before the applied one", dir, []string{v2}, Status{}, ErrOutOfOrder},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -52,7 +45,7 @@ func TestPlan(t *testing.T) {
 }
 
 func TestDowngradeIsRefusedWithAMessage(t *testing.T) {
-	_, err := plan(map[string]string{v1: "h1"}, []Applied{{v1, "h1"}, {v2, "h2"}})
+	_, err := plan([]string{v1}, []string{v1, v2})
 	if err == nil {
 		t.Fatal("no error")
 	}

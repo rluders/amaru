@@ -4,15 +4,12 @@ import (
 	"errors"
 	"flag"
 	"os"
-	"sort"
 	"strings"
 	"testing"
 	"testing/fstest"
-
-	"ariga.io/atlas/sql/migrate"
 )
 
-var update = flag.Bool("update", false, "rewrite sql/atlas.sum for the embedded directory")
+var update = flag.Bool("update", false, "rewrite sql/migrations.sum for the embedded directory")
 
 const (
 	v1 = "20261101000000"
@@ -26,27 +23,18 @@ CREATE TABLE a (id integer);
 DROP TABLE a;
 `
 
-// fixture builds a directory from name to content and writes a matching atlas.sum.
+// fixture builds a directory from name to content and writes a matching migrations.sum.
 func fixture(t *testing.T, files map[string]string) fstest.MapFS {
 	t.Helper()
 	fsys := fstest.MapFS{}
-	var list []migrate.File
+	sums := map[string][]byte{}
 	for name, body := range files {
 		fsys[name] = &fstest.MapFile{Data: []byte(body)}
 		if strings.HasSuffix(name, ".sql") {
-			list = append(list, migrate.NewLocalFile(name, []byte(body)))
+			sums[name] = []byte(body)
 		}
 	}
-	sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
-	sum, err := migrate.NewHashFile(list)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := sum.MarshalText()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fsys[migrate.HashFileName] = &fstest.MapFile{Data: b}
+	fsys[SumFile] = &fstest.MapFile{Data: Sum(sums)}
 	return fsys
 }
 
@@ -68,20 +56,6 @@ func TestOpenDir(t *testing.T) {
 	}
 }
 
-func TestOpenDirIgnoresTheDownSection(t *testing.T) {
-	d, err := OpenDir(fixture(t, map[string]string{v1 + "_a.sql": createA}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	stmts, err := d.files[0].Stmts()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(stmts) != 1 || !strings.HasPrefix(stmts[0], "CREATE TABLE a") {
-		t.Fatalf("statements = %q, want only the Up statement (migrations are forward-only)", stmts)
-	}
-}
-
 func TestOpenDirEmpty(t *testing.T) {
 	d, err := OpenDir(fixture(t, nil))
 	if err != nil {
@@ -92,13 +66,13 @@ func TestOpenDirEmpty(t *testing.T) {
 	}
 }
 
-func TestOpenDirRefusesWhatAtlasSumDoesNotCover(t *testing.T) {
+func TestOpenDirRefusesWhatTheManifestDoesNotCover(t *testing.T) {
 	good := map[string]string{v1 + "_a.sql": createA}
 	for name, mutate := range map[string]func(fstest.MapFS){
 		"an edited file": func(f fstest.MapFS) { f[v1+"_a.sql"] = &fstest.MapFile{Data: []byte(createA + "-- edited\n")} },
 		"an added file":  func(f fstest.MapFS) { f[v2+"_b.sql"] = &fstest.MapFile{Data: []byte("-- +goose Up\nSELECT 1;\n")} },
 		"a removed file": func(f fstest.MapFS) { delete(f, v1+"_a.sql") },
-		"a missing sum":  func(f fstest.MapFS) { delete(f, migrate.HashFileName) },
+		"a missing sum":  func(f fstest.MapFS) { delete(f, SumFile) },
 	} {
 		t.Run(name, func(t *testing.T) {
 			fsys := fixture(t, good)
@@ -111,8 +85,10 @@ func TestOpenDirRefusesWhatAtlasSumDoesNotCover(t *testing.T) {
 }
 
 func TestOpenDirRefusesBadVersions(t *testing.T) {
-	if _, err := OpenDir(fixture(t, map[string]string{"first_a.sql": createA})); err == nil {
-		t.Fatal("a non-timestamp version was accepted")
+	for _, name := range []string{"first_a.sql", "2026110100000_short.sql", v1 + "a.sql"} {
+		if _, err := OpenDir(fixture(t, map[string]string{name: createA})); err == nil {
+			t.Fatalf("%s was accepted", name)
+		}
 	}
 	_, err := OpenDir(fixture(t, map[string]string{v1 + "_a.sql": createA, v1 + "_b.sql": createA}))
 	if err == nil || !strings.Contains(err.Error(), "share version") {
@@ -120,21 +96,11 @@ func TestOpenDirRefusesBadVersions(t *testing.T) {
 	}
 }
 
-func TestOpenDirIsReadOnly(t *testing.T) {
-	d, err := OpenDir(fixture(t, nil))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := d.WriteFile("x.sql", nil); err == nil {
-		t.Fatal("WriteFile succeeded")
-	}
-}
-
 // TestEmbeddedDirectory: the directory in the binary is valid. Run with -update after adding or
-// changing a migration file to rewrite atlas.sum (or run `atlas migrate hash --dir-format goose`).
+// changing a migration file to rewrite migrations.sum.
 func TestEmbeddedDirectory(t *testing.T) {
 	if *update {
-		var list []migrate.File
+		files := map[string][]byte{}
 		ents, err := os.ReadDir("sql")
 		if err != nil {
 			t.Fatal(err)
@@ -145,20 +111,14 @@ func TestEmbeddedDirectory(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				list = append(list, migrate.NewLocalFile(e.Name(), b))
+				files[e.Name()] = b
 			}
 		}
-		sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
-		sum, err := migrate.NewHashFile(list)
-		if err != nil {
-			t.Fatal(err)
-		}
-		b, _ := sum.MarshalText()
-		if err := os.WriteFile("sql/"+migrate.HashFileName, b, 0o644); err != nil {
+		if err := os.WriteFile("sql/"+SumFile, Sum(files), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
 	if _, err := OpenDir(Embedded()); err != nil {
-		t.Fatalf("embedded migration directory: %v (run go test -update ./internal/store/migrations)", err)
+		t.Fatalf("embedded migration directory: %v", err)
 	}
 }

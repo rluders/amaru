@@ -9,17 +9,9 @@ import (
 var (
 	// ErrSchemaNewer: the database records a version this build does not know.
 	ErrSchemaNewer = errors.New("migrations: database schema is newer than this build")
-	// ErrHistoryChanged: an applied migration file differs from what was applied.
-	ErrHistoryChanged = errors.New("migrations: an applied migration file was changed")
-	// ErrChecksum: the directory does not match atlas.sum.
-	ErrChecksum = errors.New("migrations: directory does not match atlas.sum")
+	// ErrOutOfOrder: a migration file is older than one already applied.
+	ErrOutOfOrder = errors.New("migrations: a migration older than an applied one is pending")
 )
-
-// Applied is one recorded, fully applied migration.
-type Applied struct {
-	Version string
-	Hash    string
-}
 
 // Status is where a database stands relative to a directory.
 type Status struct {
@@ -32,29 +24,27 @@ type Status struct {
 // UpToDate reports whether nothing is pending.
 func (s Status) UpToDate() bool { return len(s.Pending) == 0 }
 
-// plan compares recorded migrations with the directory (version to file hash). It is pure.
-// Versions are fixed-width timestamps, so string order is chronological order.
-func plan(dir map[string]string, applied []Applied) (Status, error) {
+// plan compares the directory's versions with the recorded ones. It is pure. Versions are
+// fixed-width timestamps, so string order is chronological order.
+func plan(dir, applied []string) (Status, error) {
 	var st Status
-	for v := range dir {
+	known := map[string]bool{}
+	for _, v := range dir {
+		known[v] = true
 		if v > st.Latest {
 			st.Latest = v
 		}
 	}
 	recorded := map[string]bool{}
 	var unknown []string
-	for _, a := range applied {
-		recorded[a.Version] = true
-		st.Applied = append(st.Applied, a.Version)
-		if a.Version > st.Current {
-			st.Current = a.Version
+	for _, v := range applied {
+		recorded[v] = true
+		st.Applied = append(st.Applied, v)
+		if v > st.Current {
+			st.Current = v
 		}
-		h, known := dir[a.Version]
-		switch {
-		case !known:
-			unknown = append(unknown, a.Version)
-		case a.Hash != "" && a.Hash != h:
-			return st, fmt.Errorf("%w: version %s", ErrHistoryChanged, a.Version)
+		if !known[v] {
+			unknown = append(unknown, v)
 		}
 	}
 	sort.Strings(st.Applied)
@@ -63,15 +53,14 @@ func plan(dir map[string]string, applied []Applied) (Status, error) {
 		return st, fmt.Errorf("%w: it records version %s but the newest this build knows is %s; upgrade Amaru, downgrading is not supported",
 			ErrSchemaNewer, unknown[len(unknown)-1], orNone(st.Latest))
 	}
-	for v := range dir {
+	for _, v := range dir {
 		if !recorded[v] {
 			st.Pending = append(st.Pending, v)
 		}
 	}
 	sort.Strings(st.Pending)
-	// A pending version older than an applied one means a file was added out of order.
 	if len(st.Pending) > 0 && st.Current != "" && st.Pending[0] < st.Current {
-		return st, fmt.Errorf("%w: version %s is older than the applied %s", ErrHistoryChanged, st.Pending[0], st.Current)
+		return st, fmt.Errorf("%w: version %s is older than the applied %s", ErrOutOfOrder, st.Pending[0], st.Current)
 	}
 	return st, nil
 }
