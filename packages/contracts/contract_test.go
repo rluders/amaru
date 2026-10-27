@@ -150,7 +150,7 @@ func TestOpenAPIRefsResolveAndOperationsAreUnique(t *testing.T) {
 // ADR-0047: no prototype namespace or product name remains in the contract
 // files. PROVENANCE.md and the baseline image are the only exceptions.
 func TestNoPrototypeNamesInContractFiles(t *testing.T) {
-	banned := []string{"weave", "orkestra", "obsidian", "/v0"}
+	banned := []string{"weave", "orkestra", "obsidian", "autoloop", "/v0"}
 	for _, root := range []string{"schemas", "openapi", "proto"} {
 		_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() {

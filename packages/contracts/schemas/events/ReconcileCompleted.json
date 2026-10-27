@@ -29,8 +29,7 @@
           "properties": {
             "scope": {
               "enum": [
-                "intake",
-                "autoloop"
+                "delivery_loop"
               ]
             },
             "ok": {

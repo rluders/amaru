@@ -5,7 +5,7 @@
   "time": "2026-10-05T12:10:00Z",
   "projectId": "prj_01",
   "data": {
-    "scope": "intake",
+    "scope": "delivery_loop",
     "ok": true,
     "partial": false,
     "created": 0,
