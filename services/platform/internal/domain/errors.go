@@ -21,3 +21,10 @@ type ExecError struct {
 
 // ErrInvalid is returned (wrapped) when a definition fails validation. Test with errors.Is.
 var ErrInvalid = errors.New("invalid definition")
+
+// ErrConflict is returned (wrapped) when an edit was made against a revision that is no longer
+// the latest: someone else changed the definition first. Test with errors.Is.
+var ErrConflict = errors.New("stale revision")
+
+// ErrDeleted is returned (wrapped) when a deleted definition is edited or deleted again.
+var ErrDeleted = errors.New("definition is deleted")
