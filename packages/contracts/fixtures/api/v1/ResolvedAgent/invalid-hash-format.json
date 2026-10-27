@@ -1,0 +1,12 @@
+{
+  "id": "reviewer",
+  "name": "Reviewer",
+  "instructions": "Review the change.",
+  "providerPreference": [
+    "claude"
+  ],
+  "providerId": "claude",
+  "resolution": "preference",
+  "revision": 3,
+  "hash": "XYZ"
+}

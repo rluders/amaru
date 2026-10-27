@@ -29,7 +29,9 @@
           "claude"
         ],
         "providerId": "claude",
-        "resolution": "preference"
+        "resolution": "preference",
+        "revision": 1,
+        "hash": "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3"
       }
     }
   ]

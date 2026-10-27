@@ -803,6 +803,16 @@ export interface components {
          */
         AgentResolution: "preference" | "fallback" | "default";
         /**
+         * SkillUse
+         * @description Audit record of one Skill injected into a Step's context.
+         */
+        SkillUse: {
+            name: components["schemas"]["AgentId"];
+            version: string;
+            /** @description SHA-256 of the Skill body. */
+            hash: string;
+        };
+        /**
          * ResolvedAgent
          * @description Snapshot of the Agent a step ran with, recorded when the run is planned. A full copy: the run stays reconstructable after the Agent changes.
          */
@@ -823,6 +833,12 @@ export interface components {
             providerPreference: components["schemas"]["ProviderId"][];
             providerId: components["schemas"]["ProviderId"];
             resolution: components["schemas"]["AgentResolution"];
+            /** @description Revision of the Agent definition this snapshot was taken from. */
+            revision: number;
+            /** @description Hash of that revision (Agent.hash), so the definition is identified by content as well as by number. */
+            hash: string;
+            /** @description Skills injected into the Step's context, in injection order. Name, version and content hash identify what ran without storing Skill history. */
+            skills?: components["schemas"]["SkillUse"][];
         };
         /**
          * TeamRole

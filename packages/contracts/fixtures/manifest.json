@@ -2269,6 +2269,53 @@
       "schema": "proto:amaru.worker.v1.Envelope",
       "kind": "valid",
       "expect": "valid"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/invalid-hash-format.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/hash"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/invalid-missing-revision.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/invalid-revision-zero.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minimum@/revision"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/invalid-skill-extra-field.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/skills/0"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/invalid-skill-hash.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/skills/0/hash"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/valid.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/ResolvedAgent/valid-minimal.json",
+      "schema": "ResolvedAgent.json",
+      "kind": "valid",
+      "expect": "valid"
     }
   ]
 }
