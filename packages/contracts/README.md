@@ -4,7 +4,7 @@ The versioned, UI-agnostic contract of the Amaru Platform: the public HTTP API, 
 
 **Status: proposed, 0.x.** Nothing serves these contracts yet: there is no Platform, SDK or Worker in the repository. What exists and is checked here is the contract files, the route-drift guard and the shared fixture corpus validated in Go and TypeScript. Versioning rules: [CONTRACT_VERSIONING](../../docs/architecture/CONTRACT_VERSIONING.md), [ADR-0025](../../docs/architecture/adr/0025-api-and-protocol-versioning-policy.md). Origin of the files: [PROVENANCE](PROVENANCE.md) ([ADR-0047](../../docs/architecture/adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md)). Owner: the Platform contract owner. Work: WP-M2-01 ([#9](https://github.com/rluders/amaru/issues/9)), API-001 ([#68](https://github.com/rluders/amaru/issues/68)), fixtures API-002 ([#117](https://github.com/rluders/amaru/issues/117)).
 
-License: Apache-2.0 for contract packages is decided in [ADR-0026](../../docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md). The package `LICENSE` file is added by the product owner; it is not in this change.
+License: Apache-2.0 for contract packages is decided in [ADR-0026](../../docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md). The package [`LICENSE`](LICENSE) is the unmodified Apache License 2.0 text from <https://www.apache.org/licenses/LICENSE-2.0.txt>, added at the product owner's explicit instruction on 2026-10-26.
 
 ## Layout
 
