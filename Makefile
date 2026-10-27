@@ -5,14 +5,15 @@ DOCCHECK := tools/doccheck
 SPIKE    := spikes/wp-m1-02
 CONTRACTS := packages/contracts
 SDK       := packages/sdk
+PLATFORM  := services/platform
 
-.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts spike-m1-02
+.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts spike-m1-02 platform-test
 
-check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts
+check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts platform-test
 
 # Fails if any Go file is not gofmt-formatted.
 fmt:
-	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE) $(CONTRACTS))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
+	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE) $(CONTRACTS) $(PLATFORM))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
 
 vet:
 	cd $(DOCCHECK) && go vet ./...
@@ -54,6 +55,11 @@ contracts-ts:
 # pnpm; installs from the committed lockfile only.
 sdk-ts:
 	cd $(SDK) && pnpm install --frozen-lockfile && pnpm run check:generated && pnpm run typecheck && pnpm run test
+
+# Platform core (WP-M3-01): vet and tests, which include the architecture test. Vet also runs for the two other OSes
+# (early signal only; the OS evidence is a native run on each, see docs/engineering/validation.md).
+platform-test:
+	cd $(PLATFORM) && go vet ./... && GOOS=windows go vet ./... && GOOS=darwin GOARCH=arm64 go vet ./... && go test -count=1 ./...
 
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:

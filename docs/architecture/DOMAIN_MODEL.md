@@ -129,6 +129,8 @@ stateDiagram-v2
 ```
 Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsupported` plus `runtime_restarted` as an error code (`domain/step.go`). `refused`, `leased`, `awaiting_approval` and `interrupted` are **[Proposed]**; `unsupported` becomes `refused` with a reason. A Worker lost mid-Step follows the restart rule of [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) (`interrupted` with reason `worker_lost` unless idempotent), so there is no separate `lost` state. `awaiting_approval` is the one waiting state for both an explicit Approval Step (Step type `approval`) and a Policy-required approval before any other Step starts; nothing runs while a Step is in it.
 
+**Implementation status (2026-10-26):** the Execution and Step state machines of §5.1–5.2 are implemented and unit-tested in `services/platform/internal/domain` ([#118](https://github.com/rluders/amaru/issues/118)); only the transitions drawn above are possible. **Gaps in this section, not decided here:** (a) ADR-0042 says an `interrupted` Step is resumed by a human or a Policy rule, and ADR-0044 adds a `timed_out` ending, but neither has a transition or state in §5.2; the code treats `interrupted` as terminal until they are documented. (b) §5.1 has no edge for an Execution whose Step is `interrupted`.
+
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 
