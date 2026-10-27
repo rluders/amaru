@@ -1,7 +1,8 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "title": "Set up input mapping",
   "owner": {
-    "kind": "agent"
+    "kind": "human",
+    "label": "Ricardo"
   }
 }

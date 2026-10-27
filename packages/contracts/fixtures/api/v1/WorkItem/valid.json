@@ -1,6 +1,7 @@
 {
-  "id": "WI-001",
-  "packageId": "WP-001",
+  "id": "01K10000000000000000000001",
+  "key": "PROJ-1",
+  "packageId": "01K20000000000000000000001",
   "title": "Set up input mapping",
   "intent": "Map keyboard and gamepad to move/jump.",
   "status": "in_progress",

@@ -1,6 +1,6 @@
 [
   {
-    "id": "WP-001",
+    "id": "01K20000000000000000000001",
     "title": "Player controller",
     "summary": "Movement and camera for the playable character.",
     "status": "active",

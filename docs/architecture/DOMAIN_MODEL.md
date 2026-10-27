@@ -134,6 +134,8 @@ Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsup
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 
+**Implementation status (2026-10-27):** the Work Item status machine and the rules below are implemented and unit-tested in `services/platform/internal/domain` ([#166](https://github.com/rluders/amaru/issues/166)): only a human, or the delivery loop with a Policy authority, may set a status; `done` is final; package progress is derived from the items. **Gaps, not decided here:** (a) §5.3 draws no edge out of `done`, so the code has none; whether a human may reopen an item is open. (b) The `<PROJECTKEY>` alphabet and length are not fixed; the code accepts 2–10 characters, `A–Z`/`0–9`, starting with a letter (proposed). (c) Work Package status transitions are not documented, so none are enforced.
+
 ### 5.4 Delivery-loop phases (per Work Item)
 `waiting → implementing → validating → reviewing → awaiting_ci → awaiting_merge → done`, with `blocked`, `needs_grant` and `paused` reachable from any active phase **[Prototype `AutoloopPhase`]**. Amaru keeps the phases and moves budget rules (attempts, repairs, reviews, restart recoveries) into Policy.
 

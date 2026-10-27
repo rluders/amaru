@@ -206,7 +206,7 @@ export interface paths {
         };
         get: operations["listWorkPackages"];
         put?: never;
-        /** @description The Platform assigns the id (WP-001, WP-002, …). New packages start as `planned`. */
+        /** @description The Platform assigns the id (a ULID). New packages start as `planned`. */
         post: operations["createWorkPackage"];
         delete?: never;
         options?: never;
@@ -245,7 +245,7 @@ export interface paths {
         };
         get: operations["listWorkItems"];
         put?: never;
-        /** @description The Platform assigns the id (WI-001, … global in the project). Errors - invalid_request, not_found (unknown package). */
+        /** @description The Platform assigns the id (a ULID) and the display key (`<PROJECTKEY>-<n>`, unique per Instance). Errors - invalid_request, not_found (unknown package). */
         post: operations["createWorkItem"];
         delete?: never;
         options?: never;
@@ -776,7 +776,10 @@ export interface components {
             code: string;
             message: string;
         };
-        /** WorkItemId */
+        /**
+         * WorkItemId
+         * @description Stable internal id of a Work Item: a ULID. Never reused.
+         */
         WorkItemId: string;
         /** WorkflowId */
         WorkflowId: string;
@@ -1396,7 +1399,10 @@ export interface components {
             commitInclude?: string[];
             localChecks?: components["schemas"]["LocalChecksPolicy"];
         };
-        /** WorkPackageId */
+        /**
+         * WorkPackageId
+         * @description Stable internal id of a Work Package: a ULID. Never reused.
+         */
         WorkPackageId: string;
         /**
          * WorkPackageStatus
@@ -1457,14 +1463,22 @@ export interface components {
             blockedBy?: components["schemas"]["IssueDep"][];
         };
         /**
+         * WorkKey
+         * @description Display key of a Work Item, <PROJECTKEY>-<n>, unique per Instance. For people to read and cite; the ULID id is the identity. Format proposed, not decided.
+         */
+        WorkKey: string;
+        /**
          * WorkItemStatus
          * @enum {unknown}
          */
         WorkItemStatus: "todo" | "in_progress" | "blocked" | "done";
-        /** WorkOwner */
+        /**
+         * WorkOwner
+         * @description The responsible human. Agents and Teams are assignees, not owners (DOMAIN_MODEL section 7).
+         */
         WorkOwner: {
             /** @enum {unknown} */
-            kind: "human" | "agent";
+            kind: "human";
             label?: string;
         };
         /** WorkItem */
@@ -1473,6 +1487,7 @@ export interface components {
             workflowId?: components["schemas"]["WorkflowId"];
             external?: components["schemas"]["IssueRef"];
             id: components["schemas"]["WorkItemId"];
+            key: components["schemas"]["WorkKey"];
             packageId: components["schemas"]["WorkPackageId"];
             title: string;
             intent: string;

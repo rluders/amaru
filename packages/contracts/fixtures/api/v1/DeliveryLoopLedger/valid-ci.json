@@ -1,12 +1,12 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "items": {
-    "WI-003": {
+    "01K10000000000000000000003": {
       "phase": "awaiting_ci",
       "attempt": 3,
       "extraAttempts": 2,
       "checkout": {
-        "path": ".amaru/runtime/worktrees/WI-003",
+        "path": ".amaru/runtime/worktrees/01K10000000000000000000003",
         "branch": "amaru/wi-003-x",
         "base": "main"
       },

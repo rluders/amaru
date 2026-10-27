@@ -1,6 +1,7 @@
 {
-  "id": "WI-007",
-  "packageId": "WP-001",
+  "id": "01K10000000000000000000007",
+  "key": "PROJ-7",
+  "packageId": "01K20000000000000000000001",
   "title": "#7 Wire the inventory",
   "intent": "Wire the inventory.",
   "status": "todo",

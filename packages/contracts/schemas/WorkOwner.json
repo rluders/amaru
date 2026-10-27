@@ -10,13 +10,13 @@
   "properties": {
     "kind": {
       "enum": [
-        "human",
-        "agent"
+        "human"
       ]
     },
     "label": {
       "type": "string",
       "maxLength": 120
     }
-  }
+  },
+  "description": "The responsible human. Agents and Teams are assignees, not owners (DOMAIN_MODEL section 7)."
 }

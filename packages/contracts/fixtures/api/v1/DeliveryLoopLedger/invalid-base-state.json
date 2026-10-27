@@ -1,7 +1,7 @@
 {
-  "packageId": "WP-007",
+  "packageId": "01K20000000000000000000007",
   "items": {
-    "WI-013": {
+    "01K10000000000000000000013": {
       "phase": "blocked",
       "attempt": 1,
       "base": {
