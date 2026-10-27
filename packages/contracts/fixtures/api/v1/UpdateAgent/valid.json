@@ -3,5 +3,6 @@
   "providerPreference": [
     "codex",
     "claude"
-  ]
+  ],
+  "expectedRevision": 1
 }
