@@ -32,3 +32,11 @@ var ErrDeleted = errors.New("definition is deleted")
 // ErrNotPermitted is returned (wrapped) when the actor may not make the change, for example an
 // Agent or a Step setting a Work Item status. Test with errors.Is.
 var ErrNotPermitted = errors.New("actor is not permitted")
+
+// ErrDependenciesNotDone is returned (wrapped) when a Work Item is started while a dependency is
+// not done. The message names the unmet dependencies. Test with errors.Is.
+var ErrDependenciesNotDone = errors.New("dependencies are not done")
+
+// ErrDependencyCycle is returned (wrapped, and also matching ErrInvalid) when a dependency edit
+// would make a Work Item depend on itself through others. Test with errors.Is.
+var ErrDependencyCycle = errors.New("dependency cycle")

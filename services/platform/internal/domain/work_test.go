@@ -110,7 +110,7 @@ func TestWorkItemTransitionsMatchDomainModel(t *testing.T) {
 			if from == WIBlocked {
 				w.BlockedReason = "waiting"
 			}
-			err := w.SetStatus(now, to, human, "")
+			err := w.SetStatus(now, to, human, "", nil)
 			if want := workItemEdges[[2]WorkItemStatus{from, to}]; want != (err == nil) {
 				t.Errorf("%s -> %s: documented=%v err=%v", from, to, want, err)
 			}
@@ -134,12 +134,12 @@ func TestSetStatusActors(t *testing.T) {
 		"human with authority": {Kind: "human_ish", Authority: "pol-1"},
 	} {
 		w := validItem()
-		if err := w.SetStatus(now, WIInProgress, by, ""); !errors.Is(err, ErrNotPermitted) || w.Status != WITodo {
+		if err := w.SetStatus(now, WIInProgress, by, "", nil); !errors.Is(err, ErrNotPermitted) || w.Status != WITodo {
 			t.Errorf("%s: err=%v status=%s", name, err, w.Status)
 		}
 	}
 	w := validItem()
-	if err := w.SetStatus(now, WIInProgress, Actor{Kind: ActorDeliveryLoop, Authority: "pol-1"}, ""); err != nil {
+	if err := w.SetStatus(now, WIInProgress, Actor{Kind: ActorDeliveryLoop, Authority: "pol-1"}, "", nil); err != nil {
 		t.Errorf("delivery loop with Policy authority refused: %v", err)
 	}
 }
@@ -148,20 +148,20 @@ func TestBlockedReasonFollowsStatus(t *testing.T) {
 	now := time.Date(2026, 10, 27, 9, 0, 0, 0, time.UTC)
 	h := Actor{Kind: ActorHuman}
 	w := validItem()
-	if err := w.SetStatus(now, WIBlocked, h, "waiting for design"); err != nil || w.BlockedReason != "waiting for design" || !w.UpdatedAt.Equal(now) {
+	if err := w.SetStatus(now, WIBlocked, h, "waiting for design", nil); err != nil || w.BlockedReason != "waiting for design" || !w.UpdatedAt.Equal(now) {
 		t.Fatalf("block: %v %+v", err, w)
 	}
 	if err := w.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	if err := w.SetStatus(now, WITodo, h, "stale reason"); err != nil || w.BlockedReason != "" {
+	if err := w.SetStatus(now, WITodo, h, "stale reason", nil); err != nil || w.BlockedReason != "" {
 		t.Fatalf("unblock must clear the reason: %v %q", err, w.BlockedReason)
 	}
 	long := make([]rune, MaxReason+1)
 	for i := range long {
 		long[i] = 'a'
 	}
-	if err := w.SetStatus(now, WIBlocked, h, string(long)); !errors.Is(err, ErrInvalid) || w.Status != WITodo {
+	if err := w.SetStatus(now, WIBlocked, h, string(long), nil); !errors.Is(err, ErrInvalid) || w.Status != WITodo {
 		t.Errorf("long reason: %v", err)
 	}
 }
@@ -170,7 +170,7 @@ func TestDoneIsFinal(t *testing.T) {
 	w := validItem()
 	w.Status = WIDone
 	for _, to := range WorkItemStatuses {
-		if w.SetStatus(time.Now(), to, Actor{Kind: ActorHuman}, "") == nil {
+		if w.SetStatus(time.Now(), to, Actor{Kind: ActorHuman}, "", nil) == nil {
 			t.Errorf("done -> %s allowed", to)
 		}
 	}

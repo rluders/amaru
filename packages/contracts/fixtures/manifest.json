@@ -2349,6 +2349,19 @@
       "schema": "ResolvedAgent.json",
       "kind": "valid",
       "expect": "valid"
+    },
+    {
+      "file": "api/v1/WorkItem/valid-dependencies.json",
+      "schema": "WorkItem.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-dependency-id.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/dependsOn/0"
     }
   ]
 }

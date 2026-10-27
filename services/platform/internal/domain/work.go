@@ -123,8 +123,12 @@ type WorkPackage struct {
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
 
-// WorkItem is a human-owned unit of intended work. Dependencies, the Workflow link, the
-// external issue link and delivery-loop state are separate features and are not modelled here.
+// MaxDependsOn bounds a Work Item's dependency list.
+const MaxDependsOn = 20
+
+// WorkItem is a human-owned unit of intended work. It does not start until every Work Item in
+// DependsOn is done. The Workflow link, the external issue link and delivery-loop state are
+// separate features and are not modelled here.
 type WorkItem struct {
 	ID            string         `json:"id"`
 	Key           WorkKey        `json:"key"`
@@ -134,6 +138,7 @@ type WorkItem struct {
 	Status        WorkItemStatus `json:"status"`
 	BlockedReason string         `json:"blockedReason,omitempty"`
 	Owner         WorkOwner      `json:"owner"`
+	DependsOn     []string       `json:"dependsOn,omitempty"`
 	CreatedAt     time.Time      `json:"createdAt"`
 	UpdatedAt     time.Time      `json:"updatedAt"`
 }
@@ -192,6 +197,27 @@ func (w WorkItem) Validate() error {
 	case w.Status != WIBlocked && w.BlockedReason != "":
 		return invalid("blockedReason is only allowed while status is blocked")
 	}
+	return checkDependsOn(w.ID, w.DependsOn)
+}
+
+// checkDependsOn checks the part of a dependency list that needs no other item: size, id form,
+// distinctness and self-reference. Existence and cycles need the graph (see ValidateDependencies).
+func checkDependsOn(id string, deps []string) error {
+	if len(deps) > MaxDependsOn {
+		return invalid("too many dependencies (max %d)", MaxDependsOn)
+	}
+	seen := make(map[string]bool, len(deps))
+	for _, d := range deps {
+		switch {
+		case !ulidRe.MatchString(d):
+			return invalid("dependsOn must list work item ULIDs")
+		case seen[d]:
+			return invalid("dependsOn lists %s twice", d)
+		case d == id:
+			return invalid("a work item cannot depend on itself")
+		}
+		seen[d] = true
+	}
 	return nil
 }
 
@@ -225,20 +251,173 @@ func (a Actor) permitted() bool {
 // SetStatus moves the item along a documented edge. Only a human, or the delivery loop with a
 // Policy authority, may do it; an Agent, a Step or an unknown actor gets ErrNotPermitted. A
 // move into blocked records reason; any other move clears it.
-func (w *WorkItem) SetStatus(now time.Time, to WorkItemStatus, by Actor, reason string) error {
+//
+// items are the Work Items of the Project, including w's dependencies. Starting (a move into
+// in_progress) is refused with ErrDependenciesNotDone, naming them, while a dependency is not
+// done; a dependency missing from items counts as not done. Blocking an item that waits on
+// dependencies with no reason of its own records which ones, so the block explains itself.
+func (w *WorkItem) SetStatus(now time.Time, to WorkItemStatus, by Actor, reason string, items []WorkItem) error {
 	if !by.permitted() {
 		return fmt.Errorf("%w: %q may not set a work item status", ErrNotPermitted, by.Kind)
 	}
 	if !w.Status.CanTransitionTo(to) {
 		return fmt.Errorf("%w: work item %s -> %s", ErrInvalidTransition, w.Status, to)
 	}
-	if to != WIBlocked {
+	unmet := w.UnmetDependencies(items)
+	switch {
+	case to == WIInProgress && len(unmet) > 0:
+		return fmt.Errorf("%w: %s", ErrDependenciesNotDone, describeUnmet(unmet))
+	case to == WIBlocked && reason == "" && len(unmet) > 0:
+		reason = describeUnmet(unmet)
+	case to != WIBlocked:
 		reason = ""
 	}
 	if len([]rune(reason)) > MaxReason {
 		return invalid("blockedReason is too long")
 	}
 	w.Status, w.BlockedReason, w.UpdatedAt = to, reason, now
+	return nil
+}
+
+// Dependency says which dependency of a Work Item is not done, and what state it is in. Key and
+// Status are empty when the dependency is not among the items given.
+type Dependency struct {
+	ID     string
+	Key    WorkKey
+	Status WorkItemStatus
+}
+
+// UnmetDependencies lists the dependencies of w that are not done, in DependsOn order. A
+// dependency missing from items is unmet: the check fails closed.
+func (w WorkItem) UnmetDependencies(items []WorkItem) []Dependency {
+	var unmet []Dependency
+	for _, id := range w.DependsOn {
+		i := slices.IndexFunc(items, func(it WorkItem) bool { return it.ID == id })
+		switch {
+		case i < 0:
+			unmet = append(unmet, Dependency{ID: id})
+		case items[i].Status != WIDone:
+			unmet = append(unmet, Dependency{ID: id, Key: items[i].Key, Status: items[i].Status})
+		}
+	}
+	return unmet
+}
+
+func describeUnmet(unmet []Dependency) string {
+	parts := make([]string, len(unmet))
+	for i, d := range unmet {
+		if d.Key == "" {
+			parts[i] = d.ID + " (not found)"
+			continue
+		}
+		parts[i] = fmt.Sprintf("%s (%s)", d.Key, d.Status)
+	}
+	return "waiting on " + strings.Join(parts, ", ")
+}
+
+// SetDependsOn replaces the dependencies of w with deps after checking them against items, the
+// Work Items of the Project (w may or may not be among them). Every dependency must exist, be a
+// distinct id other than w's, and the result must stay acyclic. Dependencies may cross Work
+// Packages; that they stay within one Project is for the caller, which knows the Projects.
+// On error w is unchanged.
+func (w *WorkItem) SetDependsOn(now time.Time, deps []string, items []WorkItem) error {
+	if err := checkDependsOn(w.ID, deps); err != nil {
+		return err
+	}
+	for _, d := range deps {
+		if !slices.ContainsFunc(items, func(it WorkItem) bool { return it.ID == d }) {
+			return invalid("dependency %s does not exist", d)
+		}
+	}
+	next := slices.Clone(deps)
+	graph := make([]WorkItem, 0, len(items)+1)
+	for _, it := range items {
+		if it.ID != w.ID {
+			graph = append(graph, it)
+		}
+	}
+	edited := *w
+	edited.DependsOn = next
+	graph = append(graph, edited)
+	if err := ValidateDependencies(graph); err != nil {
+		return err
+	}
+	w.DependsOn, w.UpdatedAt = next, now
+	return nil
+}
+
+// ValidateDependencies checks the dependency graph of items: every dependency exists, lists are
+// well formed, and there is no cycle. A cycle error names the Work Items on it.
+func ValidateDependencies(items []WorkItem) error {
+	byID := make(map[string]WorkItem, len(items))
+	for _, it := range items {
+		byID[it.ID] = it
+	}
+	for _, it := range items {
+		if err := checkDependsOn(it.ID, it.DependsOn); err != nil {
+			return err
+		}
+		for _, d := range it.DependsOn {
+			if _, ok := byID[d]; !ok {
+				return invalid("work item %s depends on %s, which does not exist", it.ID, d)
+			}
+		}
+	}
+	if cycle := DependencyCycle(items); len(cycle) > 0 {
+		keys := make([]string, len(cycle))
+		for i, id := range cycle {
+			keys[i] = string(byID[id].Key)
+			if keys[i] == "" {
+				keys[i] = id
+			}
+		}
+		return fmt.Errorf("%w: %w: %s", ErrInvalid, ErrDependencyCycle, strings.Join(keys, " -> "))
+	}
+	return nil
+}
+
+// DependencyCycle returns the ids on one dependency cycle among items, in dependency order, or
+// nil when the graph is acyclic. Dependencies on ids not in items are ignored here; see
+// ValidateDependencies for those.
+func DependencyCycle(items []WorkItem) []string {
+	deps := make(map[string][]string, len(items))
+	for _, it := range items {
+		deps[it.ID] = it.DependsOn
+	}
+	const (
+		visiting = 1
+		finished = 2
+	)
+	state := make(map[string]int, len(items))
+	var path []string
+	var visit func(id string) []string
+	visit = func(id string) []string {
+		switch state[id] {
+		case visiting:
+			start := slices.Index(path, id)
+			return slices.Clone(path[start:])
+		case finished:
+			return nil
+		}
+		if _, ok := deps[id]; !ok {
+			return nil
+		}
+		state[id] = visiting
+		path = append(path, id)
+		for _, d := range deps[id] {
+			if c := visit(d); c != nil {
+				return c
+			}
+		}
+		path = path[:len(path)-1]
+		state[id] = finished
+		return nil
+	}
+	for _, it := range items {
+		if c := visit(it.ID); c != nil {
+			return c
+		}
+	}
 	return nil
 }
 
