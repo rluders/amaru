@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DeliveryLoopLedger.json",
+  "title": "DeliveryLoopLedger",
+  "description": "GET /v1/projects/{projectId}/work-packages/{id}/delivery-loop. Platform state; Work Items and Executions stay authoritative.",
+  "type": "object",
+  "required": [
+    "packageId",
+    "items",
+    "decisions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "packageId": {
+      "$ref": "WorkPackageId.json"
+    },
+    "items": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "DeliveryLoopItem.json"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "DeliveryLoopDecision.json"
+      }
+    },
+    "completedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

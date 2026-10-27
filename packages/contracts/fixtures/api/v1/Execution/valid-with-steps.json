@@ -1,0 +1,56 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "running",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "startedAt": "2026-10-01T12:00:01Z",
+  "workflowId": "WF-001",
+  "input": {
+    "prompt": "Workflow: x"
+  },
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "Validate Model",
+      "type": "agent",
+      "capability": "agent.run",
+      "executable": true,
+      "state": "succeeded",
+      "startedAt": "2026-10-01T12:00:01Z",
+      "endedAt": "2026-10-01T12:00:05Z",
+      "outputs": [
+        "out/a.txt"
+      ]
+    },
+    {
+      "stepId": "step-2",
+      "name": "Generate LODs",
+      "type": "agent",
+      "capability": "agent.run",
+      "executable": true,
+      "state": "running",
+      "startedAt": "2026-10-01T12:00:05Z"
+    },
+    {
+      "stepId": "step-3",
+      "name": "Export to Unreal",
+      "type": "tool",
+      "executable": false,
+      "state": "refused",
+      "reason": "tool steps without a capability are not executable yet"
+    },
+    {
+      "stepId": "step-4",
+      "name": "Trigger",
+      "type": "trigger",
+      "executable": false,
+      "state": "skipped",
+      "reason": "control step; not executed"
+    }
+  ],
+  "outputs": [
+    "out/a.txt"
+  ]
+}

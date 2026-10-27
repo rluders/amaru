@@ -1,0 +1,6 @@
+{
+  "protocol": "amaru.provider/v1",
+  "method": "run",
+  "capability": "mesh.from_text",
+  "input": {}
+}

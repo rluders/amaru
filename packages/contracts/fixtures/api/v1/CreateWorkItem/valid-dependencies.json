@@ -1,0 +1,8 @@
+{
+  "packageId": "WP-001",
+  "title": "HUD",
+  "dependsOn": [
+    "WI-001"
+  ],
+  "workflowId": "WF-001"
+}

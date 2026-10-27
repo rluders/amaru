@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ProviderList.json",
+  "title": "ProviderList",
+  "type": "array",
+  "items": {
+    "$ref": "Provider.json"
+  }
+}

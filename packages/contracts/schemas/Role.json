@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Role.json",
+  "title": "Role",
+  "description": "Fixed role set, no custom roles (ADR-0038). Clients must tolerate new values.",
+  "enum": [
+    "owner",
+    "admin",
+    "maintainer",
+    "contributor",
+    "viewer"
+  ]
+}

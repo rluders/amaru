@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CreateWorkflow.json",
+  "title": "CreateWorkflow",
+  "description": "The Platform assigns the id (WF-001, …). Defaults: status active, type pipeline.",
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "status": {
+      "$ref": "WorkflowStatus.json"
+    },
+    "type": {
+      "$ref": "WorkflowType.json"
+    },
+    "steps": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "WorkflowStep.json"
+      }
+    },
+    "variables": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "WorkflowVariable.json"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "WorkflowEdge.json"
+      }
+    },
+    "layout": {
+      "$ref": "WorkflowLayout.json"
+    }
+  }
+}

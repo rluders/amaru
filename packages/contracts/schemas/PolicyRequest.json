@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PolicyRequest.json",
+  "title": "PolicyRequest",
+  "description": "Input of the single Policy function (ADR-0037): a request is never authority.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "principal",
+    "capability",
+    "resource",
+    "scope",
+    "context"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "requestId": {
+      "$ref": "Ulid.json"
+    },
+    "principal": {
+      "$ref": "Principal.json"
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "resource": {
+      "$ref": "PolicyResource.json"
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "organizationId": {
+          "$ref": "Ulid.json"
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stepExecutionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "manual",
+                "webhook",
+                "schedule",
+                "delivery_loop"
+              ]
+            }
+          }
+        },
+        "definition": {
+          "type": "object",
+          "required": [
+            "commit",
+            "contentHash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "commit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "contentHash": {
+              "$ref": "Digest.json"
+            }
+          }
+        },
+        "requestedCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "environmentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceDigest": {
+          "$ref": "Digest.json"
+        }
+      }
+    }
+  }
+}

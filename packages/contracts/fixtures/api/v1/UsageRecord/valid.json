@@ -1,0 +1,28 @@
+{
+  "provider": "example-llm",
+  "model": "model-x",
+  "inputTokens": {
+    "value": 1200,
+    "source": "reported"
+  },
+  "outputTokens": {
+    "value": 300,
+    "source": "reported"
+  },
+  "cacheReadTokens": {
+    "source": "unknown"
+  },
+  "wallDurationMs": {
+    "value": 4100,
+    "source": "estimated"
+  },
+  "cost": {
+    "amount": "0.0132",
+    "currency": "USD",
+    "source": "estimated",
+    "priceTableVersion": "2026-10-01"
+  },
+  "id": "use_01",
+  "stepExecutionId": "se_01",
+  "capturedAt": "2026-10-26T09:00:00Z"
+}

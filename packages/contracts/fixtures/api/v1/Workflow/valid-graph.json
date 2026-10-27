@@ -1,0 +1,47 @@
+{
+  "id": "WF-002",
+  "name": "Mesh pipeline",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Generate",
+      "type": "tool",
+      "capability": "mesh.from_image",
+      "input": {
+        "image": "refs/crate.png"
+      }
+    },
+    {
+      "id": "step-2",
+      "name": "Inspect",
+      "type": "tool",
+      "capability": "mesh.inspect"
+    }
+  ],
+  "variables": [],
+  "edges": [
+    {
+      "from": "step-1",
+      "fromPort": "model",
+      "to": "step-2",
+      "toPort": "model"
+    }
+  ],
+  "layout": {
+    "nodes": {
+      "step-1": {
+        "x": 0,
+        "y": 0
+      },
+      "step-2": {
+        "x": 260.5,
+        "y": -12
+      }
+    }
+  },
+  "createdAt": "2026-10-02T12:00:00Z",
+  "updatedAt": "2026-10-02T12:00:00Z"
+}

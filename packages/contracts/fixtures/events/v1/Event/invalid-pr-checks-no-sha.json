@@ -1,0 +1,15 @@
+{
+  "id": "01J00000000000000000000044",
+  "seq": 44,
+  "type": "pr.checks",
+  "time": "2026-10-05T12:04:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "repo": "rluders/orbital-courier",
+    "source": "webhook"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

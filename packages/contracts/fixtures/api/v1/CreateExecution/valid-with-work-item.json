@@ -1,0 +1,7 @@
+{
+  "capability": "agent.run",
+  "input": {
+    "prompt": "Do it."
+  },
+  "workItemId": "WI-001"
+}

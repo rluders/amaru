@@ -1,0 +1,18 @@
+{
+  "id": "01J00000000000000000000042",
+  "seq": 42,
+  "type": "pr.checks",
+  "time": "2026-10-05T12:02:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "repo": "rluders/orbital-courier",
+    "sha": "0123456789abcdef0123456789abcdef01234567",
+    "branch": "amaru/wi-001-run-state",
+    "source": "webhook",
+    "deliveryId": "d-2"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ProjectList.json",
+  "title": "ProjectList",
+  "description": "Projects attached to this Platform (GET /projects), ordered by name.",
+  "type": "array",
+  "items": {
+    "$ref": "Project.json"
+  }
+}

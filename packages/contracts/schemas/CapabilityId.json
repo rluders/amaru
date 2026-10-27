@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CapabilityId.json",
+  "title": "CapabilityId",
+  "type": "string",
+  "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+  "description": "Dotted identifier, e.g. agent.run. Data, not an enum: new capabilities are additive."
+}

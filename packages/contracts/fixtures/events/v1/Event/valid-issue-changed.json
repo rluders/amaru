@@ -1,0 +1,18 @@
+{
+  "id": "01J00000000000000000000042",
+  "seq": 42,
+  "type": "issue.changed",
+  "time": "2026-10-05T12:02:00Z",
+  "projectId": "prj_01",
+  "data": {
+    "repo": "rluders/orbital-courier",
+    "number": 7,
+    "action": "labeled",
+    "source": "webhook",
+    "deliveryId": "d-2"
+  },
+  "resource": {
+    "type": "project",
+    "id": "prj_01"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01J0Q8Z3X50000000000000111",
+  "seq": 11,
+  "type": "policy.evaluated",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "policy_request",
+    "id": "01J0Q8Z3X50000000000000010"
+  },
+  "data": {
+    "requestId": "01J0Q8Z3X50000000000000010",
+    "decision": "deny",
+    "inputHash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "reasonCodes": []
+  }
+}

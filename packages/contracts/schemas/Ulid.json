@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Ulid.json",
+  "title": "Ulid",
+  "description": "Crockford base32 ULID (POLICY_AND_APPROVAL_SHAPES conventions).",
+  "type": "string",
+  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+}

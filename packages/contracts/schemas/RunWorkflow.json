@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/RunWorkflow.json",
+  "title": "RunWorkflow",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "providerId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "workItemId": {
+      "$ref": "WorkItemId.json"
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

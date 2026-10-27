@@ -1,0 +1,6 @@
+{
+  "deliveryLoop": {
+    "enabled": true,
+    "maxAttempts": 9
+  }
+}

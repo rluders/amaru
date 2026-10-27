@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/BaseState.json",
+  "title": "BaseState",
+  "description": "The last outcome of bringing an item's branch up to date with the base branch.",
+  "type": "object",
+  "required": [
+    "sha",
+    "state",
+    "at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "sha": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "current",
+        "refreshed",
+        "conflict",
+        "diverged",
+        "error"
+      ]
+    },
+    "detail": {
+      "type": "string"
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "at": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

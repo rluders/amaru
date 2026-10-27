@@ -1,0 +1,25 @@
+{
+  "provider": "example-llm",
+  "model": "model-x",
+  "inputTokens": {
+    "source": "unknown",
+    "value": 0
+  },
+  "outputTokens": {
+    "value": 300,
+    "source": "reported"
+  },
+  "cacheReadTokens": {
+    "source": "unknown"
+  },
+  "wallDurationMs": {
+    "value": 4100,
+    "source": "estimated"
+  },
+  "cost": {
+    "amount": "0.0132",
+    "currency": "USD",
+    "source": "estimated",
+    "priceTableVersion": "2026-10-01"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Connection.json",
+  "title": "Connection",
+  "description": "User-level configuration of a provider that needs one. Secret values are never returned, only whether each is set.",
+  "type": "object",
+  "required": [
+    "enabled",
+    "secrets"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    }
+  }
+}

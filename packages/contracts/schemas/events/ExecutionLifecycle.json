@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ExecutionLifecycle.json",
+  "title": "ExecutionLifecycle",
+  "description": "created / started / waiting / completed / cancelled. Terminal events are final.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "execution.created",
+            "execution.started",
+            "execution.waiting",
+            "execution.completed",
+            "execution.cancelled"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "state"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "enum": [
+                "queued",
+                "running",
+                "waiting",
+                "succeeded",
+                "cancelled"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -3,14 +3,15 @@
 
 DOCCHECK := tools/doccheck
 SPIKE    := spikes/wp-m1-02
+CONTRACTS := packages/contracts
 
-.PHONY: check fmt vet test docs-check spike-vet spike-m1-02
+.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts spike-m1-02
 
-check: fmt vet test docs-check spike-vet
+check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts
 
 # Fails if any Go file is not gofmt-formatted.
 fmt:
-	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
+	@out="$$(gofmt -l $(DOCCHECK) $(SPIKE) $(CONTRACTS))"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
 
 vet:
 	cd $(DOCCHECK) && go vet ./...
@@ -26,6 +27,26 @@ docs-check:
 # not evidence for them). Needs the pinned modules in the Go module cache.
 spike-vet:
 	cd $(SPIKE) && go vet ./... && GOOS=windows go vet ./... && GOOS=darwin GOARCH=arm64 go vet ./...
+
+# Contracts package: structural checks on schemas and OpenAPI, the route-drift guard, and the fixture corpus validated in Go
+# (stdlib + yaml.v3 + santhosh-tekuri/jsonschema).
+contracts-test:
+	cd $(CONTRACTS) && go vet ./... && go test -count=1 ./...
+
+# Worker protocol (Protobuf): lint, formatting, and breaking-change check against the committed baseline image.
+# Needs the `buf` CLI (verified with 1.69.0). See packages/contracts/README.md.
+contracts-proto:
+	cd $(CONTRACTS) && buf lint && buf format -d --exit-code && buf breaking --against baseline/worker-v1.binpb
+
+# Contract fixtures in TypeScript (Ajv) from the same corpus, plus the Go/TS parity check: both suites write one
+# "fixture<TAB>outcome" line per fixture and the two files must be identical. Needs Node >= 22.18 and pnpm; installs from
+# the committed lockfile only.
+contracts-ts:
+	cd $(CONTRACTS) && pnpm install --frozen-lockfile && pnpm run typecheck
+	@d="$$(mktemp -d)" && cd $(CONTRACTS) \
+	&& CONTRACTS_OUTCOMES_OUT="$$d/go.tsv" go test -count=1 -run TestFixturesMatchTheirDeclaredOutcome ./ \
+	&& CONTRACTS_OUTCOMES_OUT="$$d/ts.tsv" pnpm run test \
+	&& diff "$$d/go.tsv" "$$d/ts.tsv" && echo "contracts parity: $$(wc -l < "$$d/go.tsv") fixtures, identical outcomes in Go and TypeScript"
 
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:

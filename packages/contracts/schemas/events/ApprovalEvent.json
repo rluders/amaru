@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ApprovalEvent.json",
+  "title": "ApprovalEvent",
+  "description": "Approval state change: previous and new state plus the evidence digest (POLICY_AND_APPROVAL_SHAPES 3.3). No rationale text and no secrets.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "approval.requested",
+            "approval.approved",
+            "approval.rejected",
+            "approval.expired",
+            "approval.voided"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "approvalId",
+            "state",
+            "evidenceDigest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "approvalId": {
+              "$ref": "../Ulid.json"
+            },
+            "previousState": {
+              "enum": [
+                "requested",
+                "approved",
+                "rejected",
+                "expired",
+                "voided"
+              ]
+            },
+            "state": {
+              "enum": [
+                "requested",
+                "approved",
+                "rejected",
+                "expired",
+                "voided"
+              ]
+            },
+            "evidenceDigest": {
+              "$ref": "../Digest.json"
+            },
+            "replaces": {
+              "$ref": "../Ulid.json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

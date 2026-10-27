@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ExecutionOutput.json",
+  "title": "ExecutionOutput",
+  "description": "Provider-neutral output chunk. `stream` is a role, not a pipe: message = agent prose, log = diagnostics.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "execution.output"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "stream",
+            "text"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "stream": {
+              "enum": [
+                "message",
+                "log"
+              ]
+            },
+            "text": {
+              "type": "string"
+            },
+            "stepId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Workflow step this output belongs to; absent outside workflow runs."
+            }
+          }
+        }
+      }
+    }
+  ]
+}

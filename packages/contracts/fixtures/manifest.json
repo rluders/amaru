@@ -1,0 +1,2274 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "file": "api/v1/Agent/invalid-duplicate-preference.json",
+      "schema": "Agent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "uniqueItems@/providerPreference",
+      "source": "protocol/fixtures/types/Agent.invalid-duplicate-preference.json"
+    },
+    {
+      "file": "api/v1/Agent/invalid-id.json",
+      "schema": "Agent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/id",
+      "source": "protocol/fixtures/types/Agent.invalid-id.json"
+    },
+    {
+      "file": "api/v1/Agent/invalid-model.json",
+      "schema": "Agent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/model",
+      "source": "protocol/fixtures/types/Agent.invalid-model.json"
+    },
+    {
+      "file": "api/v1/Agent/invalid-status.json",
+      "schema": "Agent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status",
+      "source": "protocol/fixtures/types/Agent.invalid-status.json"
+    },
+    {
+      "file": "api/v1/Agent/valid-minimal.json",
+      "schema": "Agent.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Agent.valid-minimal.json"
+    },
+    {
+      "file": "api/v1/Agent/valid.json",
+      "schema": "Agent.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Agent.valid.json"
+    },
+    {
+      "file": "api/v1/AgentList/valid.json",
+      "schema": "AgentList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AgentList.valid.json"
+    },
+    {
+      "file": "api/v1/Approval/invalid-agent-requester-without-sponsor.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/requester"
+    },
+    {
+      "file": "api/v1/Approval/invalid-approved-without-decision.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/Approval/invalid-digest-format.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/evidence/digest"
+    },
+    {
+      "file": "api/v1/Approval/invalid-empty-evidence.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/evidence/items"
+    },
+    {
+      "file": "api/v1/Approval/invalid-extra-field.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/",
+      "note": "Approval is a closed object; unknown fields are rejected on this side"
+    },
+    {
+      "file": "api/v1/Approval/invalid-outcome-contradicts-state.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/decision/outcome"
+    },
+    {
+      "file": "api/v1/Approval/invalid-requested-with-decision.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/"
+    },
+    {
+      "file": "api/v1/Approval/invalid-unknown-state.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/state"
+    },
+    {
+      "file": "api/v1/Approval/invalid-voided-without-voidedby.json",
+      "schema": "Approval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/Approval/malformed-empty.json",
+      "schema": "Approval.json",
+      "kind": "malformed",
+      "expect": "malformed"
+    },
+    {
+      "file": "api/v1/Approval/malformed-not-json.json",
+      "schema": "Approval.json",
+      "kind": "malformed",
+      "expect": "malformed"
+    },
+    {
+      "file": "api/v1/Approval/malformed-trailing-comma.json",
+      "schema": "Approval.json",
+      "kind": "malformed",
+      "expect": "malformed"
+    },
+    {
+      "file": "api/v1/Approval/malformed-truncated.json",
+      "schema": "Approval.json",
+      "kind": "malformed",
+      "expect": "malformed"
+    },
+    {
+      "file": "api/v1/Approval/malformed-two-documents.json",
+      "schema": "Approval.json",
+      "kind": "malformed",
+      "expect": "malformed",
+      "note": "One JSON document per file; trailing data is an error in both parsers"
+    },
+    {
+      "file": "api/v1/Approval/valid-approved.json",
+      "schema": "Approval.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Approval/valid-rejected.json",
+      "schema": "Approval.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Approval/valid-replacement.json",
+      "schema": "Approval.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Approval/valid-requested.json",
+      "schema": "Approval.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Approval/valid-voided.json",
+      "schema": "Approval.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "ADR-0048: a changed digest voids the Approval; a new one replaces it"
+    },
+    {
+      "file": "api/v1/Artifact/invalid-missing-type.json",
+      "schema": "Artifact.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/Artifact.invalid-missing-type.json"
+    },
+    {
+      "file": "api/v1/Artifact/invalid-work-item.json",
+      "schema": "Artifact.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/workItems/0",
+      "source": "protocol/fixtures/types/Artifact.invalid-work-item.json"
+    },
+    {
+      "file": "api/v1/Artifact/valid-minimal.json",
+      "schema": "Artifact.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Artifact.valid-minimal.json"
+    },
+    {
+      "file": "api/v1/ArtifactList/valid.json",
+      "schema": "ArtifactList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ArtifactList.valid.json"
+    },
+    {
+      "file": "api/v1/AttachProject/invalid-empty-root.json",
+      "schema": "AttachProject.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/root",
+      "source": "protocol/fixtures/types/AttachProject.invalid-empty-root.json"
+    },
+    {
+      "file": "api/v1/AttachProject/invalid-extra.json",
+      "schema": "AttachProject.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/",
+      "source": "protocol/fixtures/types/AttachProject.invalid-extra.json"
+    },
+    {
+      "file": "api/v1/AttachProject/valid.json",
+      "schema": "AttachProject.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AttachProject.valid.json"
+    },
+    {
+      "file": "api/v1/CapabilityInfo/invalid-text-output.json",
+      "schema": "CapabilityInfo.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/outputs/0/kind",
+      "source": "protocol/fixtures/types/CapabilityInfo.invalid-text-output.json"
+    },
+    {
+      "file": "api/v1/CapabilityList/valid.json",
+      "schema": "CapabilityList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CapabilityList.valid.json"
+    },
+    {
+      "file": "api/v1/CapabilitySpec/invalid-enum-without-values.json",
+      "schema": "CapabilitySpec.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/inputs/0",
+      "source": "protocol/fixtures/types/CapabilitySpec.invalid-enum-without-values.json"
+    },
+    {
+      "file": "api/v1/CreateAgent/invalid-no-instructions.json",
+      "schema": "CreateAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/CreateAgent.invalid-no-instructions.json"
+    },
+    {
+      "file": "api/v1/CreateAgent/valid-full.json",
+      "schema": "CreateAgent.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateAgent.valid-full.json"
+    },
+    {
+      "file": "api/v1/CreateAgent/valid.json",
+      "schema": "CreateAgent.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateAgent.valid.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/invalid-both-inputs.json",
+      "schema": "CreateExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/input",
+      "source": "protocol/fixtures/types/CreateExecution.invalid-both-inputs.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/invalid-capability.json",
+      "schema": "CreateExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/capability",
+      "source": "protocol/fixtures/types/CreateExecution.invalid-capability.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/invalid-empty-artifact-id.json",
+      "schema": "CreateExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/input/artifactId",
+      "source": "protocol/fixtures/types/CreateExecution.invalid-empty-artifact-id.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/invalid-empty-prompt.json",
+      "schema": "CreateExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/input/prompt",
+      "source": "protocol/fixtures/types/CreateExecution.invalid-empty-prompt.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/valid-asset-generate.json",
+      "schema": "CreateExecution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateExecution.valid-asset-generate.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/valid-with-provider.json",
+      "schema": "CreateExecution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateExecution.valid-with-provider.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/valid-with-work-item.json",
+      "schema": "CreateExecution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateExecution.valid-with-work-item.json"
+    },
+    {
+      "file": "api/v1/CreateExecution/valid.json",
+      "schema": "CreateExecution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateExecution.valid.json"
+    },
+    {
+      "file": "api/v1/CreateTeam/valid.json",
+      "schema": "CreateTeam.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateTeam.valid.json"
+    },
+    {
+      "file": "api/v1/CreateWorkItem/invalid-dependency-id.json",
+      "schema": "CreateWorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/dependsOn/0",
+      "source": "protocol/fixtures/types/CreateWorkItem.invalid-dependency-id.json"
+    },
+    {
+      "file": "api/v1/CreateWorkItem/invalid-missing-package.json",
+      "schema": "CreateWorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/CreateWorkItem.invalid-missing-package.json"
+    },
+    {
+      "file": "api/v1/CreateWorkItem/invalid-package-id.json",
+      "schema": "CreateWorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/packageId",
+      "source": "protocol/fixtures/types/CreateWorkItem.invalid-package-id.json"
+    },
+    {
+      "file": "api/v1/CreateWorkItem/valid-dependencies.json",
+      "schema": "CreateWorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkItem.valid-dependencies.json"
+    },
+    {
+      "file": "api/v1/CreateWorkItem/valid.json",
+      "schema": "CreateWorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkItem.valid.json"
+    },
+    {
+      "file": "api/v1/CreateWorkPackage/invalid-empty-title.json",
+      "schema": "CreateWorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/title",
+      "source": "protocol/fixtures/types/CreateWorkPackage.invalid-empty-title.json"
+    },
+    {
+      "file": "api/v1/CreateWorkPackage/valid.json",
+      "schema": "CreateWorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkPackage.valid.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/invalid-empty-name.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/name",
+      "source": "protocol/fixtures/types/CreateWorkflow.invalid-empty-name.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/invalid-input-on-agent-step.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/steps/0",
+      "source": "protocol/fixtures/types/CreateWorkflow.invalid-input-on-agent-step.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/invalid-input-without-capability.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/steps/0",
+      "source": "protocol/fixtures/types/CreateWorkflow.invalid-input-without-capability.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/invalid-step-type.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/steps/0/type",
+      "source": "protocol/fixtures/types/CreateWorkflow.invalid-step-type.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/valid-capability-input.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkflow.valid-capability-input.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/valid-full.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkflow.valid-full.json"
+    },
+    {
+      "file": "api/v1/CreateWorkflow/valid.json",
+      "schema": "CreateWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/CreateWorkflow.valid.json"
+    },
+    {
+      "file": "api/v1/DecideApproval/invalid-missing-digest.json",
+      "schema": "DecideApproval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/DecideApproval/invalid-outcome.json",
+      "schema": "DecideApproval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/outcome"
+    },
+    {
+      "file": "api/v1/DecideApproval/valid.json",
+      "schema": "DecideApproval.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/invalid-base-state.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/items/WI-013/base/state",
+      "source": "protocol/fixtures/types/AutoloopLedger.invalid-base-state.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/invalid-local-state.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/items/WI-001/local/state",
+      "source": "protocol/fixtures/types/AutoloopLedger.invalid-local-state.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/invalid-phase.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/items/WI-001/phase",
+      "source": "protocol/fixtures/types/AutoloopLedger.invalid-phase.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/valid-ci.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AutoloopLedger.valid-ci.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/valid-local.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AutoloopLedger.valid-local.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/valid-refresh.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AutoloopLedger.valid-refresh.json"
+    },
+    {
+      "file": "api/v1/DeliveryLoopLedger/valid.json",
+      "schema": "DeliveryLoopLedger.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/AutoloopLedger.valid.json"
+    },
+    {
+      "file": "api/v1/Error/invalid-code.json",
+      "schema": "Error.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/error/code",
+      "source": "protocol/fixtures/types/Error.invalid-code.json"
+    },
+    {
+      "file": "api/v1/Error/valid.json",
+      "schema": "Error.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Error.valid.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-empty-input.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/input/prompt",
+      "source": "protocol/fixtures/types/Execution.invalid-empty-input.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-failed-without-error.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/Execution.invalid-failed-without-error.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-outputs-empty-string.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/outputs/0",
+      "source": "protocol/fixtures/types/Execution.invalid-outputs-empty-string.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-queued-with-started.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/",
+      "source": "protocol/fixtures/types/Execution.invalid-queued-with-started.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-step-agent-resolution.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/steps/0/agent/resolution",
+      "source": "protocol/fixtures/types/Execution.invalid-step-agent-resolution.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-step-file-sha.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/steps/0/files/0/sha256",
+      "source": "protocol/fixtures/types/Execution.invalid-step-file-sha.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-step-skipped-no-reason.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/steps/0",
+      "source": "protocol/fixtures/types/Execution.invalid-step-skipped-no-reason.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-step-state.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/steps/0/state",
+      "source": "protocol/fixtures/types/Execution.invalid-step-state.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-succeeded-no-ended.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/Execution.invalid-succeeded-no-ended.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-work-item-id.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/workItemId",
+      "source": "protocol/fixtures/types/Execution.invalid-work-item-id.json"
+    },
+    {
+      "file": "api/v1/Execution/invalid-workflow-id.json",
+      "schema": "Execution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/workflowId",
+      "source": "protocol/fixtures/types/Execution.invalid-workflow-id.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-asset-generate.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-asset-generate.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-failed.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-failed.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-queued.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-queued.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-running.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-running.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-step-agent.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-step-agent.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-step-files.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-step-files.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-steps-failed.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-steps-failed.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-succeeded.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-succeeded.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-with-input.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-with-input.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-with-steps.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-with-steps.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-with-work-item.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-with-work-item.json"
+    },
+    {
+      "file": "api/v1/Execution/valid-with-workflow.json",
+      "schema": "Execution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Execution.valid-with-workflow.json"
+    },
+    {
+      "file": "api/v1/ExecutionList/valid.json",
+      "schema": "ExecutionList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ExecutionList.valid.json"
+    },
+    {
+      "file": "api/v1/Grant/invalid-no-capabilities.json",
+      "schema": "Grant.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/capabilities"
+    },
+    {
+      "file": "api/v1/Grant/invalid-project-scope-without-project.json",
+      "schema": "Grant.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/scope"
+    },
+    {
+      "file": "api/v1/Grant/invalid-status.json",
+      "schema": "Grant.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status"
+    },
+    {
+      "file": "api/v1/Grant/valid-project.json",
+      "schema": "Grant.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Health/invalid-missing-uptime.json",
+      "schema": "Health.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/Health.invalid-missing-uptime.json"
+    },
+    {
+      "file": "api/v1/Health/invalid-protocol-version.json",
+      "schema": "Health.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/protocolVersion",
+      "source": "protocol/fixtures/types/Health.invalid-protocol-version.json"
+    },
+    {
+      "file": "api/v1/Health/valid.json",
+      "schema": "Health.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Health.valid.json"
+    },
+    {
+      "file": "api/v1/PolicyDecision/invalid-allow-with-approval.json",
+      "schema": "PolicyDecision.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/"
+    },
+    {
+      "file": "api/v1/PolicyDecision/invalid-needs-grant-is-not-a-decision.json",
+      "schema": "PolicyDecision.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/decision",
+      "note": "ADR-0048 Q57: needs_grant is a delivery-loop phase, not a Policy decision"
+    },
+    {
+      "file": "api/v1/PolicyDecision/invalid-no-reasons.json",
+      "schema": "PolicyDecision.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/reasons"
+    },
+    {
+      "file": "api/v1/PolicyDecision/invalid-require-approval-without-approval.json",
+      "schema": "PolicyDecision.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/PolicyDecision/valid-allow.json",
+      "schema": "PolicyDecision.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/PolicyDecision/valid-explicit-deny.json",
+      "schema": "PolicyDecision.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "ADR-0048 Q57: the Step ends refused"
+    },
+    {
+      "file": "api/v1/PolicyDecision/valid-require-approval.json",
+      "schema": "PolicyDecision.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/PolicyDecision/valid-uncovered-deny.json",
+      "schema": "PolicyDecision.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "ADR-0048 Q57: uncovered is deny with policy.uncovered; the delivery loop parks the item as needs_grant"
+    },
+    {
+      "file": "api/v1/PolicyRequest/invalid-capability-name.json",
+      "schema": "PolicyRequest.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/capability"
+    },
+    {
+      "file": "api/v1/PolicyRequest/invalid-resource-without-type.json",
+      "schema": "PolicyRequest.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/resource"
+    },
+    {
+      "file": "api/v1/PolicyRequest/invalid-trigger-kind.json",
+      "schema": "PolicyRequest.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/context/trigger/kind"
+    },
+    {
+      "file": "api/v1/PolicyRequest/valid.json",
+      "schema": "PolicyRequest.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Principal/invalid-human-with-sponsor.json",
+      "schema": "Principal.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/"
+    },
+    {
+      "file": "api/v1/Principal/invalid-kind.json",
+      "schema": "Principal.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/kind"
+    },
+    {
+      "file": "api/v1/Principal/invalid-trigger-without-sponsor.json",
+      "schema": "Principal.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/Principal/valid-agent.json",
+      "schema": "Principal.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Principal/valid-human.json",
+      "schema": "Principal.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/Principal/valid-trigger-with-sponsor.json",
+      "schema": "Principal.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "ADR-0048 Q57: a Trigger acts under a human sponsor"
+    },
+    {
+      "file": "api/v1/Project/invalid-no-root.json",
+      "schema": "Project.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/Project.invalid-no-root.json"
+    },
+    {
+      "file": "api/v1/Project/invalid-remote-type.json",
+      "schema": "Project.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/git/remote",
+      "source": "protocol/fixtures/types/Project.invalid-remote-type.json"
+    },
+    {
+      "file": "api/v1/Project/valid-no-git.json",
+      "schema": "Project.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Project.valid-no-git.json"
+    },
+    {
+      "file": "api/v1/Project/valid-remote.json",
+      "schema": "Project.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Project.valid-remote.json"
+    },
+    {
+      "file": "api/v1/Project/valid.json",
+      "schema": "Project.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Project.valid.json"
+    },
+    {
+      "file": "api/v1/ProjectList/valid-empty.json",
+      "schema": "ProjectList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ProjectList.valid-empty.json"
+    },
+    {
+      "file": "api/v1/ProjectList/valid.json",
+      "schema": "ProjectList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ProjectList.valid.json"
+    },
+    {
+      "file": "api/v1/ProjectSettings/invalid-extra.json",
+      "schema": "ProjectSettings.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/",
+      "source": "protocol/fixtures/types/ProjectSettings.invalid-extra.json"
+    },
+    {
+      "file": "api/v1/ProjectSettings/valid.json",
+      "schema": "ProjectSettings.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ProjectSettings.valid.json"
+    },
+    {
+      "file": "api/v1/Provider/invalid-kind.json",
+      "schema": "Provider.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/kind",
+      "source": "protocol/fixtures/types/Provider.invalid-kind.json"
+    },
+    {
+      "file": "api/v1/Provider/valid-claude.json",
+      "schema": "Provider.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Provider.valid-claude.json"
+    },
+    {
+      "file": "api/v1/Provider/valid-network.json",
+      "schema": "Provider.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Provider.valid-network.json"
+    },
+    {
+      "file": "api/v1/Provider/valid-unavailable.json",
+      "schema": "Provider.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Provider.valid-unavailable.json"
+    },
+    {
+      "file": "api/v1/Provider/valid-with-specs.json",
+      "schema": "Provider.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Provider.valid-with-specs.json"
+    },
+    {
+      "file": "api/v1/ProviderList/valid.json",
+      "schema": "ProviderList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/ProviderList.valid.json"
+    },
+    {
+      "file": "api/v1/RunWorkflow/invalid-work-item-id.json",
+      "schema": "RunWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/workItemId",
+      "source": "protocol/fixtures/types/RunWorkflow.invalid-work-item-id.json"
+    },
+    {
+      "file": "api/v1/RunWorkflow/valid-with-work-item.json",
+      "schema": "RunWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/RunWorkflow.valid-with-work-item.json"
+    },
+    {
+      "file": "api/v1/RunWorkflow/valid.json",
+      "schema": "RunWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/RunWorkflow.valid.json"
+    },
+    {
+      "file": "api/v1/StepExecution/invalid-failed-without-error.json",
+      "schema": "StepExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/StepExecution/invalid-prototype-state-unsupported.json",
+      "schema": "StepExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/state",
+      "note": "Prototype `unsupported` became `refused`"
+    },
+    {
+      "file": "api/v1/StepExecution/invalid-refused-without-reason.json",
+      "schema": "StepExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/StepExecution/invalid-timed-out-without-end.json",
+      "schema": "StepExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/StepExecution/invalid-usage-prototype-shape.json",
+      "schema": "StepExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/usage/0/credits"
+    },
+    {
+      "file": "api/v1/StepExecution/valid-interrupted.json",
+      "schema": "StepExecution.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "Interrupted Steps are retried as a new attempt (ADR-0044)"
+    },
+    {
+      "file": "api/v1/StepExecution/valid-refused.json",
+      "schema": "StepExecution.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/StepExecution/valid-timed-out.json",
+      "schema": "StepExecution.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/StepVerdict/invalid-outcome.json",
+      "schema": "StepVerdict.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/outcome",
+      "source": "protocol/fixtures/types/StepVerdict.invalid-outcome.json"
+    },
+    {
+      "file": "api/v1/StepVerdict/valid.json",
+      "schema": "StepVerdict.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/StepVerdict.valid.json"
+    },
+    {
+      "file": "api/v1/Team/invalid-role.json",
+      "schema": "Team.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/members/0/role",
+      "source": "protocol/fixtures/types/Team.invalid-role.json"
+    },
+    {
+      "file": "api/v1/Team/valid.json",
+      "schema": "Team.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Team.valid.json"
+    },
+    {
+      "file": "api/v1/UpdateAgent/invalid-empty.json",
+      "schema": "UpdateAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateAgent.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateAgent/invalid-id.json",
+      "schema": "UpdateAgent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/",
+      "source": "protocol/fixtures/types/UpdateAgent.invalid-id.json"
+    },
+    {
+      "file": "api/v1/UpdateAgent/valid.json",
+      "schema": "UpdateAgent.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateAgent.valid.json"
+    },
+    {
+      "file": "api/v1/UpdateSettings/invalid-empty.json",
+      "schema": "UpdateSettings.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateSettings.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateSettings/valid.json",
+      "schema": "UpdateSettings.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateSettings.valid.json"
+    },
+    {
+      "file": "api/v1/UpdateTeam/invalid-empty.json",
+      "schema": "UpdateTeam.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateTeam.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkItem/invalid-empty.json",
+      "schema": "UpdateWorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateWorkItem.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkItem/invalid-status.json",
+      "schema": "UpdateWorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status",
+      "source": "protocol/fixtures/types/UpdateWorkItem.invalid-status.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkItem/valid.json",
+      "schema": "UpdateWorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkItem.valid.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/invalid-delivery-loop-attempts.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "maximum@/deliveryLoop/maxAttempts",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.invalid-autoloop-attempts.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/invalid-empty.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/valid-delivery-loop-local.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.valid-autoloop-local.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/valid-delivery-loop-refresh.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.valid-autoloop-refresh.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/valid-delivery-loop.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.valid-autoloop.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkPackage/valid.json",
+      "schema": "UpdateWorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkPackage.valid.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkflow/invalid-empty.json",
+      "schema": "UpdateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minProperties@/",
+      "source": "protocol/fixtures/types/UpdateWorkflow.invalid-empty.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkflow/invalid-layout-node.json",
+      "schema": "UpdateWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/layout/nodes/step-1",
+      "source": "protocol/fixtures/types/UpdateWorkflow.invalid-layout-node.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkflow/valid-edges-layout.json",
+      "schema": "UpdateWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkflow.valid-edges-layout.json"
+    },
+    {
+      "file": "api/v1/UpdateWorkflow/valid.json",
+      "schema": "UpdateWorkflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/UpdateWorkflow.valid.json"
+    },
+    {
+      "file": "api/v1/UsageRecord/invalid-no-step-execution.json",
+      "schema": "UsageRecord.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/UsageRecord/invalid-unknown-field.json",
+      "schema": "UsageRecord.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "unevaluatedProperties@/"
+    },
+    {
+      "file": "api/v1/UsageRecord/valid.json",
+      "schema": "UsageRecord.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-cost-as-float.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/cost/amount",
+      "note": "ADR-0033: cost is a decimal string"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-currency.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/cost/currency"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-estimated-cost-without-table.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/cost"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-negative-tokens.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minimum@/inputTokens/value"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-reported-without-value.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/outputTokens"
+    },
+    {
+      "file": "api/v1/UsageReport/invalid-unknown-as-zero.json",
+      "schema": "UsageReport.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/inputTokens"
+    },
+    {
+      "file": "api/v1/UsageReport/valid-all-unknown.json",
+      "schema": "UsageReport.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "Unknown is never zero"
+    },
+    {
+      "file": "api/v1/UsageReport/valid-mixed-sources.json",
+      "schema": "UsageReport.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "ADR-0033: each number carries its own source"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-blocked-by-state.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/external/blockedBy/0/state",
+      "source": "protocol/fixtures/types/WorkItem.invalid-blocked-by-state.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-missing-package.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/WorkItem.invalid-missing-package.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-owner-kind.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/owner/kind",
+      "source": "protocol/fixtures/types/WorkItem.invalid-owner-kind.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-reason-when-not-blocked.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/",
+      "source": "protocol/fixtures/types/WorkItem.invalid-reason-when-not-blocked.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-status.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status",
+      "source": "protocol/fixtures/types/WorkItem.invalid-status.json"
+    },
+    {
+      "file": "api/v1/WorkItem/valid-agent-owner.json",
+      "schema": "WorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkItem.valid-agent-owner.json"
+    },
+    {
+      "file": "api/v1/WorkItem/valid-blocked.json",
+      "schema": "WorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkItem.valid-blocked.json"
+    },
+    {
+      "file": "api/v1/WorkItem/valid.json",
+      "schema": "WorkItem.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkItem.valid.json"
+    },
+    {
+      "file": "api/v1/WorkItemList/valid.json",
+      "schema": "WorkItemList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkItemList.valid.json"
+    },
+    {
+      "file": "api/v1/WorkPackage/invalid-empty-title.json",
+      "schema": "WorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/title",
+      "source": "protocol/fixtures/types/WorkPackage.invalid-empty-title.json"
+    },
+    {
+      "file": "api/v1/WorkPackage/invalid-id.json",
+      "schema": "WorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/id",
+      "source": "protocol/fixtures/types/WorkPackage.invalid-id.json"
+    },
+    {
+      "file": "api/v1/WorkPackage/invalid-status.json",
+      "schema": "WorkPackage.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status",
+      "source": "protocol/fixtures/types/WorkPackage.invalid-status.json"
+    },
+    {
+      "file": "api/v1/WorkPackage/valid-empty-summary.json",
+      "schema": "WorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkPackage.valid-empty-summary.json"
+    },
+    {
+      "file": "api/v1/WorkPackage/valid.json",
+      "schema": "WorkPackage.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkPackage.valid.json"
+    },
+    {
+      "file": "api/v1/WorkPackageList/valid.json",
+      "schema": "WorkPackageList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkPackageList.valid.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-agent-id-on-tool-step.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/steps/0",
+      "source": "protocol/fixtures/types/Workflow.invalid-agent-id-on-tool-step.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-agent-no-prompt.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/steps/0",
+      "source": "protocol/fixtures/types/Workflow.invalid-agent-no-prompt.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-capability-on-agent.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/steps/0",
+      "source": "protocol/fixtures/types/Workflow.invalid-capability-on-agent.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-edge-half-port.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "dependentRequired@/edges/0",
+      "source": "protocol/fixtures/types/Workflow.invalid-edge-half-port.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-status.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/status",
+      "source": "protocol/fixtures/types/Workflow.invalid-status.json"
+    },
+    {
+      "file": "api/v1/Workflow/invalid-step-no-id.json",
+      "schema": "Workflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/steps/0",
+      "source": "protocol/fixtures/types/Workflow.invalid-step-no-id.json"
+    },
+    {
+      "file": "api/v1/Workflow/valid-agent-step.json",
+      "schema": "Workflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Workflow.valid-agent-step.json"
+    },
+    {
+      "file": "api/v1/Workflow/valid-capability-step.json",
+      "schema": "Workflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Workflow.valid-capability-step.json"
+    },
+    {
+      "file": "api/v1/Workflow/valid-empty.json",
+      "schema": "Workflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Workflow.valid-empty.json"
+    },
+    {
+      "file": "api/v1/Workflow/valid-graph.json",
+      "schema": "Workflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Workflow.valid-graph.json"
+    },
+    {
+      "file": "api/v1/Workflow/valid.json",
+      "schema": "Workflow.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/Workflow.valid.json"
+    },
+    {
+      "file": "api/v1/WorkflowList/valid.json",
+      "schema": "WorkflowList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkflowList.valid.json"
+    },
+    {
+      "file": "api/v1/WorkflowStep/invalid-review-no-reviews.json",
+      "schema": "WorkflowStep.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/WorkflowStep.invalid-review-no-reviews.json"
+    },
+    {
+      "file": "api/v1/WorkflowStep/valid-approval.json",
+      "schema": "WorkflowStep.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkflowStep.valid-approval.json"
+    },
+    {
+      "file": "api/v1/WorkflowStep/valid-review.json",
+      "schema": "WorkflowStep.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkflowStep.valid-review.json"
+    },
+    {
+      "file": "api/v1/WorkflowStep/valid-team-agent.json",
+      "schema": "WorkflowStep.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/types/WorkflowStep.valid-team-agent.json"
+    },
+    {
+      "file": "events/v1/ApprovalEvent/invalid-digest.json",
+      "schema": "events/ApprovalEvent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/data/evidenceDigest"
+    },
+    {
+      "file": "events/v1/ApprovalEvent/invalid-type.json",
+      "schema": "events/ApprovalEvent.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/type"
+    },
+    {
+      "file": "events/v1/ApprovalEvent/valid.json",
+      "schema": "events/ApprovalEvent.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Event/forward-compat-unknown-top-level-field.json",
+      "schema": "events/Event.json",
+      "kind": "forward-compat",
+      "expect": "valid",
+      "note": "ADR-0025: a client ignores fields it does not know; the event envelope is open"
+    },
+    {
+      "file": "events/v1/Event/invalid-agent-changed-empty.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/data/ids",
+      "source": "protocol/fixtures/events/Event.invalid-agent-changed-empty.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-artifact-generated-empty.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/data/paths",
+      "source": "protocol/fixtures/events/Event.invalid-artifact-generated-empty.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-empty-correlation-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/correlationId"
+    },
+    {
+      "file": "events/v1/Event/invalid-failed-no-error.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/data",
+      "source": "protocol/fixtures/events/Event.invalid-failed-no-error.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-hook-delivery-failed-execution-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/type",
+      "source": "protocol/fixtures/events/Event.invalid-hook-delivery-failed-execution-id.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-hook-delivery-failed-no-attempts.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/type",
+      "source": "protocol/fixtures/events/Event.invalid-hook-delivery-failed-no-attempts.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-hook-triggered-no-execution-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/type",
+      "source": "protocol/fixtures/events/Event.invalid-hook-triggered-no-execution-id.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-hook-triggered-no-workflow.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/type",
+      "source": "protocol/fixtures/events/Event.invalid-hook-triggered-no-workflow.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/id"
+    },
+    {
+      "file": "events/v1/Event/invalid-issue-changed-action.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/data/action",
+      "source": "protocol/fixtures/events/Event.invalid-issue-changed-action.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-lifecycle-no-execution-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/events/Event.invalid-lifecycle-no-execution-id.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-no-project-id.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/events/Event.invalid-no-project-id.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-no-resource.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "events/v1/Event/invalid-output-stream.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/data/stream",
+      "source": "protocol/fixtures/events/Event.invalid-output-stream.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-pr-checks-no-sha.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/data",
+      "source": "protocol/fixtures/events/Event.invalid-pr-checks-no-sha.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-pr-merged-source.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/data/action",
+      "source": "protocol/fixtures/events/Event.invalid-pr-merged-source.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-seq-zero.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minimum@/seq",
+      "source": "protocol/fixtures/events/Event.invalid-seq-zero.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-step-external.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/data/external/jobId",
+      "source": "protocol/fixtures/events/Event.invalid-step-external.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-step-failed-no-error.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/data",
+      "source": "protocol/fixtures/events/Event.invalid-step-failed-no-error.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-step-state.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/data/state",
+      "source": "protocol/fixtures/events/Event.invalid-step-state.json"
+    },
+    {
+      "file": "events/v1/Event/invalid-unknown-data-field.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/",
+      "note": "Per-type data is closed; a new field needs a minor version of the schema"
+    },
+    {
+      "file": "events/v1/Event/invalid-unknown-type.json",
+      "schema": "events/Event.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/type",
+      "source": "protocol/fixtures/events/Event.invalid-unknown-type.json"
+    },
+    {
+      "file": "events/v1/Event/valid-agent-changed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-agent-changed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-artifact-generated.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-artifact-generated.json"
+    },
+    {
+      "file": "events/v1/Event/valid-cancelled.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-cancelled.json"
+    },
+    {
+      "file": "events/v1/Event/valid-completed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-completed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-created.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-created.json"
+    },
+    {
+      "file": "events/v1/Event/valid-delivery-loop-decision.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-autoloop-decision.json"
+    },
+    {
+      "file": "events/v1/Event/valid-failed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-failed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-issue-changed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-issue-changed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-output-step.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-output-step.json"
+    },
+    {
+      "file": "events/v1/Event/valid-output.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-output.json"
+    },
+    {
+      "file": "events/v1/Event/valid-platform-state.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-runtime-state.json"
+    },
+    {
+      "file": "events/v1/Event/valid-pr-checks-resync.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-pr-checks-resync.json"
+    },
+    {
+      "file": "events/v1/Event/valid-pr-checks.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-pr-checks.json"
+    },
+    {
+      "file": "events/v1/Event/valid-pr-merged.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-pr-merged.json"
+    },
+    {
+      "file": "events/v1/Event/valid-progress.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-progress.json"
+    },
+    {
+      "file": "events/v1/Event/valid-reconcile-completed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-reconcile-completed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-started.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-started.json"
+    },
+    {
+      "file": "events/v1/Event/valid-step-files.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-step-files.json"
+    },
+    {
+      "file": "events/v1/Event/valid-step-interrupted.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Event/valid-step-timed-out.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Event/valid-step.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-step.json"
+    },
+    {
+      "file": "events/v1/Event/valid-team-changed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-team-changed.json"
+    },
+    {
+      "file": "events/v1/Event/valid-work-item-changed.json",
+      "schema": "events/Event.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Event.valid-work-item-changed.json"
+    },
+    {
+      "file": "events/v1/EventList/invalid-not-array.json",
+      "schema": "events/EventList.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/events/EventList.invalid-not-array.json"
+    },
+    {
+      "file": "events/v1/EventList/invalid-prototype-bare-array.json",
+      "schema": "events/EventList.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/",
+      "note": "Prototype returned a bare array; WRK-003 returns an object with nextCursor"
+    },
+    {
+      "file": "events/v1/EventList/valid-with-cursor.json",
+      "schema": "events/EventList.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/EventList/valid.json",
+      "schema": "events/EventList.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/EventList.valid.json"
+    },
+    {
+      "file": "events/v1/Frame/invalid-unknown-frame.json",
+      "schema": "events/Frame.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "condition@/"
+    },
+    {
+      "file": "events/v1/Frame/valid-event.json",
+      "schema": "events/Frame.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Frame/valid-hello.json",
+      "schema": "events/Frame.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Frame/valid-resync.json",
+      "schema": "events/Frame.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/GrantChanged/invalid-status.json",
+      "schema": "events/GrantChanged.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/data/status"
+    },
+    {
+      "file": "events/v1/GrantChanged/valid.json",
+      "schema": "events/GrantChanged.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/Hello/invalid-version.json",
+      "schema": "events/Hello.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/protocolVersion",
+      "source": "protocol/fixtures/events/Hello.invalid-version.json"
+    },
+    {
+      "file": "events/v1/Hello/valid.json",
+      "schema": "events/Hello.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/events/Hello.valid.json"
+    },
+    {
+      "file": "events/v1/PolicyEvaluated/invalid-no-reason-codes.json",
+      "schema": "events/PolicyEvaluated.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/data/reasonCodes"
+    },
+    {
+      "file": "events/v1/PolicyEvaluated/valid.json",
+      "schema": "events/PolicyEvaluated.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/ResultRejectedStale/invalid-current-token-zero.json",
+      "schema": "events/ResultRejectedStale.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minimum@/data/currentToken"
+    },
+    {
+      "file": "events/v1/ResultRejectedStale/valid.json",
+      "schema": "events/ResultRejectedStale.json",
+      "kind": "valid",
+      "expect": "valid",
+      "note": "A stale fencing token is rejected and recorded, never applied"
+    },
+    {
+      "file": "events/v1/ResyncRequired/invalid-negative-resume.json",
+      "schema": "events/ResyncRequired.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minimum@/resumeFrom"
+    },
+    {
+      "file": "events/v1/ResyncRequired/invalid-reason.json",
+      "schema": "events/ResyncRequired.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "enum@/reason"
+    },
+    {
+      "file": "events/v1/ResyncRequired/valid.json",
+      "schema": "events/ResyncRequired.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "events/v1/UsageRecorded/invalid-no-execution-id.json",
+      "schema": "events/UsageRecorded.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "events/v1/UsageRecorded/valid.json",
+      "schema": "events/UsageRecorded.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "provider-protocol/v1/Describe/invalid-no-capabilities.json",
+      "schema": "provider/Describe.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minItems@/capabilities",
+      "source": "protocol/fixtures/provider/Describe.invalid-no-capabilities.json"
+    },
+    {
+      "file": "provider-protocol/v1/Describe/valid.json",
+      "schema": "provider/Describe.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Describe.valid.json"
+    },
+    {
+      "file": "provider-protocol/v1/Manifest/invalid-shell-string.json",
+      "schema": "provider/Manifest.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/command",
+      "source": "protocol/fixtures/provider/Manifest.invalid-shell-string.json"
+    },
+    {
+      "file": "provider-protocol/v1/Manifest/valid.json",
+      "schema": "provider/Manifest.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Manifest.valid.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/invalid-failed-without-error.json",
+      "schema": "provider/Message.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/provider/Message.invalid-failed-without-error.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/invalid-percent.json",
+      "schema": "provider/Message.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "maximum@/percent",
+      "source": "protocol/fixtures/provider/Message.invalid-percent.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/valid-external.json",
+      "schema": "provider/Message.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Message.valid-external.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/valid-output.json",
+      "schema": "provider/Message.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Message.valid-output.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/valid-progress.json",
+      "schema": "provider/Message.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Message.valid-progress.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/valid-result-failed.json",
+      "schema": "provider/Message.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Message.valid-result-failed.json"
+    },
+    {
+      "file": "provider-protocol/v1/Message/valid-result.json",
+      "schema": "provider/Message.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Message.valid-result.json"
+    },
+    {
+      "file": "provider-protocol/v1/Request/invalid-run-missing.json",
+      "schema": "provider/Request.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "const@/method",
+      "source": "protocol/fixtures/provider/Request.invalid-run-missing.json"
+    },
+    {
+      "file": "provider-protocol/v1/Request/valid-describe.json",
+      "schema": "provider/Request.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Request.valid-describe.json"
+    },
+    {
+      "file": "provider-protocol/v1/Request/valid-run.json",
+      "schema": "provider/Request.json",
+      "kind": "valid",
+      "expect": "valid",
+      "source": "protocol/fixtures/provider/Request.valid-run.json"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-enum-name.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-message-id-type.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-negative-fencing-token.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-timestamp.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-two-bodies.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/",
+      "note": "At most one member of the body oneof"
+    },
+    {
+      "file": "worker/v1/Envelope/invalid-uint32-overflow.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "decode@/"
+    },
+    {
+      "file": "worker/v1/Envelope/malformed-truncated.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "malformed",
+      "expect": "malformed"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-assignment.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-cancel.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-drain.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-hello.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-lease-renew.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-lease-revoked.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-reject-attempt.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-result-failed-timeout.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-result-succeeded-with-usage.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "worker/v1/Envelope/valid-step-events.json",
+      "schema": "proto:amaru.worker.v1.Envelope",
+      "kind": "valid",
+      "expect": "valid"
+    }
+  ]
+}

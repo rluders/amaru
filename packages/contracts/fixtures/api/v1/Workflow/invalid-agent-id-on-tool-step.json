@@ -1,0 +1,19 @@
+{
+  "id": "WF-001",
+  "name": "x",
+  "description": "",
+  "status": "active",
+  "type": "pipeline",
+  "variables": [],
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Export",
+      "type": "tool",
+      "capability": "model.export",
+      "agentId": "godot-developer"
+    }
+  ]
+}

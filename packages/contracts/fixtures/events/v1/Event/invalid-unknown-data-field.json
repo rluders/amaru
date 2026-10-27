@@ -1,0 +1,21 @@
+{
+  "id": "01J0Q8Z3X50000000000000116",
+  "seq": 16,
+  "type": "execution.step",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "execution",
+    "id": "exe_01"
+  },
+  "data": {
+    "stepId": "implement",
+    "state": "timed_out",
+    "error": {
+      "code": "timeout",
+      "message": "Step exceeded its 30m limit"
+    },
+    "futureField": 1
+  },
+  "executionId": "exe_01"
+}

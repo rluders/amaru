@@ -7,9 +7,12 @@ What can be checked locally today, and how to report it.
 | Command | What it does | Needs |
 |---|---|---|
 | `make check` | Runs all of the below. | Go ≥ 1.27, or Go ≥ 1.21 with `GOTOOLCHAIN=auto` (downloads 1.27) |
-| `make fmt` | Fails if any Go file under `tools/doccheck` is not `gofmt`-formatted. | Go |
+| `make fmt` | Fails if any Go file under `tools/doccheck`, the spike or `packages/contracts` is not `gofmt`-formatted. | Go |
 | `make vet` | `go vet` on `tools/doccheck`. | Go |
 | `make test` | Unit tests of `tools/doccheck` (`-count=1`). | Go |
+| `make contracts-test` | `go vet` and tests in `packages/contracts`: every schema parses and has a unique `$id`, every `$ref` resolves, `operationId`s are unique, no prototype names remain, and the route-drift guard (`routeguard`). Also validates the shared fixture corpus (`fixtures/manifest.json`, schemas and Worker Protobuf) in Go: declared outcome and error id per fixture, manifest and directory in sync, coverage of each area, no secret-like values or prototype names in fixtures (API-002). | Go, `buf` |
+| `make contracts-proto` | In `packages/contracts`: `buf lint`, `buf format -d --exit-code`, and `buf breaking` against `baseline/worker-v1.binpb`. | `buf` (verified with 1.69.0) |
+| `make contracts-ts` | In `packages/contracts`: `pnpm install --frozen-lockfile`, `tsc --noEmit`, the same fixture corpus validated with Ajv (Draft 2020-12) and `@bufbuild/protobuf`, and a parity check: Go and TypeScript each write one `fixture<TAB>outcome` line per fixture and the two files must be identical. | Node >= 22.18, pnpm (verified with Node 25.7, pnpm 11.5) |
 | `make docs-check` | Runs `doccheck` on the repository: relative links and anchors, unclosed fences and empty Mermaid blocks, ADR names/frontmatter/numbering and the DECISIONS index, Skill frontmatter and `.claude/skills` symlinks. | Go |
 
 `doccheck` is offline: it does **not** check external URLs, Mermaid syntax (only that blocks are non-empty and closed), spelling, or whether prose is true. Those need review (`documentation-maintenance` Skill).

@@ -125,6 +125,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Valid and invalid fixtures pass in Go and TypeScript in `make check`.
   - The product owner has added the Apache-2.0 `LICENSE` to `packages/contracts` ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md); agents never add license text).
 - **Validation:** fixture tests.
+- **Status (2026-10-26):** in progress. [ADR-0047](adr/0047-migrate-the-prototype-protocol-into-packages-contracts.md) accepted (#67 closed); the contract files, Worker Protobuf with a `buf breaking` baseline and the route-drift guard are in `packages/contracts` (#68). Q56–Q58 were decided by [ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md) (accepted 2026-10-26) and the Approval/Policy shapes follow it. Shared fixtures (315: 208 re-validated from the prototype, 107 new for Approval, Policy, Principal, Grant, usage, events, Step timeout and interruption, and the Worker envelope) are validated in Go and TypeScript with identical outcomes (#117). The product owner's `LICENSE` is not done.
 
 ### WP-M2-02 Generated TypeScript SDK
 - **Issue:** [#10](https://github.com/rluders/amaru/issues/10)

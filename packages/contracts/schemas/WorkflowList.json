@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkflowList.json",
+  "title": "WorkflowList",
+  "type": "array",
+  "items": {
+    "$ref": "Workflow.json"
+  }
+}

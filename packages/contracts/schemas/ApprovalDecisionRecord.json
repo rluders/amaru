@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ApprovalDecisionRecord.json",
+  "title": "ApprovalDecisionRecord",
+  "type": "object",
+  "required": [
+    "outcome",
+    "approver",
+    "decidedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "enum": [
+        "approved",
+        "rejected"
+      ]
+    },
+    "approver": {
+      "$ref": "Principal.json"
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Free text. Must not contain secret values."
+    },
+    "decidedAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

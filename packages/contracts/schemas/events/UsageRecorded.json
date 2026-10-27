@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/UsageRecorded.json",
+  "title": "UsageRecorded",
+  "description": "A usage record was captured for a Step Execution (OBS-002, ADR-0033). The numbers are on the UsageRecord; the event carries only the reference.",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "usage.recorded"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "stepExecutionId",
+            "usageRecordId"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "stepExecutionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "usageRecordId": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "01J0Q8Z3X50000000000000112",
+  "seq": 12,
+  "type": "grant.revoked",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "grant",
+    "id": "01J0Q8Z3X50000000000000020"
+  },
+  "data": {
+    "grantId": "01J0Q8Z3X50000000000000020",
+    "status": "deleted"
+  }
+}

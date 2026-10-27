@@ -1,0 +1,19 @@
+{
+  "name": "Generate LODs",
+  "description": "d",
+  "type": "task",
+  "status": "draft",
+  "steps": [
+    {
+      "name": "Do",
+      "type": "agent",
+      "prompt": "Do {{x}}"
+    }
+  ],
+  "variables": [
+    {
+      "name": "x",
+      "value": "1"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Project.json",
+  "title": "Project",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "root",
+    "config",
+    "git"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute native path of the project root. Informational; identity is `id`."
+    },
+    "repositories": {
+      "type": "array",
+      "maxItems": 16,
+      "description": "External Git repositories linked in .amaru/project.yaml. An entry with `error` is never used.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string"
+          },
+          "remote": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "present"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "required": [
+        "present"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "remote": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "URL of the origin remote read from .git/config, credentials removed. Untrusted project text; never contacted."
+        }
+      }
+    }
+  }
+}

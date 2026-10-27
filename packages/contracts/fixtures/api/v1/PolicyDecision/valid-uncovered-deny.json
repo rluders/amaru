@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "requestId": "01J0Q8Z3X50000000000000010",
+  "decision": "deny",
+  "reasons": [
+    {
+      "code": "policy.uncovered",
+      "source": "default",
+      "message": "No Grant covers this Capability."
+    }
+  ],
+  "matchedGrantId": null,
+  "evaluatedAt": "2026-10-26T09:00:00Z"
+}

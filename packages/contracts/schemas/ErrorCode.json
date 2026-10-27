@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ErrorCode.json",
+  "title": "ErrorCode",
+  "enum": [
+    "invalid_request",
+    "unauthorized",
+    "forbidden_origin",
+    "forbidden",
+    "not_found",
+    "provider_unavailable",
+    "protocol_mismatch",
+    "conflict",
+    "rate_limited",
+    "needs_grant",
+    "internal"
+  ]
+}

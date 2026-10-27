@@ -1,0 +1,6 @@
+{
+  "capability": "asset.generate",
+  "input": {
+    "artifactId": ""
+  }
+}

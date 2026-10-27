@@ -1,0 +1,5 @@
+{
+  "type": "resync_required",
+  "reason": "cursor_ahead",
+  "resumeFrom": 0
+}

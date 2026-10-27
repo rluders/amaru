@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CIState.json",
+  "title": "CIState",
+  "description": "What the delivery loop knows about the CI checks of an item's pull request (requireChecks).",
+  "type": "object",
+  "required": [
+    "headSha",
+    "state",
+    "repairs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "headSha": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "pending",
+        "success",
+        "failure"
+      ]
+    },
+    "repairs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "handled": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string"
+      }
+    },
+    "lastFailure": {
+      "type": "string"
+    },
+    "lastFailureClass": {
+      "enum": [
+        "recoverable",
+        "pre_existing",
+        "infra",
+        "ambiguous",
+        "ci_unavailable"
+      ],
+      "description": "The classification behind lastFailure; ci_unavailable means the host never ran the job (quota, billing), so no repair or rerun was spent."
+    },
+    "superseded": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string"
+      },
+      "description": "Earlier heads the delivery loop waited on; their checks never validate the current head."
+    }
+  }
+}

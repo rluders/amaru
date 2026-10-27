@@ -4,7 +4,7 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**Three open (Q56–Q58, raised by WP-M1-04).** Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046. Two passes on 2026-10-25 closed every question:
+**None open.** Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
@@ -22,8 +22,8 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
   - [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) retries an idempotent Step as a new Lease. [ADR-0006](adr/0006-human-authorization-for-consequential-actions.md) says an Approval authorizes one occurrence. It is unstated whether the retry reuses the original Approval, and how "first use of a secret" ([rule 12](../security/SECURITY_MODEL.md#baseline-rules)) is remembered afterwards.
 - **Why it matters:** an approved push or pull request must neither run unapproved on changed content nor ask the human twice for the same occurrence after a crash.
 - **Evidence required:** a crash-injection case on fakes (approved, then interrupted) and an agreed reading of DOMAIN_MODEL §4/§5.5.
-- **Recommendation (not a decision):** an `approved` record is immutable; validity is checked at use time against the evidence digest; an idempotent retry of the same occurrence reuses the Approval while the digest is unchanged; DOMAIN_MODEL §4 is reworded to match.
-- **Blocks:** Approval contract in WP-M2-01 and WP-M3-04. Closed by an ADR owned by the product owner.
+- **Decision:** accepted by the product owner on 2026-10-26 → [ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md). An `approved` or `rejected` record is immutable and never voided; validity is checked at use time against the evidence digest, and a changed digest means a new `requested` Approval with `replaces`; an Approval covers one occurrence (Step Execution id, Capability, resource) and an idempotent retry of it reuses the Approval while the digest is unchanged; secret first use is remembered per (Capability, secret name, Project). DOMAIN_MODEL §4 is reworded. Original recommendation: an `approved` record is immutable; validity is checked at use time against the evidence digest; an idempotent retry of the same occurrence reuses the Approval while the digest is unchanged; DOMAIN_MODEL §4 is reworded to match.
+- **Unblocked:** Approval contract in WP-M2-01 and WP-M3-04.
 
 ### Q57. How does Policy treat a Capability no rule covers, and who is the requester of a triggered Execution
 - **Question:** raised by [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04).
@@ -31,8 +31,8 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
   - Webhooks, schedules and the delivery loop have no human requester. [ADR-0036](adr/0036-approvals-bind-to-evidence-and-gate-work.md) bars service accounts from approving and [ADR-0038](adr/0038-roles-teams-and-separation-of-duties.md) defines separation of duties against the initiator and the Agent's human sponsor, but nothing names the sponsor of a Trigger.
 - **Why it matters:** the delivery loop must park, not stall or fail; separation of duties needs a defined initiator for unattended runs.
 - **Evidence required:** a decision table (explicit deny, uncovered, approvable) reviewed with the loop's `needs_grant` phase; the Trigger principal and sponsor rule.
-- **Recommendation (not a decision):** explicit `deny` refuses the Step; uncovered and non-approvable parks as `needs_grant` with decision `deny` recorded; a Trigger is a principal of kind `trigger` with a named human sponsor who is the initiator for separation of duties.
-- **Blocks:** Policy contract in WP-M2-01, Trigger shapes in WP-M7 and the delivery loop in WP-M3. Closed by an ADR owned by the product owner.
+- **Decision:** accepted by the product owner on 2026-10-26 → [ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md). Explicit `deny` gives reason `policy.explicit_deny` and the Step ends `refused`; uncovered and non-approvable gives `deny` with reason `policy.uncovered`, parked as `needs_grant` in the delivery loop; a Trigger is a `trigger` principal with a required human sponsor. Original recommendation: explicit `deny` refuses the Step; uncovered and non-approvable parks as `needs_grant` with decision `deny` recorded; a Trigger is a principal of kind `trigger` with a named human sponsor who is the initiator for separation of duties.
+- **Unblocked:** Policy contract in WP-M2-01, Trigger shapes in WP-M7 and the delivery loop in WP-M3.
 
 ### Q58. Policy defaults versus the MVP never-merges rule, and what a Project may tighten
 - **Question:** raised by [POLICY_AND_APPROVAL_SHAPES](POLICY_AND_APPROVAL_SHAPES.md) (WP-M1-04).
@@ -41,8 +41,8 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
   - [ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md) lets lower scopes only tighten security-relevant keys, while Policy rules live at Organization scope ([AMARU_DIRECTORY §3.1](AMARU_DIRECTORY.md)). Which keys can Project configuration tighten, and is shorter retention "tighter"?
 - **Why it matters:** the default list is a security baseline; its interpretation must not drift between contracts and code.
 - **Evidence required:** product-owner reading of rules 2 and 12; review of the key table in [POLICY_AND_APPROVAL_SHAPES §8](POLICY_AND_APPROVAL_SHAPES.md#8-configuration).
-- **Recommendation (not a decision):** no merge Capability in the MVP catalog (default `deny`, `require_approval` once added); treat opening a pull request as approvable; Project config may add approval requirements, narrow allowlists, shorten retention and expiry, and nothing else.
-- **Blocks:** default rule set and configuration contract in WP-M2-01. Closed by an ADR owned by the product owner.
+- **Decision:** accepted by the product owner on 2026-10-26 → [ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md). No merge Capability in the MVP (`scm.pr.merge` reserved, default `deny`); `scm.pr.create` is `require_approval`; a Project may only add approval requirements, narrow allowlists, shorten retention and expiry, and make gates stricter. Original recommendation: no merge Capability in the MVP catalog (default `deny`, `require_approval` once added); treat opening a pull request as approvable; Project config may add approval requirements, narrow allowlists, shorten retention and expiry, and nothing else.
+- **Unblocked:** default rule set and configuration contract in WP-M2-01.
 
 A new question is added here with **why it matters**, **evidence required** and **what it blocks**, and is closed by an ADR.
 

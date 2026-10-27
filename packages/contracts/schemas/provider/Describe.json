@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/provider/Describe.json",
+  "title": "Describe",
+  "description": "The only line a describe call writes.",
+  "type": "object",
+  "required": [
+    "type",
+    "id",
+    "name",
+    "capabilities"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "describe"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,62}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "$ref": "../CapabilitySpec.json"
+      }
+    }
+  }
+}

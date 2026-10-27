@@ -1,0 +1,7 @@
+{
+  "capability": "asset.generate",
+  "input": {
+    "artifactId": "Assets/Player.md"
+  },
+  "workItemId": "WI-009"
+}

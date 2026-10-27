@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/OutputPortSpec.json",
+  "title": "OutputPortSpec",
+  "description": "An output port: always a file; its name is the output role.",
+  "allOf": [
+    {
+      "$ref": "PortSpec.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "file"
+        }
+      }
+    }
+  ]
+}

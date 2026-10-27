@@ -1,0 +1,10 @@
+{
+  "packageId": "WP-001",
+  "items": {
+    "WI-001": {
+      "phase": "flying",
+      "attempt": 1
+    }
+  },
+  "decisions": []
+}

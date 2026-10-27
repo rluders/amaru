@@ -1,0 +1,27 @@
+{
+  "id": "exe_02",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "meshy",
+  "state": "running",
+  "createdAt": "2026-10-02T12:00:00Z",
+  "startedAt": "2026-10-02T12:00:01Z",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "G",
+      "type": "tool",
+      "executable": true,
+      "state": "running",
+      "files": [
+        {
+          "role": "model",
+          "path": "a.glb",
+          "mediaType": "model/gltf-binary",
+          "sha256": "xyz",
+          "bytes": 1
+        }
+      ]
+    }
+  ]
+}

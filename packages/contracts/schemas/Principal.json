@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Principal.json",
+  "title": "Principal",
+  "description": "Whoever or whatever a request or decision is attributed to (ADR-0038). Only `human` may decide an Approval. `agent` and `trigger` require a human `sponsor`: for `trigger` that is ADR-0048 (accepted 2026-10-26, Q57); the `agent` rule is in POLICY_AND_APPROVAL_SHAPES section 2.",
+  "type": "object",
+  "required": [
+    "kind",
+    "id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "human",
+        "agent",
+        "trigger",
+        "plugin"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "displayName": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "organizationRole": {
+      "$ref": "Role.json"
+    },
+    "projectRole": {
+      "oneOf": [
+        {
+          "$ref": "Role.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sponsor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Id of the accountable human principal."
+    },
+    "teams": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "agent",
+              "trigger"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "sponsor"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "human"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "sponsor"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "capability": "agent.run",
+  "input": {
+    "prompt": "Summarize the design docs"
+  },
+  "providerId": "claude",
+  "idempotencyKey": "k1"
+}

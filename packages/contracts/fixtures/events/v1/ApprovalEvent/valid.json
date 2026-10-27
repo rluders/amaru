@@ -1,0 +1,18 @@
+{
+  "id": "01J0Q8Z3X50000000000000110",
+  "seq": 10,
+  "type": "approval.approved",
+  "time": "2026-10-26T09:00:00Z",
+  "projectId": "prj_01",
+  "resource": {
+    "type": "approval",
+    "id": "01J0Q8Z3X50000000000000001"
+  },
+  "data": {
+    "approvalId": "01J0Q8Z3X50000000000000001",
+    "previousState": "requested",
+    "state": "approved",
+    "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "correlationId": "corr_1"
+}

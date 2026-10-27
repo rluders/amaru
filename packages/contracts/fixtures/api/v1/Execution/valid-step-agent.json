@@ -1,0 +1,36 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "running",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "startedAt": "2026-10-01T12:00:01Z",
+  "workflowId": "WF-001",
+  "input": {
+    "prompt": "Workflow: x"
+  },
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "Inspect",
+      "type": "agent",
+      "capability": "agent.run",
+      "executable": true,
+      "state": "running",
+      "startedAt": "2026-10-01T12:00:01Z",
+      "agent": {
+        "id": "godot-developer",
+        "name": "Godot developer",
+        "role": "Developer",
+        "instructions": "You are the Godot developer.",
+        "model": "opus",
+        "providerPreference": [
+          "claude"
+        ],
+        "providerId": "claude",
+        "resolution": "preference"
+      }
+    }
+  ]
+}

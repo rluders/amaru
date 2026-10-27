@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CapabilitySpec.json",
+  "title": "CapabilitySpec",
+  "description": "Vendor-neutral contract of a capability: named inputs and output roles.",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "inputs",
+    "outputs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "CapabilityId.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "inputs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "PortSpec.json"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "OutputPortSpec.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/PolicyReason.json",
+  "title": "PolicyReason",
+  "description": "Why a decision was reached. `policy.explicit_deny` and `policy.uncovered` are decided by ADR-0048 (accepted 2026-10-26, Q57); `default.*` codes come from POLICY_AND_APPROVAL_SHAPES. No secret values in `message`.",
+  "type": "object",
+  "required": [
+    "code",
+    "source",
+    "message"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "ruleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "default",
+        "grant",
+        "rule",
+        "request"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    }
+  }
+}

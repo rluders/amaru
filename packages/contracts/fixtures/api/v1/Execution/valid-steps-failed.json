@@ -1,0 +1,46 @@
+{
+  "id": "exe_01",
+  "projectId": "prj_01",
+  "capability": "agent.run",
+  "providerId": "claude",
+  "state": "failed",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "startedAt": "2026-10-01T12:00:01Z",
+  "endedAt": "2026-10-01T12:00:09Z",
+  "error": {
+    "code": "exit_1",
+    "message": "boom"
+  },
+  "workflowId": "WF-001",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "name": "A",
+      "type": "agent",
+      "executable": true,
+      "state": "succeeded",
+      "endedAt": "2026-10-01T12:00:05Z"
+    },
+    {
+      "stepId": "step-2",
+      "name": "B",
+      "type": "agent",
+      "executable": true,
+      "state": "failed",
+      "endedAt": "2026-10-01T12:00:09Z",
+      "error": {
+        "code": "exit_1",
+        "message": "boom"
+      }
+    },
+    {
+      "stepId": "step-3",
+      "name": "C",
+      "type": "agent",
+      "executable": true,
+      "state": "skipped",
+      "reason": "previous step failed",
+      "endedAt": "2026-10-01T12:00:09Z"
+    }
+  ]
+}

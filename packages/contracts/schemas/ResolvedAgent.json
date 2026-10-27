@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/ResolvedAgent.json",
+  "title": "ResolvedAgent",
+  "description": "Snapshot of the Agent a step ran with, recorded when the run is planned. A full copy: the run stays reconstructable after the Agent changes.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "instructions",
+    "providerPreference",
+    "providerId",
+    "resolution"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "toolIsolation": {
+      "type": "string",
+      "enum": [
+        "strict",
+        "ambient"
+      ],
+      "description": "strict: the provider ran with its own MCP servers, connectors and native skills shut out. ambient: it also saw whatever the user configured for that CLI. Absent on snapshots recorded before."
+    },
+    "worktreeWrite": {
+      "type": "boolean"
+    },
+    "worktreeCommands": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9._+-]{0,31}( -{0,2}[A-Za-z0-9][A-Za-z0-9._+=/:-]{0,63}){0,3}$"
+      },
+      "description": "Shell command prefixes run in an OS sandbox in the worktree. Needs worktreeWrite."
+    },
+    "id": {
+      "$ref": "AgentId.json"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "providerPreference": {
+      "type": "array",
+      "items": {
+        "$ref": "ProviderId.json"
+      }
+    },
+    "providerId": {
+      "$ref": "ProviderId.json"
+    },
+    "resolution": {
+      "$ref": "AgentResolution.json"
+    }
+  }
+}

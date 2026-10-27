@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/StepExecution.json",
+  "title": "StepExecution",
+  "description": "Execution state of one workflow step inside a workflow run. The parent Execution stays the canonical overall run.",
+  "type": "object",
+  "required": [
+    "stepId",
+    "name",
+    "type",
+    "executable",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "stepId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "$ref": "StepType.json"
+    },
+    "capability": {
+      "$ref": "CapabilityId.json"
+    },
+    "executable": {
+      "type": "boolean",
+      "description": "Decided when the run is planned: whether this step can run at all. Progress counts only executable steps."
+    },
+    "state": {
+      "$ref": "StepState.json"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "startedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "endedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "error": {
+      "$ref": "ExecutionError.json"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "agent": {
+      "$ref": "ResolvedAgent.json"
+    },
+    "team": {
+      "$ref": "StepTeam.json"
+    },
+    "answer": {
+      "type": "string",
+      "description": "The agent's final text for an agent or review step (capped); what a review step reads."
+    },
+    "reviews": {
+      "type": "string",
+      "description": "The step a review or approval step looks at."
+    },
+    "verdict": {
+      "$ref": "StepVerdict.json"
+    },
+    "approval": {
+      "$ref": "ApprovalState.json"
+    },
+    "providerId": {
+      "$ref": "ProviderId.json"
+    },
+    "input": {
+      "description": "Capability input the step ran with (variables and data edges substituted). Provenance; never credentials.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "OutputFile.json"
+      }
+    },
+    "usage": {
+      "type": "array",
+      "items": {
+        "$ref": "UsageRecord.json"
+      },
+      "description": "Usage records of this Step Execution (ADR-0033); empty or absent when the provider reported nothing."
+    },
+    "external": {
+      "$ref": "ExternalRef.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "error"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "skipped",
+              "refused"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "timed_out",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "endedAt"
+        ]
+      }
+    }
+  ]
+}

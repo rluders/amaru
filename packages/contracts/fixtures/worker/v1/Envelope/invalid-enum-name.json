@@ -1,0 +1,7 @@
+{
+  "messageId": "16",
+  "rejectAttempt": {
+    "attemptId": "att_2",
+    "reason": "NO_CAPACITY"
+  }
+}

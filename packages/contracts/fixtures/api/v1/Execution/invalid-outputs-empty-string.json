@@ -1,0 +1,16 @@
+{
+  "id": "exe_02",
+  "projectId": "prj_01",
+  "capability": "asset.generate",
+  "providerId": "placeholder",
+  "state": "succeeded",
+  "createdAt": "2026-10-01T12:00:00Z",
+  "startedAt": "2026-10-01T12:00:00Z",
+  "endedAt": "2026-10-01T12:00:01Z",
+  "input": {
+    "artifactId": "Assets/Player.md"
+  },
+  "outputs": [
+    ""
+  ]
+}

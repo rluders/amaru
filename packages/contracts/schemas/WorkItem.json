@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkItem.json",
+  "title": "WorkItem",
+  "type": "object",
+  "required": [
+    "id",
+    "packageId",
+    "title",
+    "intent",
+    "status",
+    "owner",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "dependsOn": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "WorkItemId.json"
+      }
+    },
+    "workflowId": {
+      "$ref": "WorkflowId.json"
+    },
+    "external": {
+      "$ref": "IssueRef.json"
+    },
+    "id": {
+      "$ref": "WorkItemId.json"
+    },
+    "packageId": {
+      "$ref": "WorkPackageId.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "intent": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "status": {
+      "$ref": "WorkItemStatus.json"
+    },
+    "blockedReason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "owner": {
+      "$ref": "WorkOwner.json"
+    },
+    "createdAt": {
+      "$ref": "Timestamp.json"
+    },
+    "updatedAt": {
+      "$ref": "Timestamp.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "blockedReason"
+          ]
+        }
+      }
+    }
+  ]
+}

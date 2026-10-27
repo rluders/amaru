@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/WorkItemStatus.json",
+  "title": "WorkItemStatus",
+  "enum": [
+    "todo",
+    "in_progress",
+    "blocked",
+    "done"
+  ]
+}

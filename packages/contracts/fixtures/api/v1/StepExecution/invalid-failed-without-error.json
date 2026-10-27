@@ -1,0 +1,9 @@
+{
+  "stepId": "implement",
+  "name": "Implement",
+  "type": "agent",
+  "executable": true,
+  "state": "failed",
+  "startedAt": "2026-10-26T09:00:00Z",
+  "endedAt": "2026-10-26T09:30:00Z"
+}

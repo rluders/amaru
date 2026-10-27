@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/UpdateTeam.json",
+  "title": "UpdateTeam",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "members": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "TeamMember.json"
+      }
+    },
+    "separationOfDuties": {
+      "type": "boolean"
+    }
+  }
+}

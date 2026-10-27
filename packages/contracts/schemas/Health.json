@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Health.json",
+  "title": "Health",
+  "type": "object",
+  "required": [
+    "status",
+    "platformVersion",
+    "protocolVersion",
+    "startedAt",
+    "uptimeSec"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "const": "ok"
+    },
+    "platformVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "protocolVersion": {
+      "$ref": "ProtocolVersion.json"
+    },
+    "startedAt": {
+      "$ref": "Timestamp.json"
+    },
+    "uptimeSec": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/events/ExecutionFailed.json",
+  "title": "ExecutionFailed",
+  "allOf": [
+    {
+      "$ref": "EventBase.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "type": {
+          "const": "execution.failed"
+        },
+        "data": {
+          "type": "object",
+          "required": [
+            "state",
+            "error"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "const": "failed"
+            },
+            "error": {
+              "type": "object",
+              "required": [
+                "code",
+                "message"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

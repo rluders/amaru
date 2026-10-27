@@ -1,0 +1,28 @@
+{
+  "type": "describe",
+  "id": "hello",
+  "name": "Hello",
+  "version": "0.1.0",
+  "capabilities": [
+    {
+      "id": "mesh.from_text",
+      "title": "T",
+      "inputs": [
+        {
+          "name": "prompt",
+          "kind": "text",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "kind": "file",
+          "mediaTypes": [
+            "model/gltf+json"
+          ]
+        }
+      ]
+    }
+  ]
+}

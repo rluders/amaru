@@ -1,0 +1,6 @@
+{
+  "id": "hello",
+  "name": "x",
+  "protocol": "amaru.provider/v1",
+  "command": "./hello --x"
+}

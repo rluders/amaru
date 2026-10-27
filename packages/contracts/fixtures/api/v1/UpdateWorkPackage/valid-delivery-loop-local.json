@@ -1,0 +1,35 @@
+{
+  "deliveryLoop": {
+    "enabled": true,
+    "maxAttempts": 2,
+    "reviewWorkflowId": "WF-002",
+    "repository": "httpsuite",
+    "commitInclude": [
+      ".scratch/keep/"
+    ],
+    "localChecks": {
+      "checks": [
+        {
+          "name": "go-test",
+          "command": [
+            "go",
+            "test",
+            "-count=1",
+            "./..."
+          ],
+          "dir": "runtime",
+          "timeoutSec": 900
+        },
+        {
+          "name": "vet",
+          "command": [
+            "go",
+            "vet",
+            "./..."
+          ]
+        }
+      ],
+      "maxRuns": 2
+    }
+  }
+}

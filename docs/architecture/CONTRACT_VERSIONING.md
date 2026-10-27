@@ -1,6 +1,6 @@
 # Contract versioning rules
 
-**Status: Proposed.** Design for WP-M1-03 ([#4](https://github.com/rluders/amaru/issues/4)). Nothing here is implemented: no `packages/contracts` directory, generator, `buf` configuration or fixture exists yet ([repository layout](../engineering/repository-layout.md)). This document applies [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md) (accepted) and does not change it. Every code block is an illustrative draft, not a file in the repository.
+**Status: Proposed; partly applied in [`packages/contracts`](../../packages/contracts/README.md) (WP-M2-01, #68).** Applied there: the `buf` configuration with `FILE` breaking rules and `STANDARD` lint, the `buf breaking` baseline (a committed Buf image, section 2), and the `/v1` URL major. Applied by API-002 (#117): the shared fixture corpus with a manifest, validated in Go and TypeScript with a parity check (section 1, as built). Still not implemented: replay of *released* fixtures (there is no release yet), deprecation headers, TypeScript generation (WP-M2-02). Design for WP-M1-03 ([#4](https://github.com/rluders/amaru/issues/4)); the changelog, deprecation headers and generator sections below are still proposals. This document applies [ADR-0025](adr/0025-api-and-protocol-versioning-policy.md) (accepted) and does not change it. Every code block is an illustrative draft, not a file in the repository.
 
 ## Scope
 In: how ADR-0025 is made checkable through shared fixtures, `buf breaking`, deprecation headers, version numbers and TypeScript generation. Out: implementing any of it (M2, [WP-M2-01](WORK_PACKAGES.md#wp-m2-01-contracts-package-from-the-prototype-protocol) [#9](https://github.com/rluders/amaru/issues/9), [WP-M2-02](WORK_PACKAGES.md#wp-m2-02-generated-typescript-sdk) [#10](https://github.com/rluders/amaru/issues/10), [WP-M2-03](WORK_PACKAGES.md#wp-m2-03-contract-drift-guard) [#11](https://github.com/rluders/amaru/issues/11)); changing the ADR-0025 rules; the release process.
@@ -11,7 +11,7 @@ In: how ADR-0025 is made checkable through shared fixtures, `buf breaking`, depr
 - Deprecations use `Deprecation` and `Sunset` headers plus the changelog.
 
 ## 1. Fixture conventions for additive changes
-Fixtures are shared by all consumers (Go and TypeScript) ([ADR-0004](adr/0004-shared-versioned-contracts.md)). Proposed layout and rules, to be created with the package at M2:
+Fixtures are shared by all consumers (Go and TypeScript) ([ADR-0004](adr/0004-shared-versioned-contracts.md)). Rules (as built by API-002, with the layout differences listed under the table):
 
 | Rule | Why |
 |---|---|
@@ -24,6 +24,12 @@ Fixtures are shared by all consumers (Go and TypeScript) ([ADR-0004](adr/0004-sh
 | Fixtures contain no secrets or real tokens. | AGENTS rule 7. |
 
 Additive change checklist for a PR: new fixture added; old fixtures untouched; replay passes in Go and TypeScript; changelog entry written.
+
+**As built ([`packages/contracts/fixtures`](../../packages/contracts/README.md#fixtures)).** Directories are `fixtures/<group>/v1/<Type>/<name>.json` with `group` one of `api`, `events`, `provider-protocol`, `worker`, plus `fixtures/manifest.json`. Differences from the proposal above, and why:
+- `valid/`, `invalid/` and `forward/` are not directories. Each manifest entry has a `kind` (`valid`, `invalid`, `forward-compat`, `malformed`) and an `expect`; one directory per type keeps a type's valid and invalid cases together, and the manifest can carry what a directory cannot (the schema to validate against, the stable error id, a note).
+- The "expected error code" is a stable error id `keyword@/instance/path`; composition failures (`allOf`, `if`/`then`, `not`, `oneOf`, `anyOf`) normalize to the keyword `condition`. Both validators must report the declared id. Worker (Protobuf JSON) fixtures use `decode@/`.
+- Nothing is released yet, so "never edited once released" and "every released fixture is replayed against the current schema" have nothing to act on. They start applying at the first contracts release, when the corpus is frozen as the baseline; until then the corpus describes the current draft of `v1`.
+- Forward-compat is covered only where the schema is open (the event envelope). Consumers ignoring unknown enum values and fields in closed objects, and Worker receivers ignoring unknown `oneof` bodies ([WORKER_PROTOCOL §8](WORKER_PROTOCOL.md#8-open-points-for-the-m2-contract-work)), are runtime behaviors that a schema validator cannot show; they need consumer tests (SDK, Platform) and are not claimed.
 
 ## 2. `buf breaking` for Protobuf packages
 Applies only to contracts that are Protobuf ([ADR-0025](adr/0025-api-and-protocol-versioning-policy.md): packages `amaru.<kind>.v<major>`). Per the buf documentation, `buf breaking` compares the current schema with a past version and reports breaking changes; its rule categories, strictest to most lenient, are `FILE`, `PACKAGE`, `WIRE_JSON` and `WIRE`, with `FILE` the default ([buf docs](https://buf.build/docs/breaking/), [rules](https://buf.build/docs/breaking/rules/), read 2026-10-26).
@@ -91,5 +97,5 @@ Evidence levels per [validation](../engineering/validation.md#evidence-levels).
 
 ## Open decisions
 - Whether `0.x` permits wire-breaking changes under `/v1` (section 4).
-- Baseline storage for `buf breaking` (section 2).
+- Baseline storage for `buf breaking` (section 2): proposed in #68 as a committed Buf image rebuilt only at a contracts release; awaiting review.
 - Whether any contract is Protobuf at M2; if not, section 2 stays dormant.

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/Checkout.json",
+  "title": "Checkout",
+  "description": "A Platform-managed Git worktree; path is project-relative.",
+  "type": "object",
+  "required": [
+    "path",
+    "branch",
+    "base"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

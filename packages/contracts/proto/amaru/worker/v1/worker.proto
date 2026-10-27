@@ -1,0 +1,305 @@
+syntax = "proto3";
+
+package amaru.worker.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+// Envelope wraps every frame (ADR-0029). Transport: WebSocket for remote
+// Workers, an in-process channel for the embedded Worker; same messages.
+message Envelope {
+  // Sender-assigned, unique per session, strictly increasing.
+  uint64 message_id = 1;
+  // Highest message_id received from the peer (application-level ack).
+  uint64 ack_id = 2;
+  oneof body {
+    Hello hello = 10;
+    Welcome welcome = 11;
+    ChallengeResponse challenge_response = 12;
+    Authenticated authenticated = 13;
+    Offer offer = 20;
+    Assignment assignment = 21;
+    AcceptAttempt accept_attempt = 22;
+    RejectAttempt reject_attempt = 23;
+    LeaseRenew lease_renew = 30;
+    LeaseRelease lease_release = 31;
+    LeaseRevoked lease_revoked = 32;
+    StepEvents step_events = 40;
+    Result result = 41;
+    ResultAck result_ack = 42;
+    Cancel cancel = 50;
+    SecretDelivery secret_delivery = 60;
+    Drain drain = 70;
+    ProtocolError error = 99;
+  }
+}
+
+// ---- Handshake and enrollment (ADR-0024) ----
+
+message Hello {
+  // Protocol versions the Worker speaks, e.g. "amaru.worker.v1".
+  repeated string protocol_versions = 1;
+  // Empty on first enrollment.
+  string worker_id = 2;
+  // One-time token; empty after enrollment.
+  string enrollment_token = 3;
+  // Ed25519 public key; sent only at enrollment.
+  bytes public_key = 4;
+  string worker_version = 5;
+  Manifest manifest = 6;
+  // Session resume: last message_id received from the Platform.
+  uint64 last_ack_id = 7;
+  // Empty for a new session.
+  string session_id = 8;
+}
+
+message Manifest {
+  string os = 1;
+  string architecture = 2;
+  repeated ToolVersion tools = 3;
+  repeated string capabilities = 4;
+  map<string, string> labels = 5;
+  uint32 slots = 6;
+  bool sandbox_supported = 7;
+}
+
+message ToolVersion {
+  string name = 1;
+  string version = 2;
+}
+
+message Welcome {
+  string selected_protocol_version = 1;
+  // Random nonce the Worker signs with its private key.
+  bytes challenge = 2;
+  string session_id = 3;
+}
+
+message ChallengeResponse {
+  // Ed25519 signature over challenge || session_id.
+  bytes signature = 1;
+}
+
+message Authenticated {
+  string worker_id = 1;
+  google.protobuf.Duration heartbeat_period = 2;
+  google.protobuf.Duration lease_period = 3;
+}
+
+// ---- Dispatch (pull-based) ----
+
+message Offer {
+  uint32 free_slots = 1;
+}
+
+message Assignment {
+  string execution_id = 1;
+  string step_id = 2;
+  // Unique per attempt; the idempotency scope for results and events.
+  string attempt_id = 3;
+  string capability = 4;
+  // Resolved inputs as canonical JSON (UTF-8).
+  bytes inputs_json = 5;
+  // Repository and commit the Worker must check out (ADR-0024).
+  Revision revision = 6;
+  google.protobuf.Timestamp deadline = 7;
+  Lease lease = 8;
+  // Platform-assigned key for side effects of idempotent Capabilities.
+  string idempotency_key = 9;
+  // Declared by the Capability catalog (ADR-0042).
+  bool capability_idempotent = 10;
+  // Grants the Worker may rely on; names only, never secret values.
+  repeated string grant_ids = 11;
+}
+
+message Revision {
+  string repository = 1;
+  string commit_sha = 2;
+  // Short-lived, repository-scoped credential, if the Platform issues one.
+  // Delivered through SecretDelivery, never inline.
+  string credential_secret_ref = 3;
+}
+
+message Lease {
+  string lease_id = 1;
+  // Fencing token: strictly increasing per Step. A result carrying a lower
+  // token than the Step's current token is rejected (ADR-0044 point 4).
+  uint64 fencing_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message AcceptAttempt {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+}
+
+message RejectAttempt {
+  string attempt_id = 1;
+  RejectReason reason = 2;
+  string detail = 3;
+}
+
+enum RejectReason {
+  REJECT_REASON_UNSPECIFIED = 0;
+  REJECT_REASON_NO_CAPACITY = 1;
+  REJECT_REASON_CAPABILITY_UNAVAILABLE = 2;
+  REJECT_REASON_REVISION_UNAVAILABLE = 3;
+  REJECT_REASON_DRAINING = 4;
+}
+
+// ---- Lease ----
+
+// Heartbeat: renews the Lease. Sent every heartbeat_period.
+message LeaseRenew {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+}
+
+message LeaseRelease {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+}
+
+// Platform to Worker: the Worker no longer holds the Lease.
+message LeaseRevoked {
+  string attempt_id = 1;
+  string reason = 2;
+}
+
+// ---- Events and result ----
+
+message StepEvents {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+  // Worker-local ordinal, used only to deduplicate; the Platform assigns the
+  // authoritative per-Execution seq.
+  repeated StepEvent events = 3;
+}
+
+message StepEvent {
+  uint64 worker_ordinal = 1;
+  string type = 2;
+  // Already redacted on the Worker before leaving it.
+  string message = 3;
+  bytes data_json = 4;
+}
+
+message Result {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+  ResultOutcome outcome = 3;
+  repeated OutputRef outputs = 4;
+  repeated UsageReport usage = 5;
+  string error_code = 6;
+  string error_detail = 7;
+}
+
+enum ResultOutcome {
+  RESULT_OUTCOME_UNSPECIFIED = 0;
+  RESULT_OUTCOME_SUCCEEDED = 1;
+  RESULT_OUTCOME_FAILED = 2;
+  RESULT_OUTCOME_CANCELLED = 3;
+}
+
+message OutputRef {
+  string role = 1;
+  // Project-relative path, or an uploaded Artifact reference.
+  string path = 2;
+  // Hash is computed again by the Platform; this value is a claim.
+  string claimed_sha256 = 3;
+  string upload_ref = 4;
+}
+
+// UsageSource is the provenance of a measurement (ADR-0033). UNKNOWN is never
+// a zero: the value is absent.
+enum UsageSource {
+  USAGE_SOURCE_UNSPECIFIED = 0;
+  USAGE_SOURCE_REPORTED = 1;
+  USAGE_SOURCE_ESTIMATED = 2;
+  USAGE_SOURCE_UNKNOWN = 3;
+}
+
+message IntMeasurement {
+  UsageSource source = 1;
+  // Absent when source is UNKNOWN.
+  optional uint64 value = 2;
+}
+
+message DoubleMeasurement {
+  UsageSource source = 1;
+  // Absent when source is UNKNOWN.
+  optional double value = 2;
+}
+
+message Cost {
+  UsageSource source = 1;
+  // Decimal string, never a float. Empty when source is UNKNOWN.
+  string amount = 2;
+  // ISO 4217 code. Empty when source is UNKNOWN.
+  string currency = 3;
+  // Set when source is ESTIMATED.
+  string price_table_version = 4;
+}
+
+// UsageReport is what a Worker reports for one attempt (ADR-0033, OBS-002).
+// The Platform adds Step Execution identity and capture time.
+message UsageReport {
+  string provider = 1;
+  string model = 2;
+  IntMeasurement input_tokens = 3;
+  IntMeasurement output_tokens = 4;
+  IntMeasurement cache_read_tokens = 5;
+  IntMeasurement cache_write_tokens = 6;
+  DoubleMeasurement credits = 7;
+  IntMeasurement wall_duration_ms = 8;
+  Cost cost = 9;
+}
+
+message ResultAck {
+  string attempt_id = 1;
+  ResultDisposition disposition = 2;
+}
+
+enum ResultDisposition {
+  RESULT_DISPOSITION_UNSPECIFIED = 0;
+  RESULT_DISPOSITION_ACCEPTED = 1;
+  // Duplicate completion for an attempt already completed: ignored.
+  RESULT_DISPOSITION_DUPLICATE = 2;
+  // Worker no longer holds the Lease; Event result.rejected_stale recorded.
+  RESULT_DISPOSITION_REJECTED_STALE = 3;
+}
+
+// ---- Control ----
+
+message Cancel {
+  string attempt_id = 1;
+  string reason = 2;
+}
+
+message SecretDelivery {
+  string attempt_id = 1;
+  uint64 fencing_token = 2;
+  // Held in memory only, scoped to this Step, wiped at Lease end.
+  repeated SecretValue secrets = 3;
+}
+
+message SecretValue {
+  // Name only appears in logs; the value never does.
+  string name = 1;
+  bytes value = 2;
+}
+
+message Drain {}
+
+message ProtocolError {
+  ErrorCode code = 1;
+  string detail = 2;
+}
+
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  ERROR_CODE_UNSUPPORTED_VERSION = 1;
+  ERROR_CODE_AUTHENTICATION_FAILED = 2;
+  ERROR_CODE_REVOKED = 3;
+  ERROR_CODE_MALFORMED = 4;
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/DeliveryLoopPolicy.json",
+  "title": "DeliveryLoopPolicy",
+  "description": "Opts a Work Package into autonomous execution.",
+  "type": "object",
+  "required": [
+    "enabled"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "maxAttempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "reviewWorkflowId": {
+      "$ref": "WorkflowId.json"
+    },
+    "repo": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Project-relative Git repository directory; empty or . = the project root."
+    },
+    "requireChecks": {
+      "type": "boolean",
+      "description": "Wait for the host's CI checks before the review; repair recoverable failures (bounded by maxRepairs)."
+    },
+    "maxRepairs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "readyForReview": {
+      "type": "boolean",
+      "description": "Open the pull request ready for review instead of as a draft (default)."
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+      "description": "Id of a repository linked in .amaru/project.yaml; exclusive with repo. Used only for a trusted project."
+    },
+    "base": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "refreshBase": {
+      "type": "boolean",
+      "description": "Merge a moved base branch into an open pull request waiting for checks or a merge, and push the merge commit. Default false."
+    },
+    "commitInclude": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "description": "Patterns of new files that look like agent scratch but are deliverables; a trailing / covers a directory. Set by a person. Without a match, such files stay out of the commit and are reported."
+    },
+    "localChecks": {
+      "$ref": "LocalChecksPolicy.json"
+    }
+  }
+}
