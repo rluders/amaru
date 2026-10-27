@@ -90,7 +90,8 @@ func TestWorkKey(t *testing.T) {
 }
 
 // workItemEdges restates DOMAIN_MODEL §5.3 independently of the transition table: todo →
-// in_progress → done, blocked reachable from todo and in_progress and back.
+// in_progress → done, blocked reachable from todo and in_progress and back, and a human reopen
+// done → in_progress.
 var workItemEdges = map[[2]WorkItemStatus]bool{
 	{WITodo, WIInProgress}:    true,
 	{WIInProgress, WIDone}:    true,
@@ -98,6 +99,7 @@ var workItemEdges = map[[2]WorkItemStatus]bool{
 	{WIInProgress, WIBlocked}: true,
 	{WIBlocked, WITodo}:       true,
 	{WIBlocked, WIInProgress}: true,
+	{WIDone, WIInProgress}:    true,
 }
 
 func TestWorkItemTransitionsMatchDomainModel(t *testing.T) {
@@ -110,7 +112,11 @@ func TestWorkItemTransitionsMatchDomainModel(t *testing.T) {
 			if from == WIBlocked {
 				w.BlockedReason = "waiting"
 			}
-			err := w.SetStatus(now, to, human, "", nil)
+			reason := ""
+			if from == WIDone {
+				reason = "regression found"
+			}
+			err := w.SetStatus(now, to, human, reason, nil)
 			if want := workItemEdges[[2]WorkItemStatus{from, to}]; want != (err == nil) {
 				t.Errorf("%s -> %s: documented=%v err=%v", from, to, want, err)
 			}
@@ -166,12 +172,64 @@ func TestBlockedReasonFollowsStatus(t *testing.T) {
 	}
 }
 
-func TestDoneIsFinal(t *testing.T) {
+// done is final for automation: only a human, with a reason, reopens an item.
+func TestOnlyAHumanWithAReasonReopensDone(t *testing.T) {
+	now := time.Date(2026, 10, 27, 9, 0, 0, 0, time.UTC)
+	for name, c := range map[string]struct {
+		by     Actor
+		reason string
+	}{
+		"loop with policy": {Actor{Kind: ActorDeliveryLoop, Authority: "pol-1"}, "why"},
+		"policy rule":      {Actor{Kind: ActorPolicy, Authority: "pol-1"}, "why"},
+		"agent":            {Actor{Kind: "agent"}, "why"},
+		"human, no reason": {Actor{Kind: ActorHuman}, "  "},
+	} {
+		w := validItem()
+		w.Status = WIDone
+		if err := w.SetStatus(now, WIInProgress, c.by, c.reason, nil); !errors.Is(err, ErrNotPermitted) || w.Status != WIDone {
+			t.Errorf("%s: want ErrNotPermitted and no change, got %v (status %s)", name, err, w.Status)
+		}
+	}
 	w := validItem()
 	w.Status = WIDone
-	for _, to := range WorkItemStatuses {
-		if w.SetStatus(time.Now(), to, Actor{Kind: ActorHuman}, "", nil) == nil {
-			t.Errorf("done -> %s allowed", to)
+	if err := w.SetStatus(now, WIInProgress, Actor{Kind: ActorHuman}, "regression found", nil); err != nil ||
+		w.Status != WIInProgress || w.BlockedReason != "" {
+		t.Fatalf("human reopen: %v %+v", err, w)
+	}
+	for _, to := range []WorkItemStatus{WITodo, WIBlocked, WIDone} {
+		w := validItem()
+		w.Status = WIDone
+		if err := w.SetStatus(now, to, Actor{Kind: ActorHuman}, "why", nil); !errors.Is(err, ErrInvalidTransition) {
+			t.Errorf("done -> %s must stay invalid: %v", to, err)
+		}
+	}
+}
+
+// DOMAIN_MODEL §5.3: planned → active → completed, cancelled from planned or active, and a
+// human reopen completed → active. cancelled is final.
+func TestWorkPackageStatusTransitions(t *testing.T) {
+	edges := map[[2]WorkPackageStatus]bool{
+		{WPPlanned, WPActive}: true, {WPPlanned, WPCancelled}: true,
+		{WPActive, WPCompleted}: true, {WPActive, WPCancelled}: true,
+		{WPCompleted, WPActive}: true,
+	}
+	now := time.Date(2026, 10, 27, 9, 0, 0, 0, time.UTC)
+	for _, from := range WorkPackageStatuses {
+		for _, to := range WorkPackageStatuses {
+			p := WorkPackage{ID: testPkgID, Title: "x", Status: from}
+			err := p.SetStatus(now, to, Actor{Kind: ActorHuman})
+			if want := edges[[2]WorkPackageStatus{from, to}]; want != (err == nil) {
+				t.Errorf("%s -> %s: documented=%v err=%v", from, to, want, err)
+			}
+			if err != nil && (!errors.Is(err, ErrInvalidTransition) || p.Status != from) {
+				t.Errorf("%s -> %s: refused move must be ErrInvalidTransition and change nothing: %v", from, to, err)
+			}
+		}
+	}
+	for _, by := range []Actor{{Kind: "agent"}, {Kind: ActorDeliveryLoop, Authority: "p"}, {Kind: ActorPolicy, Authority: "p"}, {}} {
+		p := WorkPackage{ID: testPkgID, Title: "x", Status: WPPlanned}
+		if err := p.SetStatus(now, WPActive, by); !errors.Is(err, ErrNotPermitted) || p.Status != WPPlanned {
+			t.Errorf("%q: only a human sets a package status: %v", by.Kind, err)
 		}
 	}
 }

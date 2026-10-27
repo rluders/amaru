@@ -4,7 +4,7 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**None open.** Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
+**One recorded decision, none blocking.** Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
@@ -43,6 +43,12 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 - **Evidence required:** product-owner reading of rules 2 and 12; review of the key table in [POLICY_AND_APPROVAL_SHAPES §8](POLICY_AND_APPROVAL_SHAPES.md#8-configuration).
 - **Decision:** accepted by the product owner on 2026-10-26 → [ADR-0048](adr/0048-approval-reuse-uncovered-capabilities-and-policy-defaults.md). No merge Capability in the MVP (`scm.pr.merge` reserved, default `deny`); `scm.pr.create` is `require_approval`; a Project may only add approval requirements, narrow allowlists, shorten retention and expiry, and make gates stricter. Original recommendation: no merge Capability in the MVP catalog (default `deny`, `require_approval` once added); treat opening a pull request as approvable; Project config may add approval requirements, narrow allowlists, shorten retention and expiry, and nothing else.
 - **Unblocked:** default rule set and configuration contract in WP-M2-01.
+
+### Q59. Open domain gaps left by WP-M3-01
+- **Question:** the Step, Work Item and Work Package gaps listed in [DOMAIN_MODEL §5.2–5.3](DOMAIN_MODEL.md#5-lifecycles): resume of `interrupted` and `timed_out`, reopening `done`, the `<PROJECTKEY>` format, Work Package transitions, the assignee model, cross-Project dependencies and continuous dependency checks.
+- **Decision:** decided by Claude under the product owner's delegation on 2026-10-27 ("I leave the human decisions for you"). `interrupted` and `timed_out` are resumed or abandoned by a human or a named Policy rule; `done` is reopened by a human with a reason; `<PROJECTKEY>` stays 2–10 `A–Z`/`0–9` starting with a letter; Work Package `planned → active → completed`, `cancelled` final, human-only; the owner is human and the assignee a typed `human|agent|team` reference when a feature needs it; cross-Project dependencies are rejected by the service layer; the dependency check stays start-only with a visible Event on regression (not built). Amends ADR-0042 and ADR-0044 (dated amendments).
+- **Not decided:** the dispositions of `hook`, `trust`, `grant`, `settings` and `playbook` ([ADR-0049](adr/0049-adapt-the-prototype-domain-and-ports-into-services-platform.md)); they depend on the Policy and Approval work.
+- **Unblocked:** Execution recovery and the Work store.
 
 A new question is added here with **why it matters**, **evidence required** and **what it blocks**, and is closed by an ADR.
 

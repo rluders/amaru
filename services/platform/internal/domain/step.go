@@ -19,13 +19,14 @@ const (
 	StepRunning          StepState = "running"
 	StepSucceeded        StepState = "succeeded"
 	StepFailed           StepState = "failed"
-	StepInterrupted      StepState = "interrupted" // restart or lost Lease of a non-idempotent Step (ADR-0042)
+	StepInterrupted      StepState = "interrupted" // restart or lost Lease of a non-idempotent Step (ADR-0042); a human or Policy rule resumes or cancels it
+	StepTimedOut         StepState = "timed_out"   // exceeded its declared timeout (ADR-0044); resumed or cancelled like interrupted, never retried
 	StepCancelled        StepState = "cancelled"
 )
 
 // StepStates lists every Step state, in lifecycle order.
 var StepStates = []StepState{StepPending, StepSkipped, StepRefused, StepAwaitingApproval, StepQueued,
-	StepLeased, StepRunning, StepSucceeded, StepFailed, StepInterrupted, StepCancelled}
+	StepLeased, StepRunning, StepSucceeded, StepFailed, StepTimedOut, StepInterrupted, StepCancelled}
 
 // stepTransitions is the complete set of documented transitions. Anything absent is invalid.
 var stepTransitions = map[StepState][]StepState{
@@ -33,12 +34,15 @@ var stepTransitions = map[StepState][]StepState{
 	StepAwaitingApproval: {StepQueued, StepFailed},
 	StepQueued:           {StepLeased, StepCancelled},
 	StepLeased:           {StepRunning, StepQueued},
-	StepRunning:          {StepSucceeded, StepFailed, StepQueued, StepInterrupted, StepCancelled},
+	StepRunning:          {StepSucceeded, StepFailed, StepTimedOut, StepQueued, StepInterrupted, StepCancelled},
+	StepInterrupted:      {StepQueued, StepCancelled},
+	StepTimedOut:         {StepQueued, StepCancelled},
 }
 
 func (s StepState) Valid() bool { return slices.Contains(StepStates, s) }
 
-// Terminal reports whether the state is final: no transition leaves it.
+// Terminal reports whether the state is final: no transition leaves it. interrupted and
+// timed_out are not terminal: a person (or a Policy rule naming the Step) resumes or cancels them.
 func (s StepState) Terminal() bool { return s.Valid() && len(stepTransitions[s]) == 0 }
 
 // CanTransitionTo reports whether the lifecycle documents the move s → to.
@@ -49,6 +53,8 @@ const (
 	ReasonPlatformRestarted = "platform_restarted"
 	ReasonLeaseExpired      = "lease_expired"
 	ReasonWorkerLost        = "worker_lost"
+	ReasonStepTimeout       = "step_timeout"
+	ReasonResumed           = "resumed"
 )
 
 // StepExecution is one Step of an Execution. Only its lifecycle is modelled here.
@@ -205,5 +211,42 @@ func (s *StepExecution) Recover(now time.Time, idempotent bool, reason string) e
 	if to == StepInterrupted {
 		s.EndedAt = &now
 	}
+	return nil
+}
+
+// TimeOut moves running → timed_out: the Step exceeded its declared timeout (ADR-0044). It is
+// never re-run automatically, whatever its kind, and a timeout is not a retry trigger.
+func (s *StepExecution) TimeOut(now time.Time) error {
+	if err := s.move(StepRunning, StepTimedOut); err != nil {
+		return err
+	}
+	s.Reason, s.EndedAt = ReasonStepTimeout, &now
+	return nil
+}
+
+// Resume moves interrupted or timed_out → queued so the Step is leased again (ADR-0042, ADR-0044).
+// Only a human, or a Policy rule that names the Step (ActorPolicy with its Authority), may do
+// it; anything else gets ErrNotPermitted. The caller checks that the Execution still runs the
+// same Workflow version and records an Event with the actor. Resuming spends no attempt.
+func (s *StepExecution) Resume(by Actor) error {
+	if !by.mayResume() {
+		return fmt.Errorf("%w: %q may not resume a step", ErrNotPermitted, by.Kind)
+	}
+	if s.State != StepInterrupted && s.State != StepTimedOut {
+		return fmt.Errorf("%w: step %s -> %s", ErrInvalidTransition, s.State, StepQueued)
+	}
+	s.State, s.Reason, s.EndedAt = StepQueued, ReasonResumed, nil
+	return nil
+}
+
+// Abandon moves interrupted or timed_out → cancelled: the person decided not to resume it.
+func (s *StepExecution) Abandon(now time.Time, by Actor) error {
+	if !by.mayResume() {
+		return fmt.Errorf("%w: %q may not cancel a step", ErrNotPermitted, by.Kind)
+	}
+	if s.State != StepInterrupted && s.State != StepTimedOut {
+		return fmt.Errorf("%w: step %s -> %s", ErrInvalidTransition, s.State, StepCancelled)
+	}
+	s.State, s.EndedAt = StepCancelled, &now
 	return nil
 }

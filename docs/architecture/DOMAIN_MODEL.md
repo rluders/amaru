@@ -93,8 +93,8 @@ erDiagram
 stateDiagram-v2
     [*] --> queued
     queued --> running : first step starts
-    running --> waiting : step awaits approval or worker
-    waiting --> running : approval given / worker leased
+    running --> waiting : step awaits approval, worker, or a person to resume it
+    waiting --> running : approval given / worker leased / step resumed
     running --> succeeded
     running --> failed
     waiting --> failed : approval rejected / expired
@@ -123,20 +123,25 @@ stateDiagram-v2
     running --> failed
     running --> queued : restart or lease lost, idempotent
     running --> interrupted : restart or lease lost, not idempotent
+    running --> timed_out : declared timeout exceeded
+    interrupted --> queued : resumed by a human or a named Policy rule
+    timed_out --> queued : resumed by a human or a named Policy rule
+    interrupted --> cancelled : abandoned by a human or a named Policy rule
+    timed_out --> cancelled : abandoned by a human or a named Policy rule
     leased --> queued : lease expired before start
     running --> cancelled
     queued --> cancelled
 ```
 Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsupported` plus `runtime_restarted` as an error code (`domain/step.go`). `refused`, `leased`, `awaiting_approval` and `interrupted` are **[Proposed]**; `unsupported` becomes `refused` with a reason. A Worker lost mid-Step follows the restart rule of [ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md) (`interrupted` with reason `worker_lost` unless idempotent), so there is no separate `lost` state. `awaiting_approval` is the one waiting state for both an explicit Approval Step (Step type `approval`) and a Policy-required approval before any other Step starts; nothing runs while a Step is in it.
 
-**Implementation status (2026-10-26):** the Execution and Step state machines of §5.1–5.2 are implemented and unit-tested in `services/platform/internal/domain` ([#118](https://github.com/rluders/amaru/issues/118)); only the transitions drawn above are possible. **Gaps in this section, not decided here:** (a) ADR-0042 says an `interrupted` Step is resumed by a human or a Policy rule, and ADR-0044 adds a `timed_out` ending, but neither has a transition or state in §5.2; the code treats `interrupted` as terminal until they are documented. (b) §5.1 has no edge for an Execution whose Step is `interrupted`.
+**Implementation status (2026-10-27):** the Execution and Step state machines of §5.1–5.2 are implemented and unit-tested in `services/platform/internal/domain` ([#118](https://github.com/rluders/amaru/issues/118)); only the transitions drawn above are possible. **Decided 2026-10-27 (product owner delegated the choice):** (a) `interrupted` and `timed_out` are not terminal. Only a human, or a Policy rule that names the Step, resumes (`→ queued`, reason `resumed`) or abandons (`→ cancelled`) them; nothing else can, and nothing re-runs them automatically. Neither spends an attempt (ADR-0044). The caller checks the Execution still runs the same Workflow version and records an Event with the actor. (b) An Execution with an `interrupted` or `timed_out` Step is `waiting` (§5.1), not `failed`, so it stays recoverable; abandoning the Step lets a person cancel or fail the Execution. `timed_out` is a state, as ADR-0044 §3 says; it is not a reason on `failed`. **Not built:** the Policy hook that names a Step for resume (ADR-0044 follow-up) and the timeout clock itself.
 
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 
-**Implementation status (2026-10-27):** the Work Item status machine and the rules below are implemented and unit-tested in `services/platform/internal/domain` ([#166](https://github.com/rluders/amaru/issues/166)): only a human, or the delivery loop with a Policy authority, may set a status; `done` is final; package progress is derived from the items. **Gaps, not decided here:** (a) §5.3 draws no edge out of `done`, so the code has none; whether a human may reopen an item is open. (b) The `<PROJECTKEY>` alphabet and length are not fixed; the code accepts 2–10 characters, `A–Z`/`0–9`, starting with a letter (proposed). (c) Work Package status transitions are not documented, so none are enforced.
+**Implementation status (2026-10-27):** the Work Item status machine and the rules below are implemented and unit-tested in `services/platform/internal/domain` ([#166](https://github.com/rluders/amaru/issues/166)): only a human, or the delivery loop with a Policy authority, may set a status; `done` is final; package progress is derived from the items. **Decided 2026-10-27 (product owner delegated the choice):** (a) `done` is final for automation. A human may reopen it (`done → in_progress`) and must give a reason; the delivery loop, Policy rules and Agents cannot. The domain keeps no history, so the caller records the reason in the Event it emits. (b) `<PROJECTKEY>` is 2–10 characters, `A–Z`/`0–9`, starting with a letter. (c) Work Package status: `planned → active → completed`, `cancelled` from `planned` or `active`, human reopen `completed → active`, `cancelled` final; only a human sets it, and progress stays derived from the items. (d) The Work Item owner is a human; the assignee is a typed reference (`human`, `agent` or `team`) added with the feature that needs it (§7).
 
-**Dependencies (2026-10-27, [#218](https://github.com/rluders/amaru/issues/218)):** implemented and unit-tested. An item does not start (move to `in_progress`) until every dependency is `done`; a dependency missing from the items given counts as not done. Edits that would add an unknown, duplicate, self or cyclic dependency are rejected. A block records which dependencies it waits on when the person gives no reason. **Not decided or not built:** (d) whether a dependency may be on an item of another Project is rejected by §7 but the domain cannot check it (it sees no Project); the caller must. (e) The rule is checked when an item starts, not continuously: nothing moves an item that is already `in_progress`. (f) An item waiting on dependencies stays `todo` unless a person or the delivery loop marks it `blocked`; no status is set automatically. (g) External issue dependencies wait for INT-003.
+**Dependencies (2026-10-27, [#218](https://github.com/rluders/amaru/issues/218)):** implemented and unit-tested. An item does not start (move to `in_progress`) until every dependency is `done`; a dependency missing from the items given counts as not done. Edits that would add an unknown, duplicate, self or cyclic dependency are rejected. A block records which dependencies it waits on when the person gives no reason. **Decided 2026-10-27:** the domain cannot check that a dependency stays within one Project (it sees no Project); the service layer that sees Projects rejects cross-Project edges (§7). The rule is checked when an item starts and stays start-only: nothing moves an item already `in_progress`, and a dependency that regresses later should raise a visible Event for people, not change status (not built). **Not built:** (f) An item waiting on dependencies stays `todo` unless a person or the delivery loop marks it `blocked`; no status is set automatically. (g) External issue dependencies wait for INT-003.
 
 ### 5.4 Delivery-loop phases (per Work Item)
 `waiting → implementing → validating → reviewing → awaiting_ci → awaiting_merge → done`, with `blocked`, `needs_grant` and `paused` reachable from any active phase **[Prototype `AutoloopPhase`]**. Amaru keeps the phases and moves budget rules (attempts, repairs, reviews, restart recoveries) into Policy.

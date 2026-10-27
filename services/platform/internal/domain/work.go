@@ -20,6 +20,22 @@ const (
 	WPCancelled WorkPackageStatus = "cancelled"
 )
 
+// WorkPackageStatuses lists every Work Package status, in lifecycle order.
+var WorkPackageStatuses = []WorkPackageStatus{WPPlanned, WPActive, WPCompleted, WPCancelled}
+
+// workPackageTransitions: planned → active → completed, cancelled from planned or active, and a
+// human reopen completed → active. cancelled is final. Anything absent is invalid.
+var workPackageTransitions = map[WorkPackageStatus][]WorkPackageStatus{
+	WPPlanned:   {WPActive, WPCancelled},
+	WPActive:    {WPCompleted, WPCancelled},
+	WPCompleted: {WPActive},
+}
+
+// CanTransitionTo reports whether the lifecycle documents the move s → to.
+func (s WorkPackageStatus) CanTransitionTo(to WorkPackageStatus) bool {
+	return slices.Contains(workPackageTransitions[s], to)
+}
+
 func (s WorkPackageStatus) Valid() bool {
 	switch s {
 	case WPPlanned, WPActive, WPCompleted, WPCancelled:
@@ -44,10 +60,12 @@ const (
 var WorkItemStatuses = []WorkItemStatus{WITodo, WIInProgress, WIBlocked, WIDone}
 
 // workItemTransitions is the complete set of documented moves: todo → in_progress → done, with
-// blocked reachable from todo and in_progress and back. Anything absent is invalid.
+// blocked reachable from todo and in_progress and back, and a human reopen done → in_progress.
+// Anything absent is invalid.
 var workItemTransitions = map[WorkItemStatus][]WorkItemStatus{
 	WITodo:       {WIInProgress, WIBlocked},
 	WIInProgress: {WIDone, WIBlocked},
+	WIDone:       {WIInProgress}, // reopen: human only, with a reason (see SetStatus)
 	WIBlocked:    {WITodo, WIInProgress},
 }
 
@@ -121,6 +139,19 @@ type WorkPackage struct {
 	Status    WorkPackageStatus `json:"status"`
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+// SetStatus moves the package along a documented edge. Only a human sets a package status
+// (progress is derived from the items, never stored); anyone else gets ErrNotPermitted.
+func (p *WorkPackage) SetStatus(now time.Time, to WorkPackageStatus, by Actor) error {
+	if by.Kind != ActorHuman {
+		return fmt.Errorf("%w: %q may not set a work package status", ErrNotPermitted, by.Kind)
+	}
+	if !p.Status.CanTransitionTo(to) {
+		return fmt.Errorf("%w: work package %s -> %s", ErrInvalidTransition, p.Status, to)
+	}
+	p.Status, p.UpdatedAt = to, now
+	return nil
 }
 
 // MaxDependsOn bounds a Work Item's dependency list.
@@ -228,6 +259,9 @@ const (
 	ActorHuman ActorKind = "human"
 	// ActorDeliveryLoop is the delivery loop acting under an explicit Policy decision.
 	ActorDeliveryLoop ActorKind = "delivery_loop"
+	// ActorPolicy is a Policy rule acting by name, for example one that resumes an interrupted
+	// Step. It must carry the rule in Authority. It may not set a Work Item status.
+	ActorPolicy ActorKind = "policy"
 )
 
 // Actor is the identity behind a status change. A delivery-loop actor must carry the Policy
@@ -236,6 +270,12 @@ const (
 type Actor struct {
 	Kind      ActorKind
 	Authority string
+}
+
+// mayResume reports whether the actor may resume or cancel an interrupted or timed-out Step:
+// a human, or a Policy rule that names the Step.
+func (a Actor) mayResume() bool {
+	return a.Kind == ActorHuman || (a.Kind == ActorPolicy && a.Authority != "")
 }
 
 func (a Actor) permitted() bool {
@@ -250,7 +290,9 @@ func (a Actor) permitted() bool {
 
 // SetStatus moves the item along a documented edge. Only a human, or the delivery loop with a
 // Policy authority, may do it; an Agent, a Step or an unknown actor gets ErrNotPermitted. A
-// move into blocked records reason; any other move clears it.
+// move into blocked records reason; any other move clears it. Reopening a done item (done →
+// in_progress) is for a human only and requires a reason; the domain keeps no history, so the
+// caller records the reason in the Event it emits.
 //
 // items are the Work Items of the Project, including w's dependencies. Starting (a move into
 // in_progress) is refused with ErrDependenciesNotDone, naming them, while a dependency is not
@@ -262,6 +304,9 @@ func (w *WorkItem) SetStatus(now time.Time, to WorkItemStatus, by Actor, reason 
 	}
 	if !w.Status.CanTransitionTo(to) {
 		return fmt.Errorf("%w: work item %s -> %s", ErrInvalidTransition, w.Status, to)
+	}
+	if w.Status == WIDone && (by.Kind != ActorHuman || strings.TrimSpace(reason) == "") {
+		return fmt.Errorf("%w: only a human may reopen a done work item, with a reason", ErrNotPermitted)
 	}
 	unmet := w.UnmetDependencies(items)
 	switch {

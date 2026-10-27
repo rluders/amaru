@@ -19,6 +19,11 @@ var documentedStep = map[[2]StepState]bool{
 	{StepRunning, StepFailed}:           true,
 	{StepRunning, StepQueued}:           true,
 	{StepRunning, StepInterrupted}:      true,
+	{StepRunning, StepTimedOut}:         true,
+	{StepInterrupted, StepQueued}:       true,
+	{StepInterrupted, StepCancelled}:    true,
+	{StepTimedOut, StepQueued}:          true,
+	{StepTimedOut, StepCancelled}:       true,
 	{StepLeased, StepQueued}:            true,
 	{StepRunning, StepCancelled}:        true,
 	{StepQueued, StepCancelled}:         true,
@@ -32,12 +37,12 @@ func TestStepOnlyDocumentedTransitions(t *testing.T) {
 			}
 		}
 	}
-	for _, s := range []StepState{StepSkipped, StepRefused, StepSucceeded, StepFailed, StepInterrupted, StepCancelled} {
+	for _, s := range []StepState{StepSkipped, StepRefused, StepSucceeded, StepFailed, StepCancelled} {
 		if !s.Terminal() {
 			t.Errorf("%s must be terminal", s)
 		}
 	}
-	for _, s := range []StepState{StepPending, StepAwaitingApproval, StepQueued, StepLeased, StepRunning} {
+	for _, s := range []StepState{StepPending, StepAwaitingApproval, StepQueued, StepLeased, StepRunning, StepInterrupted, StepTimedOut} {
 		if s.Terminal() {
 			t.Errorf("%s must not be terminal", s)
 		}
@@ -62,6 +67,7 @@ func TestStepMethodsRejectEveryOtherState(t *testing.T) {
 		"Cancel":          {StepQueued, func(s *StepExecution) error { return s.Cancel(t0) }},
 		"Finish":          {StepRunning, func(s *StepExecution) error { return s.Finish(t0, StepFailed, boom) }},
 		"RecoverIdem":     {StepRunning, func(s *StepExecution) error { return s.Recover(t0, true, ReasonLeaseExpired) }},
+		"TimeOut":         {StepRunning, func(s *StepExecution) error { return s.TimeOut(t0) }},
 		"RecoverNonIdem":  {StepRunning, func(s *StepExecution) error { return s.Recover(t0, false, ReasonPlatformRestarted) }},
 	}
 	for name, m := range methods {
@@ -127,6 +133,9 @@ func TestStepRestartRule(t *testing.T) {
 	if err := non.Lease(); !errors.Is(err, ErrInvalidTransition) {
 		t.Fatal("an interrupted Step must not be re-run automatically")
 	}
+	if err := non.Resume(Actor{Kind: ActorHuman}); err != nil || non.State != StepQueued || non.EndedAt != nil {
+		t.Fatalf("a human resumes it: %v %+v", err, non)
+	}
 	// ADR-0044 rule 1: leased but never started is re-leased regardless of idempotency.
 	l := StepExecution{State: StepLeased}
 	if err := l.ExpireLease(); err != nil || l.State != StepQueued {
@@ -149,5 +158,59 @@ func TestStepHappyPathWithApproval(t *testing.T) {
 	}
 	if s.State != StepSucceeded || s.StartedAt == nil || s.EndedAt == nil {
 		t.Fatalf("%+v", s)
+	}
+}
+
+// ADR-0042/0044: interrupted and timed_out wait for a human or a named Policy rule; they are
+// never re-run automatically.
+func TestStepResumeAndAbandon(t *testing.T) {
+	human := Actor{Kind: ActorHuman}
+	policy := Actor{Kind: ActorPolicy, Authority: "rule-resume-build"}
+	for _, from := range []StepState{StepInterrupted, StepTimedOut} {
+		for name, by := range map[string]Actor{"human": human, "policy": policy} {
+			s := StepExecution{State: from, Reason: "x", EndedAt: &t0}
+			if err := s.Resume(by); err != nil || s.State != StepQueued || s.Reason != ReasonResumed || s.EndedAt != nil {
+				t.Errorf("%s resume %s: %v %+v", name, from, err, s)
+			}
+			a := StepExecution{State: from}
+			if err := a.Abandon(t0, by); err != nil || a.State != StepCancelled || a.EndedAt == nil {
+				t.Errorf("%s abandon %s: %v %+v", name, from, err, a)
+			}
+		}
+		for name, by := range map[string]Actor{
+			"agent": {Kind: "agent"}, "step": {Kind: "step"}, "zero": {},
+			"loop":           {Kind: ActorDeliveryLoop, Authority: "p"},
+			"policy no rule": {Kind: ActorPolicy},
+		} {
+			s := StepExecution{State: from}
+			if err := s.Resume(by); !errors.Is(err, ErrNotPermitted) || s.State != from {
+				t.Errorf("%s must not resume %s: %v", name, from, err)
+			}
+			if err := s.Abandon(t0, by); !errors.Is(err, ErrNotPermitted) || s.State != from {
+				t.Errorf("%s must not abandon %s: %v", name, from, err)
+			}
+		}
+	}
+	for _, state := range StepStates {
+		if state == StepInterrupted || state == StepTimedOut {
+			continue
+		}
+		s := StepExecution{State: state}
+		if err := s.Resume(human); !errors.Is(err, ErrInvalidTransition) || s.State != state {
+			t.Errorf("Resume from %s: %v", state, err)
+		}
+		if err := s.Abandon(t0, human); !errors.Is(err, ErrInvalidTransition) || s.State != state {
+			t.Errorf("Abandon from %s: %v", state, err)
+		}
+	}
+}
+
+func TestStepTimeOut(t *testing.T) {
+	s := StepExecution{State: StepRunning}
+	if err := s.TimeOut(t0); err != nil || s.State != StepTimedOut || s.Reason != ReasonStepTimeout || s.EndedAt == nil {
+		t.Fatalf("timeout: %v %+v", err, s)
+	}
+	if err := s.Lease(); !errors.Is(err, ErrInvalidTransition) {
+		t.Fatal("a timed-out Step must not be re-run automatically")
 	}
 }
