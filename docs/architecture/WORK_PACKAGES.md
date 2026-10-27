@@ -216,6 +216,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M3-03; migration ADRs per provider.
 - **Done when:** captured-output tests pass and a recorded real run is made per agent provider.
 - **Validation:** tests and recorded runs.
+- **Contract follow-up (from the M2 exit, [record](investigations/2026-10-27-m2-contracts-v0-exit.md)):** the prototype's Skill listing and trust routes and its provider secret routes are not in the `/v1` contract. This Work Package (Skills) and the Work Package for POL-007 (secrets) add the OpenAPI operations and fixtures they need, in the same change as the implementation.
 
 ### WP-M3-06 Public API, events and local authentication
 - **Issue:** [#18](https://github.com/rluders/amaru/issues/18)
@@ -228,7 +229,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Structured logs.
 - **Features:** EXE-004, WRK-003, API-005, IAM-001, OBS-001, PRJ-001, PRJ-002.
 - **Depends on:** WP-M3-03.
-- **Done when:** contract tests pass against the running server, and security tests for Origin, Host and CSRF pass.
+- **Done when:** contract tests pass against the running server, the drift guard (`routeguard`) passes against the server's real route registrations, and security tests for Origin, Host and CSRF pass.
 - **Validation:** tests.
 
 ### WP-M3-07 Worktrees, configuration scopes, evidence
