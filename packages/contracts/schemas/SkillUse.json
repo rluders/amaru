@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/SkillUse.json",
+  "title": "SkillUse",
+  "description": "Audit record of one Skill injected into a Step's context.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "hash"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "$ref": "AgentId.json"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the Skill body."
+    }
+  }
+}

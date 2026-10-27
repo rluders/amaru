@@ -60,6 +60,26 @@ type StepExecution struct {
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	EndedAt     *time.Time `json:"endedAt,omitempty"`
 	Error       *ExecError `json:"error,omitempty"`
+	// Agent is the snapshot of the Agent (and its Skills) an agent Step runs with. Nil for other
+	// Steps. Set once, while the Step is pending, and never changed: a later edit of the Agent
+	// definition does not rewrite what this Step used.
+	Agent *ResolvedAgent `json:"agent,omitempty"`
+}
+
+// BindAgent records the Agent snapshot of a pending Step. A second bind is refused, so the
+// snapshot cannot drift from what the Step ran with.
+func (s *StepExecution) BindAgent(a ResolvedAgent) error {
+	switch {
+	case s.State != StepPending:
+		return fmt.Errorf("%w: agent is bound while pending, step is %s", ErrInvalidTransition, s.State)
+	case s.Agent != nil:
+		return fmt.Errorf("%w: step already has an agent snapshot", ErrConflict)
+	}
+	a.ProviderPreference = append([]string{}, a.ProviderPreference...)
+	a.Skills = append([]SkillUse(nil), a.Skills...)
+	a.WorktreeCommands = append([]string(nil), a.WorktreeCommands...)
+	s.Agent = &a
+	return nil
 }
 
 // move changes state only from the one state the calling method is defined for, and only along

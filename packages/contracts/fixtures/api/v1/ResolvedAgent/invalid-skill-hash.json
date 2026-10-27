@@ -1,0 +1,19 @@
+{
+  "id": "reviewer",
+  "name": "Reviewer",
+  "instructions": "Review the change.",
+  "providerPreference": [
+    "claude"
+  ],
+  "providerId": "claude",
+  "resolution": "preference",
+  "revision": 3,
+  "hash": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+  "skills": [
+    {
+      "name": "style-guide",
+      "version": "2",
+      "hash": "short"
+    }
+  ]
+}
