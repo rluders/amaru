@@ -1,6 +1,6 @@
 ---
 title: Adapt the prototype domain, ports and architecture test into services/platform by fresh import with provenance
-status: proposed
+status: accepted
 date: 2026-10-26
 deciders: Ricardo Lüders (product owner)
 ---
@@ -59,7 +59,7 @@ deciders: Ricardo Lüders (product owner)
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 6; becomes evidence in the first implementation PRs |
 | 6 | Verified execution | **Gap, listed** | The domain is a library; the prototype exercised it only through its own tests and the Runtime, never a recorded click-through. Accepting this ADR accepts that gap |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). No license file is added by this work |
-| 8 | Explicit product-owner approval | **Not met** | Pending. This ADR is `proposed` |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-26 (see Approval) |
 
 ## Consequences
 - **Easier:** a reviewed, tested pure core exists before storage (WP-M3-02) and the coordinator (WP-M3-03) depend on it; the architecture test locks the boundary from day one.
@@ -74,4 +74,4 @@ deciders: Ricardo Lüders (product owner)
 - **Move the whole `domain` package as one unit:** pulls M4 delivery-loop logic and undecided shapes into M3, contradicting the WP scope and risking pre-empting Policy/Approval decisions.
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #75, 2026-10-26). Awaiting: Ricardo Lüders (product owner). Items for the owner: confirm the Deferred and Requires-human-decision rows in item 4, and accept or reject the criterion 6 gap.
+Proposed by: Claude (migration ADR draft for #75, 2026-10-26). Approved by: Ricardo Lüders (product owner) on 2026-10-26, in the WP-M3-01 session after reviewing the draft ("Approved"). The Deferred and Requires-human-decision rows of item 4 were reviewed as drafted and stay unmoved; the criterion 6 gap is accepted with the ADR.
