@@ -6,15 +6,15 @@
   "projectId": "prj_01",
   "executionId": "exe_07",
   "data": {
-    "packageId": "WP-001",
+    "packageId": "01K20000000000000000000001",
     "decision": {
       "at": "2026-10-05T12:00:00Z",
       "triggerSeq": 39,
       "triggerType": "execution.completed",
       "source": "event",
-      "workItemId": "WI-002",
+      "workItemId": "01K10000000000000000000002",
       "action": "run_workflow",
-      "reason": "dependencies done: WI-001",
+      "reason": "dependencies done: 01K10000000000000000000001",
       "executionId": "exe_07"
     }
   },

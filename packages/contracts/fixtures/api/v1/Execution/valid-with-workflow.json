@@ -6,7 +6,7 @@
   "state": "queued",
   "createdAt": "2026-10-01T12:00:00Z",
   "workflowId": "WF-001",
-  "workItemId": "WI-001",
+  "workItemId": "01K10000000000000000000001",
   "input": {
     "prompt": "Workflow: x"
   }

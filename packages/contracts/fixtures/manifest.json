@@ -476,7 +476,7 @@
       "schema": "DeliveryLoopLedger.json",
       "kind": "invalid",
       "expect": "invalid",
-      "error": "enum@/items/WI-013/base/state",
+      "error": "enum@/items/01K10000000000000000000013/base/state",
       "source": "protocol/fixtures/types/AutoloopLedger.invalid-base-state.json"
     },
     {
@@ -484,7 +484,7 @@
       "schema": "DeliveryLoopLedger.json",
       "kind": "invalid",
       "expect": "invalid",
-      "error": "enum@/items/WI-001/local/state",
+      "error": "enum@/items/01K10000000000000000000001/local/state",
       "source": "protocol/fixtures/types/AutoloopLedger.invalid-local-state.json"
     },
     {
@@ -492,7 +492,7 @@
       "schema": "DeliveryLoopLedger.json",
       "kind": "invalid",
       "expect": "invalid",
-      "error": "enum@/items/WI-001/phase",
+      "error": "enum@/items/01K10000000000000000000001/phase",
       "source": "protocol/fixtures/types/AutoloopLedger.invalid-phase.json"
     },
     {
@@ -1350,6 +1350,38 @@
       "source": "protocol/fixtures/types/WorkItem.invalid-owner-kind.json"
     },
     {
+      "file": "api/v1/WorkItem/invalid-missing-key.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/",
+      "source": "protocol/fixtures/types/WorkItem.invalid-missing-key.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-key-format.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/key",
+      "source": "protocol/fixtures/types/WorkItem.invalid-key-format.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-key-leading-zero.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/key",
+      "source": "protocol/fixtures/types/WorkItem.invalid-key-leading-zero.json"
+    },
+    {
+      "file": "api/v1/WorkItem/invalid-legacy-id.json",
+      "schema": "WorkItem.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/id",
+      "source": "protocol/fixtures/types/WorkItem.invalid-legacy-id.json"
+    },
+    {
       "file": "api/v1/WorkItem/invalid-reason-when-not-blocked.json",
       "schema": "WorkItem.json",
       "kind": "invalid",
@@ -1366,11 +1398,12 @@
       "source": "protocol/fixtures/types/WorkItem.invalid-status.json"
     },
     {
-      "file": "api/v1/WorkItem/valid-agent-owner.json",
+      "file": "api/v1/WorkItem/invalid-agent-owner.json",
       "schema": "WorkItem.json",
-      "kind": "valid",
-      "expect": "valid",
-      "source": "protocol/fixtures/types/WorkItem.valid-agent-owner.json"
+      "kind": "invalid",
+      "expect": "invalid",
+      "source": "protocol/fixtures/types/WorkItem.invalid-agent-owner.json",
+      "error": "enum@/owner/kind"
     },
     {
       "file": "api/v1/WorkItem/valid-blocked.json",

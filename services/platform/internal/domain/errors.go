@@ -28,3 +28,7 @@ var ErrConflict = errors.New("stale revision")
 
 // ErrDeleted is returned (wrapped) when a deleted definition is edited or deleted again.
 var ErrDeleted = errors.New("definition is deleted")
+
+// ErrNotPermitted is returned (wrapped) when the actor may not make the change, for example an
+// Agent or a Step setting a Work Item status. Test with errors.Is.
+var ErrNotPermitted = errors.New("actor is not permitted")

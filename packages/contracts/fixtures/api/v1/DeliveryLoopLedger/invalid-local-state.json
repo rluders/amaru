@@ -1,7 +1,7 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "items": {
-    "WI-001": {
+    "01K10000000000000000000001": {
       "phase": "validating",
       "attempt": 1,
       "local": {

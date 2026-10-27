@@ -1,7 +1,7 @@
 {
-  "packageId": "WP-001",
+  "packageId": "01K20000000000000000000001",
   "items": {
-    "WI-001": {
+    "01K10000000000000000000001": {
       "phase": "done",
       "attempt": 2,
       "runs": [
@@ -30,7 +30,7 @@
         }
       ],
       "checkout": {
-        "path": ".amaru/runtime/worktrees/WI-001",
+        "path": ".amaru/runtime/worktrees/01K10000000000000000000001",
         "branch": "amaru/wi-001-run-state",
         "base": "main"
       },
@@ -49,7 +49,7 @@
       "triggerType": "work.package.changed",
       "triggerSeq": 3,
       "source": "event",
-      "workItemId": "WI-001",
+      "workItemId": "01K10000000000000000000001",
       "action": "run_workflow",
       "reason": "dependencies done: none",
       "executionId": "exe_01"

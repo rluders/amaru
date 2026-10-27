@@ -1,0 +1,13 @@
+{
+  "id": "01K10000000000000000000001",
+  "key": "proj-1",
+  "packageId": "01K20000000000000000000001",
+  "title": "Set up input mapping",
+  "intent": "Map keyboard and gamepad to move/jump.",
+  "status": "in_progress",
+  "owner": {
+    "kind": "human"
+  },
+  "createdAt": "2026-10-01T12:00:00Z",
+  "updatedAt": "2026-10-01T12:00:00Z"
+}

@@ -1,7 +1,7 @@
 {
-  "packageId": "WP-007",
+  "packageId": "01K20000000000000000000007",
   "items": {
-    "WI-013": {
+    "01K10000000000000000000013": {
       "phase": "paused",
       "attempt": 2,
       "parkedFor": "resume",
@@ -9,7 +9,7 @@
       "blockedIn": "awaiting_ci",
       "reviewedSha": "def",
       "checkout": {
-        "path": ".amaru/runtime/worktrees/WI-013",
+        "path": ".amaru/runtime/worktrees/01K10000000000000000000013",
         "branch": "amaru/wi-013-x",
         "base": "feat/example-branch"
       },
@@ -38,7 +38,7 @@
         "at": "2026-10-12T16:58:00Z"
       }
     },
-    "WI-014": {
+    "01K10000000000000000000014": {
       "phase": "blocked",
       "attempt": 1,
       "blockedIn": "awaiting_merge",
