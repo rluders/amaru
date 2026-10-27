@@ -3,7 +3,7 @@
 **Date:** 2026-10-27 · **Task:** [#12](https://github.com/rluders/amaru/issues/12), EXIT-M2 · **Source:** [ROADMAP M2](../ROADMAP.md#m2-contracts-v0) · **Tree:** `main` at `6279d07` (contains #9, #10 and #11 merged)
 
 ## Result
-**Two of four exit criteria are met; one is met only in part; one is not met as written.** Nothing here is CI evidence and nothing ran against a Platform, because none exists. Recommendation: do not close #12 until the owner decides the two open points below.
+**Two of four exit criteria are met; one is met only in part; one is not met as written.** Nothing here is CI evidence and nothing ran against a Platform, because none exists. The two open points were left to my judgment by the product owner on 2026-10-27 ("Your choice"), with the rule that `/v1` stays the route prefix until 1.0.0; the resolution is under "Decision".
 
 | # | Criterion | Result | Evidence level |
 |---|---|---|---|
@@ -52,6 +52,10 @@ Method: the prototype's `protocol/openapi.yaml` at the pinned baseline `c8a2f6e`
 - Hosted CI: none runs `make check`.
 - `buf breaking` against a released baseline: the baseline is the first commit of the Worker protocol, so no change has been compared with an earlier release.
 
-## Requires human decision
-1. **Criterion 1:** accept the drop list as "not needed for M3/M4", or add routes (Skill listing and trust, provider secrets and enable, MCP) to the contract now. If added, they are additive changes to `/v1` with fixtures.
-2. **Criterion 2:** close M2 with the guard unit-tested and record the Platform wiring as the M3 exit evidence (WP-M3-06), or keep #12 open until then.
+## Decision (2026-10-27, delegated by the product owner, not an ADR)
+The owner left both points to the agent and stated that `/v1` is the route prefix until 1.0.0. The package is `0.x` and may change incompatibly until the Local MVP release ([ROADMAP M2 risks](../ROADMAP.md#m2-contracts-v0)), so adding a route later costs a fixture and a schema, not a version.
+
+1. **Criterion 1: the drop list stands for the M2 exit; no routes are added now.** Reason: the dropped Skill-trust and provider-secret routes are not copies to restore. Provider secrets were dropped because their handling needs a security design that does not exist yet, and Skill trust must follow ADR-0037 and the Skill model that M3 adapts. Adding prototype-shaped routes now would freeze the wrong shapes. They are added to `/v1` by the Work Package that implements them: Skills and context in [WP-M3-05](../WORK_PACKAGES.md#wp-m3-05-providers-and-context-assembly), secrets in POL-007's Work Package. Each must add its OpenAPI operations and fixtures in that change; the exit of M3 should check this. MCP routes: not added; whether AGT-003 needs any is for WP-M3-05 to show against ADR-0037.
+2. **Criterion 2: M2 closes with the guard unit-tested.** The integration evidence (the guard run against the Platform's real route registrations) is an acceptance item of WP-M3-06 and part of the M3 exit, not of M2.
+
+Neither choice changes a contract file. If the owner disagrees with either, the record should be amended before #12 is closed.
