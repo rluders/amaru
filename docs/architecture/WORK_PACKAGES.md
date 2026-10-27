@@ -138,7 +138,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - The reconnect logic is reimplemented with tests, using the prototype's plugin's `connection.ts` as a behavioral reference only ([ADR-0031](adr/0031-obsidian-plugin-is-retired.md)).
   - The product owner has added the Apache-2.0 `LICENSE` to `packages/sdk` ([ADR-0026](adr/0026-fair-code-community-license-with-commercial-licensing.md)).
 - **Validation:** unit tests.
-- **Status (2026-10-26):** in progress. `packages/sdk` has the generated types (`openapi-typescript`), the typed client (`openapi-fetch`), the event-stream client with cursor resume and reconnect, and a staleness check in `make check` (`make sdk-ts`); unit-tested with fakes only. The product owner's `LICENSE` for the package is not done.
+- **Status (2026-10-26):** in progress. `packages/sdk` has the generated types (`openapi-typescript`), the typed client (`openapi-fetch`), the event-stream client with cursor resume and reconnect, and a staleness check in `make check` (`make sdk-ts`); unit-tested with fakes only. `packages/sdk/LICENSE` (Apache-2.0) was added on 2026-10-26 at the product owner's instruction.
 
 ### WP-M2-03 Contract drift guard
 - **Issue:** [#11](https://github.com/rluders/amaru/issues/11)

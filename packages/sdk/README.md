@@ -2,7 +2,7 @@
 
 **Status: proposed, 0.x, private (not published).** Nothing serves the API yet: there is no Platform in the repository. What exists and is checked here is the generated types, a typed HTTP client and an event-stream client, tested against fakes (WP-M2-02, [#10](https://github.com/rluders/amaru/issues/10), FEAT-API-003).
 
-**License:** this package has no `LICENSE` file yet. The Apache-2.0 `LICENSE` for the SDK is added by the product owner ([ADR-0026](../../docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md); agents never add license text). Until then `package.json` stays `private`.
+**License:** Apache-2.0 for SDK packages is decided in [ADR-0026](../../docs/architecture/adr/0026-fair-code-community-license-with-commercial-licensing.md). The package [`LICENSE`](LICENSE) is a byte-identical copy of the unmodified Apache License 2.0 text already in [`packages/contracts/LICENSE`](../contracts/LICENSE) (from <https://www.apache.org/licenses/LICENSE-2.0.txt>), added at the product owner's explicit instruction on 2026-10-26. `package.json` stays `private` because nothing is published yet.
 
 ## Layout
 
