@@ -66,10 +66,33 @@ type StepExecution struct {
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	EndedAt     *time.Time `json:"endedAt,omitempty"`
 	Error       *ExecError `json:"error,omitempty"`
+	// Version is the optimistic-concurrency counter of the stored row. The store sets it; a
+	// change is accepted only against the version it was read at.
+	Version int64 `json:"version"`
+	// Idempotent is the Capability's declaration, copied when the Step is planned: its side
+	// effects are guarded by idempotency keys, so a restart may re-run it on a new Lease (ADR-0042 rule 3).
+	Idempotent bool `json:"idempotent,omitempty"`
+	// RemoteJob is the remote job a Worker recorded for this Step, if any (ADR-0042 rule 2).
+	RemoteJob *RemoteJob `json:"remoteJob,omitempty"`
+	// CurrentLease is the Lease held while the Step is leased or running; nil otherwise.
+	CurrentLease *LeaseInfo `json:"lease,omitempty"`
 	// Agent is the snapshot of the Agent (and its Skills) an agent Step runs with. Nil for other
 	// Steps. Set once, while the Step is pending, and never changed: a later edit of the Agent
 	// definition does not rewrite what this Step used.
 	Agent *ResolvedAgent `json:"agent,omitempty"`
+}
+
+// RemoteJob identifies a job running outside the Platform. Resumable is the Provider's
+// declaration that a new Lease can re-attach to it.
+type RemoteJob struct {
+	ID        string `json:"id"`
+	Resumable bool   `json:"resumable"`
+}
+
+// LeaseInfo records who holds a Step and until when. A Lease nobody renews expires.
+type LeaseInfo struct {
+	Owner     string    `json:"owner"`
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 // BindAgent records the Agent snapshot of a pending Step. A second bind is refused, so the
@@ -140,12 +163,27 @@ func (s *StepExecution) Reject(now time.Time, err *ExecError) error {
 	return s.fail(now, StepAwaitingApproval, err)
 }
 
-// Lease moves queued → leased when a Worker accepts the Step.
-func (s *StepExecution) Lease() error { return s.move(StepQueued, StepLeased) }
+// Lease moves queued → leased when a Worker accepts the Step until expiresAt.
+func (s *StepExecution) Lease(owner string, expiresAt time.Time) error {
+	if owner == "" {
+		return fmt.Errorf("%w: a lease needs an owner", ErrInvalid)
+	}
+	if err := s.move(StepQueued, StepLeased); err != nil {
+		return err
+	}
+	s.CurrentLease = &LeaseInfo{Owner: owner, ExpiresAt: expiresAt}
+	return nil
+}
 
 // ExpireLease moves leased → queued: the Lease ended before the Step started, so nothing ran
 // and it is re-leased whatever its idempotency (ADR-0044).
-func (s *StepExecution) ExpireLease() error { return s.move(StepLeased, StepQueued) }
+func (s *StepExecution) ExpireLease() error {
+	if err := s.move(StepLeased, StepQueued); err != nil {
+		return err
+	}
+	s.CurrentLease, s.Reason = nil, ReasonLeaseExpired
+	return nil
+}
 
 // Start moves leased → running.
 func (s *StepExecution) Start(now time.Time) error {
@@ -174,7 +212,7 @@ func (s *StepExecution) Finish(now time.Time, to StepState, err *ExecError) erro
 		if mv := s.move(StepRunning, to); mv != nil {
 			return mv
 		}
-		s.EndedAt = &now
+		s.EndedAt, s.CurrentLease = &now, nil
 		return nil
 	}
 	return fmt.Errorf("%w: step %s -> %s", ErrInvalidTransition, s.State, to)
@@ -187,7 +225,7 @@ func (s *StepExecution) fail(now time.Time, from StepState, err *ExecError) erro
 	if err == nil {
 		return ErrErrorRequired
 	}
-	s.State, s.Error, s.EndedAt = StepFailed, err, &now
+	s.State, s.Error, s.EndedAt, s.CurrentLease = StepFailed, err, &now, nil
 	return nil
 }
 
@@ -207,11 +245,54 @@ func (s *StepExecution) Recover(now time.Time, idempotent bool, reason string) e
 	if reason == "" {
 		return ErrReasonRequired
 	}
-	s.State, s.Reason = to, reason
+	s.State, s.Reason, s.CurrentLease = to, reason, nil
 	if to == StepInterrupted {
 		s.EndedAt = &now
 	}
 	return nil
+}
+
+// RestartAction is what Reconcile did to a Step.
+type RestartAction string
+
+const (
+	RestartKept        RestartAction = "kept"        // nothing ran or a person must act: the Step keeps waiting (rule 1)
+	RestartResumed     RestartAction = "resumed"     // queued again to re-attach to its resumable remote job (rule 2)
+	RestartRetried     RestartAction = "retried"     // queued again to run on a new Lease (rule 3, and a Lease that ended before the Step started)
+	RestartInterrupted RestartAction = "interrupted" // ended interrupted, never re-run automatically (rule 4)
+)
+
+// Reconcile applies the restart rule of ADR-0042 to one non-terminal Step when the Platform starts
+// or a Worker is lost. reason is recorded on a running Step that is recovered (ReasonPlatformRestarted
+// or ReasonWorkerLost). It never runs a Step: it only decides where the Step waits.
+//
+//	pending, awaiting_approval, queued, interrupted, timed_out   kept (nothing ran, or a person decides)
+//	leased, Lease still valid at now                             kept
+//	leased, Lease ended                                          retried (nothing ran, so any Step)
+//	running, resumable remote job recorded                       resumed (remote job kept)
+//	running, idempotent                                          retried
+//	running, anything else                                       interrupted
+//
+// Terminal Steps return ErrInvalidTransition.
+func (s *StepExecution) Reconcile(now time.Time, reason string) (RestartAction, error) {
+	switch s.State {
+	case StepPending, StepAwaitingApproval, StepQueued, StepInterrupted, StepTimedOut:
+		return RestartKept, nil
+	case StepLeased:
+		if s.CurrentLease != nil && s.CurrentLease.ExpiresAt.After(now) {
+			return RestartKept, nil
+		}
+		return RestartRetried, s.ExpireLease()
+	case StepRunning:
+		switch {
+		case s.RemoteJob != nil && s.RemoteJob.Resumable:
+			return RestartResumed, s.Recover(now, true, reason)
+		case s.Idempotent:
+			return RestartRetried, s.Recover(now, true, reason)
+		}
+		return RestartInterrupted, s.Recover(now, false, reason)
+	}
+	return "", fmt.Errorf("%w: step %s is terminal", ErrInvalidTransition, s.State)
 }
 
 // TimeOut moves running → timed_out: the Step exceeded its declared timeout (ADR-0044). It is
@@ -220,7 +301,7 @@ func (s *StepExecution) TimeOut(now time.Time) error {
 	if err := s.move(StepRunning, StepTimedOut); err != nil {
 		return err
 	}
-	s.Reason, s.EndedAt = ReasonStepTimeout, &now
+	s.Reason, s.EndedAt, s.CurrentLease = ReasonStepTimeout, &now, nil
 	return nil
 }
 

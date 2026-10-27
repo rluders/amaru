@@ -10,3 +10,7 @@ import (
 func TestProjectStoreConformance(t *testing.T) {
 	porttest.ProjectStore(t, func(*testing.T) ports.ProjectStore { return NewProjectStore() })
 }
+
+func TestExecutionStoreConformance(t *testing.T) {
+	porttest.ExecutionStore(t, func(*testing.T) ports.ExecutionStore { return NewExecutionStore() }, nil)
+}

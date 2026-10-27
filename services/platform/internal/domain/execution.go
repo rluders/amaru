@@ -38,7 +38,9 @@ func (s ExecState) CanTransitionTo(to ExecState) bool { return slices.Contains(e
 
 // Execution is one run of a Workflow. Only its lifecycle is modelled here.
 type Execution struct {
-	ID        string     `json:"id"`
+	ID string `json:"id"`
+	// Version is the optimistic-concurrency counter of the stored row, set by the store.
+	Version   int64      `json:"version"`
 	State     ExecState  `json:"state"`
 	CreatedAt time.Time  `json:"createdAt"`
 	StartedAt *time.Time `json:"startedAt,omitempty"`

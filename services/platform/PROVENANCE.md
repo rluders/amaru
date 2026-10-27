@@ -41,3 +41,7 @@ Fresh import with provenance ([ADR-0049](../../docs/architecture/adr/0049-adapt-
 - `team.go`, `project.go`, `workflow.go`, `workflow_template.go`, `provider.go`, `artifact.go`, `output.go`, `event.go`: Adapt per ADR-0049, no WP-M3-01 feature covers them. They move with the feature that needs them (Workflows, Providers, change events: WRK-003).
 - `hook.go`, `trust.go`, `grant.go`, `settings.go`, `playbook.go`: requires a human decision (ADR-0049 item 4); unmoved.
 - `autoloop.go`, `intake.go`, `localcheck.go`, `commit.go`: deferred to M4 (ADR-0049 item 4); unmoved.
+
+## New in WP-M3-03 (written for Amaru, not transferred)
+- `ports/execution.go`, `ports/fakes/execution.go`, `store/postgres/execution.go`, migration `executions`, `internal/coordinator`: ADR-0052 (Adapt) replaces the prototype's in-memory `record`s behind one mutex with ADR-0042 durable PostgreSQL state. No prototype `internal/app` file is copied for them. The behavior they implement comes from ADR-0042/0044 and from the WP-M1-02 spike (`spikes/wp-m1-02`, Amaru's own); the prototype supplies only the `runtime_restarted` rule that ADR-0042 replaced.
+- Ported behavior is changed deliberately: a prototype restart failed every running Step; Amaru retries idempotent ones, resumes resumable ones and interrupts the rest.
