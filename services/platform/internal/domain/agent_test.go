@@ -271,17 +271,26 @@ func TestAgentContractFixturesAgree(t *testing.T) {
 		dec.DisallowUnknownFields()
 		return dec.Decode(v)
 	}
+	// The contract adds revision and hash to the stored definition; the domain keeps them in AgentVersion.
+	type wire struct {
+		Agent
+		Revision int    `json:"revision"`
+		Hash     string `json:"hash"`
+	}
 	for _, rel := range []string{"Agent/valid.json", "Agent/valid-minimal.json"} {
-		var a Agent
+		var a wire
 		if err := decode(rel, &a); err != nil {
 			t.Fatalf("%s: %v", rel, err)
+		}
+		if a.Revision < 1 || len(a.Hash) != 64 {
+			t.Errorf("%s: revision %d hash %q", rel, a.Revision, a.Hash)
 		}
 		if err := a.Validate(); err != nil {
 			t.Errorf("%s: %v", rel, err)
 		}
 	}
 	for _, rel := range []string{"Agent/invalid-id.json", "Agent/invalid-model.json", "Agent/invalid-status.json", "Agent/invalid-duplicate-preference.json"} {
-		var a Agent
+		var a wire
 		if err := decode(rel, &a); err != nil {
 			t.Fatalf("%s: %v", rel, err)
 		}
@@ -289,20 +298,24 @@ func TestAgentContractFixturesAgree(t *testing.T) {
 			t.Errorf("%s: want ErrInvalid, got %v", rel, err)
 		}
 	}
-	var list []Agent
+	var list []wire
 	if err := decode("AgentList/valid.json", &list); err != nil || len(list) == 0 {
 		t.Fatalf("AgentList/valid.json: %v (%d)", err, len(list))
 	}
-	var p AgentPatch
-	if err := decode("UpdateAgent/valid.json", &p); err != nil || p.Empty() {
-		t.Errorf("UpdateAgent/valid.json: %v empty=%v", err, p.Empty())
+	type update struct {
+		AgentPatch
+		ExpectedRevision int `json:"expectedRevision"`
 	}
-	var empty AgentPatch
+	var p update
+	if err := decode("UpdateAgent/valid.json", &p); err != nil || p.Empty() || p.ExpectedRevision != 1 {
+		t.Errorf("UpdateAgent/valid.json: %v empty=%v rev=%d", err, p.Empty(), p.ExpectedRevision)
+	}
+	var empty update
 	if err := decode("UpdateAgent/invalid-empty.json", &empty); err != nil || !empty.Empty() {
 		t.Errorf("UpdateAgent/invalid-empty.json: %v empty=%v", err, empty.Empty())
 	}
 	// The contract does not accept an id in an update; neither does the patch.
-	var withID AgentPatch
+	var withID update
 	if err := decode("UpdateAgent/invalid-id.json", &withID); err == nil {
 		t.Error("UpdateAgent/invalid-id.json decoded; the id must not be editable")
 	}

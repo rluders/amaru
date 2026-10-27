@@ -386,10 +386,11 @@ export interface paths {
         get: operations["getAgent"];
         put?: never;
         post?: never;
-        /** @description Removes `.Amaru/agents/<id>.json`. Errors - not_found, conflict (a Workflow step still refers to the Agent; disable it instead). */
+        /** @description Removes `.Amaru/agents/<id>.json`; recorded revisions are kept. Errors - not_found, conflict (a Workflow step still refers to the Agent - disable it instead - or `expectedRevision` is stale). */
         delete: operations["deleteAgent"];
         options?: never;
         head?: never;
+        /** @description The body names the `expectedRevision` the caller read. Errors - not_found, invalid_request, conflict (the Agent is at another revision, or is deleted). */
         patch: operations["updateAgent"];
         trace?: never;
     };
@@ -1629,6 +1630,10 @@ export interface components {
             status: components["schemas"]["AgentStatus"];
             createdAt: components["schemas"]["Timestamp"];
             updatedAt: components["schemas"]["Timestamp"];
+            /** @description Revision of this definition; starts at 1 and grows by one per recorded change. Deleting and recreating continue the same sequence. */
+            revision: number;
+            /** @description SHA-256 of the canonical definition without timestamps. Equal hashes mean equal definitions. */
+            hash: string;
         };
         /** AgentList */
         AgentList: components["schemas"]["Agent"][];
@@ -1655,7 +1660,7 @@ export interface components {
         };
         /**
          * UpdateAgent
-         * @description Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted).
+         * @description Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted). `expectedRevision` is required.
          */
         UpdateAgent: {
             worktreeWrite?: boolean;
@@ -1673,6 +1678,8 @@ export interface components {
             /** @description Empty string clears the model. */
             model?: string;
             status?: components["schemas"]["AgentStatus"];
+            /** @description The revision the caller read. If the Agent has moved on, the update is rejected with `conflict` (lost-update guard). */
+            expectedRevision: number;
         };
         /** TeamMember */
         TeamMember: {
@@ -2846,7 +2853,9 @@ export interface operations {
     };
     deleteAgent: {
         parameters: {
-            query?: never;
+            query: {
+                expectedRevision: number;
+            };
             header?: never;
             path: {
                 /** @description Id returned by POST /projects. */

@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://amaru.invalid/contracts/v1/schemas/UpdateAgent.json",
   "title": "UpdateAgent",
-  "description": "Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted).",
+  "description": "Fields present replace the stored value; lists replace the whole list. The id is immutable (not accepted). `expectedRevision` is required.",
   "type": "object",
-  "minProperties": 1,
+  "minProperties": 2,
   "additionalProperties": false,
   "properties": {
     "worktreeWrite": {
@@ -67,6 +67,14 @@
     },
     "status": {
       "$ref": "AgentStatus.json"
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The revision the caller read. If the Agent has moved on, the update is rejected with `conflict` (lost-update guard)."
     }
-  }
+  },
+  "required": [
+    "expectedRevision"
+  ]
 }

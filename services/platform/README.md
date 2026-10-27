@@ -10,7 +10,7 @@ Go module `github.com/rluders/amaru/services/platform`: the Platform core. Intro
 | `internal/domain` (Agents) | Agent definitions (FEAT-AGT-001, [#110](https://github.com/rluders/amaru/issues/110)): `Agent` and `AgentPatch` matching `packages/contracts`, validation, and `AgentHistory`, an append-only record of content-hashed revisions with a stale-revision (lost-update) guard; deleting appends a tombstone revision and keeps every earlier one; a deleted id can be created again as a later revision of the same history. Pure domain: no storage, so nothing is persisted yet. |
 | `internal/arch` | Architecture test: the core imports no OS, process, network, vendor or adapter package (negative-tested by adding a forbidden import). |
 
-**Open (not decided):** the Agent contract has no `revision`/`hash` and `UpdateAgent` carries no expected revision, so the lost-update guard is domain-level only. Exposing it through the API is a contract change (additive, optional fields) for the API work; until then nothing in the public API enforces it.
+**Wire shape:** the Agent contract carries `revision` and `hash` (the head's `AgentVersion`), and `UpdateAgent`/delete carry `expectedRevision`, which `AgentHistory` checks. Nothing serves the API yet.
 
 Nothing else of the Platform exists yet: no storage, API, coordinator or Worker. Approval states, Work Items and Agent snapshots arrive with the other sub-issues of #13.
 

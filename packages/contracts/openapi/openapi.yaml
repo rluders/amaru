@@ -581,6 +581,9 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateAgent
+      description: >-
+        The body names the `expectedRevision` the caller read. Errors - not_found, invalid_request, conflict (the Agent
+        is at another revision, or is deleted).
       parameters:
       - name: id
         in: path
@@ -605,14 +608,20 @@ paths:
     delete:
       operationId: deleteAgent
       description: >-
-        Removes `.Amaru/agents/<id>.json`. Errors - not_found, conflict (a Workflow step still refers to the Agent;
-        disable it instead).
+        Removes `.Amaru/agents/<id>.json`; recorded revisions are kept. Errors - not_found, conflict (a Workflow step
+        still refers to the Agent - disable it instead - or `expectedRevision` is stale).
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: string
+      - name: expectedRevision
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
       responses:
         '204':
           description: Deleted

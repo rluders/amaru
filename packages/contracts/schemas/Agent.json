@@ -12,7 +12,9 @@
     "providerPreference",
     "status",
     "createdAt",
-    "updatedAt"
+    "updatedAt",
+    "hash",
+    "revision"
   ],
   "additionalProperties": false,
   "properties": {
@@ -83,6 +85,16 @@
     },
     "updatedAt": {
       "$ref": "Timestamp.json"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Revision of this definition; starts at 1 and grows by one per recorded change. Deleting and recreating continue the same sequence."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the canonical definition without timestamps. Equal hashes mean equal definitions."
     }
   }
 }
