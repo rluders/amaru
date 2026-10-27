@@ -1,8 +1,9 @@
 ---
 title: Self-hosted ships as an OCI image with Atlas-authored migrations and operator-owned backup
-status: accepted
+status: superseded
 date: 2026-10-25
 deciders: Ricardo Lüders
+superseded-by: 0051
 ---
 
 # 0023. Self-hosted ships as an OCI image with Atlas-authored migrations and operator-owned backup

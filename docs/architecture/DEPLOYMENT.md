@@ -65,7 +65,7 @@ The Cloud runs the same Platform build with Cloud adapters. Customer-run Workers
 |---|---|---|---|---|
 | Packaging | Signed per-OS archive (zip/tar.gz), no admin rights; one binary + Web assets + pinned PostgreSQL binaries. Native installers arrive with Desktop (M8), which bundles the same binary | OCI image + reference compose (PostgreSQL, NATS, RustFS); plain binary also supported | Vendor pipeline | OPS-001, OPS-004 |
 | Upgrades | Replace binary; migrations at start; refuse downgrade | Same, plus a pre-upgrade backup check | Rolling, zero-downtime via expand/contract migrations | OPS-006 |
-| Schema migrations | Atlas-authored, embedded, applied at start; forward-only, tested on fixtures | Same | Same + expand/contract | OPS-002 |
+| Schema migrations | goose-format files, embedded, applied at start ([ADR-0051](adr/0051-migrations-run-with-goose-over-an-embedded-directory-with-a-sha256-manifest.md)); forward-only, tested on fixtures | Same | Same + expand/contract | OPS-002 |
 | Backup / restore | Copy data dir while stopped, or `amaru backup` (pg_dump + artifacts); `amaru backup` is supported for compact installs only | Operator responsibility; Amaru documents scope (DB, artifacts, KMS key, config) and a restore drill | Vendor RPO ≤ 15 min, RTO ≤ 4 h (NFR-33) | OPS-005 |
 | Configuration | File + env vars; scoped resolution ([ADR-0039](adr/0039-configuration-scopes-and-resolution-order.md)) | Same + Organization settings in DB | Same | OPS-003 |
 | Secrets | OS keychain or user-only encrypted file | Envelope-encrypted in PostgreSQL; external vault optional | KMS key per Organization | POL-007 |
