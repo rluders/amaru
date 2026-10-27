@@ -147,6 +147,7 @@ Decisions are made; these Work Packages validate them and put them into effect.
 - **Depends on:** WP-M2-01.
 - **Done when:** the test fails on a deliberately unregistered route.
 - **Validation:** the test itself.
+- **Status (2026-10-26):** done for M2. The guard is the `packages/contracts/routeguard` test utility, delivered with the OpenAPI contract in [#68](https://github.com/rluders/amaru/issues/68); `TestRegisteredButUndeclaredRouteFails` registers the prototype's undeclared `…/autoloop` route and asserts the guard reports it, and `TestDeclaredButUnregisteredRouteFails` covers the other direction (unit-tested, fake route list). It has not run against a real router, because no Platform code exists: wiring it into the Platform's tests is part of WP-M3-06 ("Drift guard").
 
 ## M3 Platform core
 
