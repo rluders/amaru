@@ -886,6 +886,11 @@ paths:
         default:
           $ref: '#/components/responses/Error'
 components:
+  schemas:
+    # Not returned by an HTTP operation: the frames of the WebSocket on `events`. Declared here so that generated
+    # clients get the frame types from the contract instead of hand-writing them.
+    StreamFrame:
+      $ref: ../schemas/events/Frame.json
   securitySchemes:
     bearer:
       type: http
@@ -908,7 +913,7 @@ components:
     Error:
       description: >-
         Error. Status mapping: invalid_request 400, unauthorized 401, forbidden_origin 403, forbidden 403, not_found
-        404, conflict 409, rate_limited 429, needs_grant 403 (the action needs a Grant7), provider_unavailable 422,
+        404, conflict 409, rate_limited 429, needs_grant 403 (the action needs a Grant), provider_unavailable 422,
         protocol_mismatch 426, internal 500.
       content:
         application/json:

@@ -60,4 +60,4 @@ Transforms applied before validating (the same rename rules as the schemas): `Au
 
 ## Added by Amaru (not migrated)
 
-Approval, Evidence, Policy request/decision, Grant and Principal shapes ([POLICY_AND_APPROVAL_SHAPES](../../docs/architecture/POLICY_AND_APPROVAL_SHAPES.md)); the Worker protocol `proto/amaru/worker/v1/worker.proto` ([WORKER_PROTOCOL](../../docs/architecture/WORKER_PROTOCOL.md), written in M1, not migrated); usage records; approval, policy, grant, usage and stale-result events; `routeguard`.
+Approval, Evidence, Policy request/decision, Grant and Principal shapes ([POLICY_AND_APPROVAL_SHAPES](../../docs/architecture/POLICY_AND_APPROVAL_SHAPES.md)); the Worker protocol `proto/amaru/worker/v1/worker.proto` ([WORKER_PROTOCOL](../../docs/architecture/WORKER_PROTOCOL.md), written in M1, not migrated); usage records; approval, policy, grant, usage and stale-result events; `routeguard`; `components.schemas.StreamFrame` in the OpenAPI document (the WebSocket frames, so generated clients take the frame types from the contract; additive, no route changes).
