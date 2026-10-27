@@ -4,10 +4,11 @@
 DOCCHECK := tools/doccheck
 SPIKE    := spikes/wp-m1-02
 CONTRACTS := packages/contracts
+SDK       := packages/sdk
 
-.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts spike-m1-02
+.PHONY: check fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts spike-m1-02
 
-check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts
+check: fmt vet test docs-check spike-vet contracts-test contracts-proto contracts-ts sdk-ts
 
 # Fails if any Go file is not gofmt-formatted.
 fmt:
@@ -47,6 +48,12 @@ contracts-ts:
 	&& CONTRACTS_OUTCOMES_OUT="$$d/go.tsv" go test -count=1 -run TestFixturesMatchTheirDeclaredOutcome ./ \
 	&& CONTRACTS_OUTCOMES_OUT="$$d/ts.tsv" pnpm run test \
 	&& diff "$$d/go.tsv" "$$d/ts.tsv" && echo "contracts parity: $$(wc -l < "$$d/go.tsv") fixtures, identical outcomes in Go and TypeScript"
+
+# TypeScript SDK: the generated types must equal a fresh generation from packages/contracts/openapi (staleness check), then
+# typecheck and unit tests (typed client against a fake fetch, event stream against fake sockets). Needs Node >= 22.18 and
+# pnpm; installs from the committed lockfile only.
+sdk-ts:
+	cd $(SDK) && pnpm install --frozen-lockfile && pnpm run check:generated && pnpm run typecheck && pnpm run test
 
 # The real experiments: needs a bundle made by `spike bundle` (network at build time). See spikes/wp-m1-02/README.md.
 spike-m1-02:
