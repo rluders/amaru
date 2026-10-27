@@ -1,8 +1,8 @@
 ---
 title: Reimplement the prototype stores as PostgreSQL adapters, with the prototype tests as specification
-status: proposed
+status: accepted
 date: 2026-10-27
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0050. Reimplement the prototype stores as PostgreSQL adapters, with the prototype tests as specification
@@ -56,7 +56,7 @@ deciders:
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 6; becomes evidence in the first implementation PRs |
 | 6 | Verified execution | **Gap, listed** | The prototype stores were exercised through their own tests and the Runtime only. Accepting this ADR accepts that gap |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). Nothing is copied, and no license file is added |
-| 8 | Explicit product-owner approval | **Not met** | Awaiting acceptance |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-27 (see Approval) |
 
 ## Consequences
 - **Easier:** no file-format debt or dual storage; one schema, one dialect, tenancy from the first migration; the prototype tests give a behavioral checklist.
@@ -71,4 +71,4 @@ deciders:
 - **Reimplement from documents only:** loses the 33 behavior tests as a checklist.
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #76, 2026-10-27). Approved by: _pending_.
+Proposed by: Claude (migration ADR draft for #76, 2026-10-27). Approved by: Ricardo Lüders (product owner) on 2026-10-27, in the WP-M3-02 session after reviewing PR #268 ("Approved, you can also merge it"). The Deferred, Reference-only and Not-moved rows of item 4 were reviewed as drafted and stay unmoved; the criterion 6 gap is accepted with the ADR. The open follow-ups (the ADR-0015 statement about prototype PostgreSQL code, and a sub-issue for the legacy importer) were not decided in the approval.
