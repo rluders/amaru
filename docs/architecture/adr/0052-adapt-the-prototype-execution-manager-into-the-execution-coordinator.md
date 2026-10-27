@@ -1,8 +1,8 @@
 ---
 title: Adapt the prototype execution manager into the Execution coordinator, on durable PostgreSQL state
-status: proposed
+status: accepted
 date: 2026-10-27
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0052. Adapt the prototype execution manager into the Execution coordinator, on durable PostgreSQL state
@@ -53,7 +53,7 @@ deciders:
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 7; becomes evidence in the first implementation PRs |
 | 6 | Verified execution | **Gap, listed** | The coordinator was exercised by its own tests and by the prototype Runtime, never by a recorded click-through. The durable design was verified by the M1 spike on its own code, not on this migration. Accepting this ADR accepts that gap |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). No license file is added by this work |
-| 8 | Explicit product-owner approval | **Not met** | Awaiting the product owner |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-27 (see Approval) |
 
 ## Consequences
 - **Easier:** the coordinator starts from a tested lifecycle (cancel races, detach, approval wake-ups, step ordering) instead of re-deriving it, and its durability comes from a design already validated by a crash-injection spike.
@@ -69,4 +69,4 @@ deciders:
 - **Adopt an external workflow engine:** rejected earlier by ADR-0014/ADR-0042; not reopened here.
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #77, 2026-10-27). Not yet approved. Acceptance needs an explicit, recorded decision by the product owner; the **Deferred** and **Requires human decision** rows of item 4 and the criterion 6 gap are the points to review.
+Proposed by: Claude (migration ADR draft for #77, 2026-10-27). Approved by: Ricardo Lüders (product owner) on 2026-10-27, in the WP-M3-03 session after reviewing PR #276 ("Approved, you can merge it."). The Deferred and Requires-human-decision rows of item 4 stay unmoved as drafted; the criterion 6 gap is accepted with the ADR.
