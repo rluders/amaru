@@ -11,7 +11,7 @@ deciders: Ricardo Lüders
 - Question: [Q3](../OPEN_QUESTIONS.md#q3-database-and-persistence-strategy). Product-owner answer: "Postgres." In this session the product owner chose a bundled PostgreSQL for compact installs over a second SQLite adapter.
 - Earlier docs required compact installs to be one process with embedded storage and no Docker (NFR-1, NFR-34). A PostgreSQL server is not embeddable in-process; the intent of NFR-34 is that the user installs and operates nothing extra.
 - Evidence:
-  - The earlier prototype already uses PostgreSQL only, with 30 migrations, and refuses SQLite outside tests.
+  - ~~The earlier prototype already uses PostgreSQL only, with 30 migrations, and refuses SQLite outside tests.~~ **Corrected 2026-10-27:** unverified. The Runtime of the earlier internal implementation at the pinned baseline `c8a2f6e` is file-based and has no PostgreSQL code ([ADR-0050](0050-reimplement-the-prototype-stores-as-postgresql-adapters.md)). The claim was not traced to any other source. It was never needed for the decision, which rests on the evidence below.
   - `fergusstrange/embedded-postgres` v2.0.1 (MIT, 2026-10-19) runs real PostgreSQL 15–18 binaries as a supervised child, with native Windows amd64 CI; by default it downloads binaries on first start (verified https://github.com/fergusstrange/embedded-postgres, 2026-10-25).
   - Row-level security ([ADR-0022](0022-cloud-tenancy-row-level-isolation-by-organization.md)), full-text search ([ADR-0030](0030-knowledge-is-lexically-indexed-project-documentation.md)) and `SKIP LOCKED` timers ([ADR-0014](0014-durable-execution-on-own-state-machine-over-postgres.md)) all need PostgreSQL features.
 
@@ -44,3 +44,5 @@ Cross-references added 2026-10-25. They leave the decision above unchanged:
 - The listener is a Unix socket on Linux/macOS and a loopback port on Windows ([Q29](../OPEN_QUESTIONS.md#q29-compact-postgresql-listener)).
 - The fallback is an installer-managed service ([Q30](../OPEN_QUESTIONS.md#q30-fallback-if-bundled-postgresql-fails)).
 - The installer budget is ≤ 120 MB (validation A15).
+
+Correction 2026-10-27 (approved by the product owner in the WP-M3-02 session): the prototype-PostgreSQL evidence bullet in Context is struck through. The Decision is unchanged.

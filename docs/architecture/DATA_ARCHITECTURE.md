@@ -25,7 +25,7 @@ Status: **accepted** (2026-10-25), not implemented. Storage decisions: [ADR-0015
     - the per-project runtime folder, with `executions/<id>/{execution.json,events.jsonl}` and the delivery-loop ledgers: gitignored operational state.
     - user state dir: credentials and grants.
   - **Gaps:** no schema migrations; work files are read only at startup.
-- **The earlier prototype** uses PostgreSQL, with 30 sequential SQL migrations applied by a custom runner (`store/migrations.go`). Artifacts are kept on the local filesystem (`ArtifactRoot`). SQLite is test-only.
+- **PostgreSQL in a predecessor: unverified.** An earlier claim that a prototype used PostgreSQL with 30 migrations, custom runner and `ArtifactRoot` could not be confirmed. The Runtime at `c8a2f6e` is file-based, with no `database/sql` or `pgx` ([ADR-0050](adr/0050-reimplement-the-prototype-stores-as-postgresql-adapters.md)). Treat it as no evidence for or against the PostgreSQL decision.
 
 ## 3. Store roles (decided)
 
