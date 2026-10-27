@@ -18,6 +18,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/porttest"
 	"github.com/rluders/amaru/services/platform/internal/store/migrations"
@@ -66,4 +67,21 @@ func migratedDB(t *testing.T) *sql.DB {
 
 func TestProjectStoreConformance(t *testing.T) {
 	porttest.ProjectStore(t, func(t *testing.T) ports.ProjectStore { return NewProjectStore(migratedDB(t)) })
+}
+
+func TestExecutionStoreConformance(t *testing.T) {
+	// reopen builds a second store over the same database: a restarted Platform sees only what was committed.
+	var db *sql.DB
+	porttest.ExecutionStore(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+// The crash-injection matrix of the coordinator against the real store: a restart is a new store
+// over the same database, so only committed rows survive.
+func TestCrashInjectionWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.CrashInjection(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
 }
