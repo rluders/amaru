@@ -18,3 +18,6 @@ type ExecError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
+
+// ErrInvalid is returned (wrapped) when a definition fails validation. Test with errors.Is.
+var ErrInvalid = errors.New("invalid definition")
