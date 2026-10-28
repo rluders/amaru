@@ -33,12 +33,27 @@ func (s *GrantStore) Create(ctx context.Context, g domain.Grant) (domain.Grant, 
 		return domain.Grant{}, fmt.Errorf("postgres: encode grant capabilities: %w", err)
 	}
 	g.Version = 1
-	_, err = s.db.ExecContext(ctx,
+	ev, err := domain.GrantAuditEvent(nil, g, time.Now().UTC())
+	if err != nil {
+		return domain.Grant{}, err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return domain.Grant{}, fmt.Errorf("postgres: create grant: %w", err)
+	}
+	defer tx.Rollback()
+	_, err = tx.ExecContext(ctx,
 		`INSERT INTO grants (`+grantColumns+`) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
 		g.ID, g.Version, string(g.Level), g.ProjectID, string(g.Subject.Kind), g.Subject.ID, caps, g.Resource.Type, g.Resource.Value,
 		g.DefinitionHash, g.GrantedBy, g.CreatedAt.UTC(), nullTime(g.ExpiresAt), string(g.Status), g.RevokedBy, nullTime(g.RevokedAt), g.RevokeReason)
 	if err != nil {
 		return domain.Grant{}, mapCreateErr(err, "grant", g.ID)
+	}
+	if err := appendAudit(ctx, tx, ev); err != nil {
+		return domain.Grant{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return domain.Grant{}, fmt.Errorf("postgres: create grant: %w", err)
 	}
 	return s.Get(ctx, g.ID)
 }
@@ -86,6 +101,15 @@ func (s *GrantStore) Update(ctx context.Context, g domain.Grant) (domain.Grant, 
 		`UPDATE grants SET version = version + 1, status = $2, revoked_by = $3, revoked_at = $4, revoke_reason = $5 WHERE id = $1`,
 		g.ID, string(g.Status), g.RevokedBy, nullTime(g.RevokedAt), g.RevokeReason); err != nil {
 		return domain.Grant{}, fmt.Errorf("postgres: update grant %s: %w", g.ID, err)
+	}
+	if g.Status != old.Status {
+		ev, err := domain.GrantAuditEvent(&old, g, time.Now().UTC())
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		if err := appendAudit(ctx, tx, ev); err != nil {
+			return domain.Grant{}, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return domain.Grant{}, fmt.Errorf("postgres: update grant: %w", err)

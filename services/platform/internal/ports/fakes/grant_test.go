@@ -10,3 +10,7 @@ import (
 func TestGrantStoreConformance(t *testing.T) {
 	porttest.GrantStore(t, func(*testing.T) ports.GrantStore { return NewGrantStore() })
 }
+
+func TestFakeAuditTrail(t *testing.T) {
+	porttest.AuditTrail(t, func(*testing.T) ports.GrantAuditStore { return NewGrantStore() })
+}

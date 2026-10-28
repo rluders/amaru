@@ -199,6 +199,42 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
+	t.Run("making and revoking a Grant are audit events with actor and reason; refused changes are not", func(t *testing.T) {
+		_, grants, c := build(t)
+		log, ok := grants.(ports.AuditLog)
+		if !ok {
+			t.Fatal("the Grant store has no audit log")
+		}
+		if _, err := c.CreateGrant(ctx, maintainer, mcpGrant("g0", "p1")); !errors.Is(err, domain.ErrNotPermitted) {
+			t.Fatalf("maintainer created a grant: %v", err)
+		}
+		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := c.RevokeGrant(ctx, admin, "g1", ""); !errors.Is(err, domain.ErrReasonRequired) {
+			t.Fatalf("revoke without a reason: %v", err)
+		}
+		if _, err := c.RevokeGrant(ctx, admin, "g1", "contract ended"); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := c.RevokeGrant(ctx, admin, "g1", "again"); !errors.Is(err, domain.ErrInvalidTransition) {
+			t.Fatalf("second revoke: %v", err)
+		}
+		evs, err := log.Audit(ctx, 0, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(evs) != 2 {
+			t.Fatalf("got %d audit events, want 2 (created, revoked): %+v", len(evs), evs)
+		}
+		if e := evs[0]; e.Kind != domain.AuditGrantCreated || e.Actor != "owner-1" || e.TargetID != "g1" || e.ProjectID != "p1" {
+			t.Fatalf("created %+v", e)
+		}
+		if e := evs[1]; e.Kind != domain.AuditGrantRevoked || e.Actor != "admin-1" || e.ActorKind != domain.ActorHuman || e.Reason != "contract ended" || e.Seq != 2 {
+			t.Fatalf("revoked %+v", e)
+		}
+	})
+
 	t.Run("only a human Owner or Admin makes or revokes a Grant", func(t *testing.T) {
 		_, grants, c := build(t)
 		for name, by := range map[string]domain.Principal{
