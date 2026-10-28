@@ -491,3 +491,10 @@ func TestApprovalsAreFinalInTheDatabase(t *testing.T) {
 		}
 	}
 }
+
+func TestExecutionEvidenceWithPostgres(t *testing.T) {
+	porttest.ExecutionEvidence(t, func(t *testing.T) porttest.EvidenceStores {
+		db := migratedDB(t)
+		return porttest.EvidenceStores{Executions: NewExecutionStore(db), Contexts: NewContextStore(db), Artifacts: NewArtifactIndex(db)}
+	})
+}
