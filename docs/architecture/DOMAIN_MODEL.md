@@ -144,6 +144,8 @@ Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsup
 
 **Concurrency limits (2026-10-28, [#158](https://github.com/rluders/amaru/issues/158)):** an Execution carries a `projectId` and an optional `environmentId`, fixed at creation. The Platform leases a queued Step only while the Steps that are leased or running stay under the global, per-Project (default 2) and per-Environment limits. A Step held back stays `queued` with a reason (`limit:global`, `limit:project`, `limit:environment`) and a `step.deferred` event; leasing it clears the reason. Slots are derived from Step states, not stored, so they cannot leak.
 
+**Workflow definitions (2026-10-28, [#138](https://github.com/rluders/amaru/issues/138)):** a Workflow is a YAML file (`schemaVersion: 1`) of steps, edges and variables. Steps are `agent`, `tool`, `system`, `review` or `approval`; a tool or system step names a Capability, never a provider. Edges order steps and can carry a value between named ports; without edges the steps run in list order, and a cycle is refused. Limits: 50 steps, 200 edges, 50 variables, 8000-character prompt. The file is read strictly (unknown fields, duplicate keys, anchors and aliases, a second document and any other `schemaVersion` are errors); an earlier format is never loaded by accident, only through an explicit migration, which does not exist yet. Execution does not read a Workflow yet: pinning (WFL-002), substitution (WFL-003) and timeouts (WFL-004) are separate.
+
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 

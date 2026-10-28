@@ -1,0 +1,38 @@
+schemaVersion: 1
+id: release-check
+name: Release check
+description: Implement, test and gate on a person.
+status: active
+variables:
+  - name: branch
+    value: main
+steps:
+  - id: implement
+    name: Implement the change
+    type: agent
+    prompt: Make the change described by the Work Item.
+    agentId: coder-agent
+  - id: test
+    name: Run the tests
+    type: tool
+    capability: code.test
+    input:
+      path: ./...
+  - id: review
+    name: Review the change
+    type: review
+    teamId: release-team
+    role: reviewer
+    reviews: implement
+  - id: ship
+    name: Approve the release
+    type: approval
+    prompt: Ship it?
+    reviews: implement
+edges:
+  - from: implement
+    to: test
+  - from: test
+    to: review
+  - from: review
+    to: ship
