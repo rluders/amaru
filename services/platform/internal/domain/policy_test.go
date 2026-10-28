@@ -93,7 +93,7 @@ func TestDefaultRules(t *testing.T) {
 			t.Errorf("%s: %s, want allow", c, d)
 		}
 	}
-	for _, c := range []Capability{"mcp.call", "asset.upload", "git.push", "unknown.thing"} {
+	for _, c := range []Capability{"mcp.call", "asset.upload", "unknown.thing"} {
 		if d := eval(t, req(c), nil, DefaultRules()).Decision; d != DecisionDeny {
 			t.Errorf("%s: %s, want deny (uncovered)", c, d)
 		}
@@ -289,5 +289,118 @@ func TestPolicyRuleValidate(t *testing.T) {
 		if err := r.Validate(); !errors.Is(err, ErrInvalid) {
 			t.Errorf("%s: %v", name, err)
 		}
+	}
+}
+
+// consequential is rule 12 and the ADR-0006 list: what each action is, without a Grant.
+var consequential = []struct {
+	capability Capability
+	resource   Resource
+	class      ActionClass
+}{
+	{"git.push", Resource{Type: "git_ref", Value: "refs/heads/amaru/x"}, ClassPublish},
+	{"deploy.run", Resource{Type: "deploy_target", Value: "staging"}, ClassDeploy},
+	{"tracker.write", Resource{Type: "tracker_item", Value: "ISSUE-1"}, ClassExternalWrite},
+	{"scm.pr.create", Resource{Type: "repository", Value: "origin"}, ClassExternalWrite},
+	{"net.egress", Resource{Type: "host", Value: "api.example.com"}, ClassEgress},
+	{"fs.delete", Resource{Type: ResourcePath, Value: "/home/u/other"}, ClassDelete},
+	{"plugin.install", Resource{Type: "plugin", Value: "acme/pandoc@1.2.0"}, ClassPermission},
+	{"plugin.upgrade", Resource{Type: "plugin", Value: "acme/pandoc@1.3.0"}, ClassPermission},
+	{"spend.paid", Resource{Type: "service", Value: "render-farm"}, ClassSpend},
+}
+
+func TestConsequentialActionsNeedAnApprovalOrAGrant(t *testing.T) {
+	for _, c := range consequential {
+		r := req(c.capability)
+		r.Resource = c.resource
+		res := eval(t, r, nil, DefaultRules())
+		if res.Decision != DecisionRequireApproval || res.Reasons[0].Code != ReasonRuleRequiresAppr || res.Reasons[0].Class != c.class || res.Reasons[0].Source != "default" {
+			t.Errorf("%s: %+v, want require_approval of class %s from a default", c.capability, res, c.class)
+		}
+		// An Owner's or Admin's Grant lowers the default, and only for what it names.
+		g := grant(t, "g", func(g *Grant) { g.Capabilities = []Capability{c.capability} })
+		if got := eval(t, r, []Grant{g}, DefaultRules()); got.Decision != DecisionAllow || got.MatchedGrantID != "g" {
+			t.Errorf("%s with a grant: %+v", c.capability, got)
+		}
+		other := r
+		other.Capability = "mcp.call"
+		if got := eval(t, other, []Grant{g}, DefaultRules()); got.Decision != DecisionDeny {
+			t.Errorf("a grant for %s covered mcp.call: %+v", c.capability, got)
+		}
+	}
+}
+
+func TestConsequentialActionsAreTheSameForEveryTriggerAndPrincipal(t *testing.T) {
+	principals := []Principal{
+		human(RoleOwner), human(RoleContributor),
+		{Kind: PrincipalAgent, ID: "a", Sponsor: "u-owner"}, {Kind: PrincipalTrigger, ID: "t", Sponsor: "u-owner"}, {Kind: PrincipalPlugin, ID: "p", Sponsor: "u-owner"},
+	}
+	for _, c := range consequential {
+		for _, trig := range []string{TriggerManual, TriggerWebhook, TriggerSchedule, TriggerDeliveryLoop} {
+			for _, p := range principals {
+				r := req(c.capability)
+				r.Resource, r.Trigger, r.Principal = c.resource, trig, p
+				if d := eval(t, r, nil, DefaultRules()).Decision; d != DecisionRequireApproval {
+					t.Errorf("%s by %s/%s via %s: %s, want require_approval", c.capability, p.Kind, p.Role, trig, d)
+				}
+			}
+		}
+	}
+}
+
+func TestDeleteIsAllowedOnlyInsideTheWorktree(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		res  Resource
+		want Decision
+	}{
+		{"inside the worktree", Resource{Type: ResourceWorktreePath, Value: "build/out.o"}, DecisionAllow},
+		{"outside the worktree", Resource{Type: ResourcePath, Value: "/etc/hosts"}, DecisionRequireApproval},
+		{"no resource named", Resource{}, DecisionDeny},
+		{"unknown resource type", Resource{Type: "bucket", Value: "x"}, DecisionDeny},
+	} {
+		r := req("fs.delete")
+		r.Resource = c.res
+		if got := eval(t, r, nil, DefaultRules()).Decision; got != c.want {
+			t.Errorf("%s: %s, want %s", c.name, got, c.want)
+		}
+	}
+}
+
+func TestNoOneBelowTheOrganizationLowersADefault(t *testing.T) {
+	r := req("git.push")
+	r.Resource = Resource{Type: "git_ref", Value: "refs/heads/amaru/x"}
+	// A Project rule that allows is invalid, so it never reaches the function.
+	loosen := PolicyRule{ID: "proj.push", Source: SourceProject, Effect: EffectAllow, Capabilities: []string{"git.push"}}
+	if _, err := Evaluate(t0, r, nil, append(DefaultRules(), loosen)); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("a project allow: %v", err)
+	}
+	// A Project rule may tighten: deny, or require an approval for what the defaults allow.
+	tighten := PolicyRule{ID: "proj.test", Source: SourceProject, Effect: EffectRequireApproval, Capabilities: []string{"code.test"}}
+	if d := eval(t, req("code.test"), nil, append(DefaultRules(), tighten)).Decision; d != DecisionRequireApproval {
+		t.Fatalf("a project requirement: %s", d)
+	}
+	// An allow rule, even the Organization's, does not lower a default requirement: only a Grant does.
+	if d := eval(t, r, nil, append(DefaultRules(), PolicyRule{ID: "org.push", Source: SourceOrganization, Effect: EffectAllow, Capabilities: []string{"git.push"}})).Decision; d != DecisionRequireApproval {
+		t.Fatalf("an allow must not beat the stricter default requirement: %s", d)
+	}
+	// The merge Capability stays denied for every principal, with or without a Grant.
+	m := req("scm.pr.merge")
+	g := grant(t, "g", func(g *Grant) {
+		g.Capabilities = []Capability{"scm.pr.merge"}
+		g.Level, g.ProjectID = GrantOrganization, ""
+	})
+	if res := eval(t, m, []Grant{g}, DefaultRules()); res.Decision != DecisionDeny || res.Reasons[0].Class != ClassIrreversibleSCM {
+		t.Fatalf("merge: %+v", res)
+	}
+}
+
+func TestDefaultRuleIDsAreUniqueAndSourcedAsDefault(t *testing.T) {
+	seen := map[string]bool{}
+	for _, r := range DefaultRules() {
+		if seen[r.ID] || r.Source != SourceDefault {
+			t.Errorf("rule %s: duplicate or not a default", r.ID)
+		}
+		seen[r.ID] = true
 	}
 }
