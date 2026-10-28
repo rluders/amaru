@@ -165,8 +165,8 @@ func insertStep(ctx context.Context, tx *sql.Tx, ord int, st domain.StepExecutio
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO step_executions (id, execution_id, ord, version, state, reason, started_at, ended_at, error_code, error_message,
 		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent,
-		   capability, inputs, attempt_id, fence_token, timeout_seconds)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+		   capability, inputs, attempt_id, fence_token, timeout_seconds, skills)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
 		append([]any{st.ID, st.ExecutionID, ord, st.Version}, args...)...)
 	return err
 }
@@ -194,9 +194,17 @@ func stepArgs(st domain.StepExecution) ([]any, error) {
 		}
 		agent = b
 	}
+	var skills []byte
+	if len(st.Skills) > 0 {
+		b, err := json.Marshal(st.Skills)
+		if err != nil {
+			return nil, fmt.Errorf("postgres: encode step skills: %w", err)
+		}
+		skills = b
+	}
 	return []any{string(st.State), st.Reason, nullTime(st.StartedAt), nullTime(st.EndedAt), code, msg,
 		st.Idempotent, job, resumable, owner, leaseExp, agent,
-		st.Capability, st.InputsJSON, nullString(st.AttemptID), int64(st.FenceToken), st.TimeoutSeconds}, nil
+		st.Capability, st.InputsJSON, nullString(st.AttemptID), int64(st.FenceToken), st.TimeoutSeconds, skills}, nil
 }
 
 func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (ports.ExecutionChange, error) {
@@ -267,7 +275,7 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 			`UPDATE step_executions SET version = version + 1, state = $4, reason = $5, started_at = $6, ended_at = $7,
 			   error_code = $8, error_message = $9, idempotent = $10, remote_job_id = $11, remote_job_resumable = $12,
 			   lease_owner = $13, lease_expires_at = $14, agent = $15,
-			   capability = $16, inputs = $17, attempt_id = $18, fence_token = $19, timeout_seconds = $20
+			   capability = $16, inputs = $17, attempt_id = $18, fence_token = $19, timeout_seconds = $20, skills = $21
 			 WHERE id = $1 AND execution_id = $2 AND version = $3 RETURNING version`,
 			append([]any{st.ID, st.ExecutionID, st.Version}, args...)...).Scan(&st.Version)
 		if err != nil {
@@ -366,7 +374,7 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	rows, err := tx.QueryContext(ctx,
 		`SELECT id, execution_id, version, state, reason, started_at, ended_at, error_code, error_message,
 		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent,
-		   capability, inputs, attempt_id, fence_token, timeout_seconds
+		   capability, inputs, attempt_id, fence_token, timeout_seconds, skills
 		 FROM step_executions WHERE execution_id = $1 ORDER BY ord`, id)
 	if err != nil {
 		return domain.Execution{}, nil, fmt.Errorf("postgres: get steps: %w", err)
@@ -382,10 +390,16 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 		var agent []byte
 		var attempt sql.NullString
 		var fence int64
+		var skills []byte
 		if err := rows.Scan(&st.ID, &st.ExecutionID, &st.Version, &state, &st.Reason, &started, &ended, &code, &msg,
 			&st.Idempotent, &job, &resumable, &owner, &leaseExp, &agent,
-			&st.Capability, &st.InputsJSON, &attempt, &fence, &st.TimeoutSeconds); err != nil {
+			&st.Capability, &st.InputsJSON, &attempt, &fence, &st.TimeoutSeconds, &skills); err != nil {
 			return domain.Execution{}, nil, fmt.Errorf("postgres: get steps: %w", err)
+		}
+		if len(skills) > 0 {
+			if err := json.Unmarshal(skills, &st.Skills); err != nil {
+				return domain.Execution{}, nil, fmt.Errorf("postgres: decode skills of step %s: %w", st.ID, err)
+			}
 		}
 		st.State, st.StartedAt, st.EndedAt = domain.StepState(state), timePtr(started), timePtr(ended)
 		if code.Valid {
