@@ -42,16 +42,17 @@ type file struct {
 }
 
 type step struct {
-	ID         string            `yaml:"id"`
-	Name       string            `yaml:"name"`
-	Type       string            `yaml:"type"`
-	Prompt     string            `yaml:"prompt"`
-	Capability string            `yaml:"capability"`
-	Input      map[string]string `yaml:"input"`
-	AgentID    string            `yaml:"agentId"`
-	TeamID     string            `yaml:"teamId"`
-	Role       string            `yaml:"role"`
-	Reviews    string            `yaml:"reviews"`
+	ID             string            `yaml:"id"`
+	Name           string            `yaml:"name"`
+	Type           string            `yaml:"type"`
+	Prompt         string            `yaml:"prompt"`
+	Capability     string            `yaml:"capability"`
+	Input          map[string]string `yaml:"input"`
+	AgentID        string            `yaml:"agentId"`
+	TimeoutSeconds int               `yaml:"timeoutSeconds"`
+	TeamID         string            `yaml:"teamId"`
+	Role           string            `yaml:"role"`
+	Reviews        string            `yaml:"reviews"`
 }
 
 type edge struct {
@@ -127,7 +128,7 @@ func (f file) workflow() domain.Workflow {
 		w.Steps = append(w.Steps, domain.WorkflowStep{
 			ID: s.ID, Name: s.Name, Type: domain.WorkflowStepType(s.Type), Prompt: s.Prompt,
 			Capability: domain.Capability(s.Capability), Input: s.Input,
-			AgentID: s.AgentID, TeamID: s.TeamID, Role: s.Role, Reviews: s.Reviews,
+			AgentID: s.AgentID, TimeoutSeconds: s.TimeoutSeconds, TeamID: s.TeamID, Role: s.Role, Reviews: s.Reviews,
 		})
 	}
 	for _, e := range f.Edges {

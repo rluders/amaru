@@ -84,6 +84,10 @@ type WorkflowStep struct {
 	// AgentID selects the Agent that runs an agent step. Existence and status are checked when an
 	// Execution is planned, not when the Workflow is saved.
 	AgentID string `json:"agentId,omitempty"`
+	// TimeoutSeconds overrides the default wall-clock timeout of the Step (FEAT-WFL-004); zero
+	// means the default for its kind. The Organization maximum is checked when an Execution is
+	// submitted, because it is the Platform's setting, not the definition's.
+	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
 	// TeamID and Role select the Agent through a Team instead of AgentID. On a review step they
 	// name the reviewer.
 	TeamID string `json:"teamId,omitempty"`
@@ -167,6 +171,9 @@ func (s WorkflowStep) validate(ids map[string]bool) error {
 	}
 	if !s.Type.Valid() {
 		return invalid("invalid type %q", s.Type)
+	}
+	if s.TimeoutSeconds < 0 || (s.TimeoutSeconds > 0 && s.Type == StepTypeApproval) {
+		return invalid("timeoutSeconds must not be negative and an approval step waits without one")
 	}
 	if utf8.RuneCountInString(s.Prompt) > MaxStepPrompt {
 		return invalid("prompt is at most %d characters", MaxStepPrompt)

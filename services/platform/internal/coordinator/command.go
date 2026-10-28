@@ -31,6 +31,8 @@ type StepSpec struct {
 	Capability string `json:"capability"`
 	Inputs     []byte `json:"inputs,omitempty"`
 	Idempotent bool   `json:"idempotent,omitempty"`
+	// TimeoutSeconds overrides the default wall-clock timeout (FEAT-WFL-004); zero is the default.
+	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
 }
 
 // SubmitRequest creates one Execution. Key is the caller's idempotency key and is required.
@@ -74,6 +76,11 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	if err != nil {
 		return Submitted{}, false, err
 	}
+	for _, sp := range specs {
+		if err := c.timeouts.Check(sp.TimeoutSeconds); err != nil {
+			return Submitted{}, false, fmt.Errorf("step %s: %w", sp.Name, err)
+		}
+	}
 	fp, err := fingerprint(struct {
 		Project, Environment string
 		Steps                []StepSpec
@@ -96,7 +103,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		for _, sp := range specs {
 			st := domain.StepExecution{
 				ID: id + "." + sp.Name, ExecutionID: id, Version: 1, State: domain.StepPending,
-				Capability: sp.Capability, InputsJSON: sp.Inputs, Idempotent: sp.Idempotent,
+				Capability: sp.Capability, InputsJSON: sp.Inputs, Idempotent: sp.Idempotent, TimeoutSeconds: sp.TimeoutSeconds,
 			}
 			if err := st.Plan(); err != nil {
 				return Submitted{}, false, err
@@ -195,7 +202,7 @@ func workflowSpecs(w domain.Workflow, overrides map[string]string) ([]StepSpec, 
 		if st.Capability == "" {
 			return nil, fmt.Errorf("%w: workflow step %s (%s) names no capability and cannot run yet", domain.ErrInvalid, st.ID, st.Type)
 		}
-		sp := StepSpec{Name: st.ID, Capability: string(st.Capability)}
+		sp := StepSpec{Name: st.ID, Capability: string(st.Capability), TimeoutSeconds: st.TimeoutSeconds}
 		if len(st.Input) > 0 {
 			resolved := make(map[string]string, len(st.Input))
 			for k, v := range st.Input {

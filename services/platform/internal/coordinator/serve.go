@@ -162,7 +162,9 @@ func (c *Coordinator) leaseOne(ctx context.Context, workerID string) (ports.Assi
 			asg = ports.Assignment{
 				ExecutionID: ref.ExecutionID, StepID: st.ID, AttemptID: st.AttemptID,
 				Capability: st.Capability, InputsJSON: st.InputsJSON,
-				Lease: ports.Lease{LeaseID: st.AttemptID, FencingToken: st.FenceToken, ExpiresAt: st.CurrentLease.ExpiresAt},
+				// The Step may run until Deadline; the Worker enforces it and kills what it started.
+				Deadline: now.Add(c.timeouts.Effective(st.Agent != nil, st.TimeoutSeconds)),
+				Lease:    ports.Lease{LeaseID: st.AttemptID, FencingToken: st.FenceToken, ExpiresAt: st.CurrentLease.ExpiresAt},
 				// Stable across attempts, so a re-run side effect is deduplicated.
 				IdempotencyKey:       ref.ExecutionID + "/" + st.ID,
 				CapabilityIdempotent: st.Idempotent,
@@ -290,6 +292,12 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 		case ports.OutcomeCancelled:
 			kind, ferr = domain.EventStepCancelled, st.Finish(now, domain.StepCancelled, nil)
 		case ports.OutcomeFailed:
+			if m.ErrorCode == domain.CodeTimeout {
+				// ADR-0044: a Step past its timeout is timed_out, never retried; a person decides.
+				kind, ferr = domain.EventStepTimedOut, st.TimeOut(now)
+				st.Error = &domain.ExecError{Code: domain.CodeTimeout, Message: m.ErrorDetail}
+				break
+			}
 			code := m.ErrorCode
 			if code == "" {
 				code = "step_failed"

@@ -21,6 +21,7 @@ type Coordinator struct {
 	newAttemptID   func() string
 	newExecutionID func() string
 	limits         Limits
+	timeouts       domain.Timeouts
 	assignMu       sync.Mutex // one lease decision at a time: count, check and lease are one step
 
 	mu     sync.Mutex
@@ -34,6 +35,16 @@ type Option func(*Coordinator)
 func WithLeasePeriod(d time.Duration) Option { return func(c *Coordinator) { c.leasePeriod = d } }
 
 // WithAttemptIDs replaces the attempt id generator (random by default); tests use a counter.
+// WithTimeouts sets the Step timeouts: the defaults per kind of Step and the Organization maximum
+// an override may reach (FEAT-WFL-004). It panics on limits that are not positive or whose
+// defaults exceed the maximum, because that is a start-up mistake and not a runtime condition.
+func WithTimeouts(t domain.Timeouts) Option {
+	if err := t.Validate(); err != nil {
+		panic(err)
+	}
+	return func(c *Coordinator) { c.timeouts = t }
+}
+
 func WithAttemptIDs(f func() string) Option { return func(c *Coordinator) { c.newAttemptID = f } }
 
 // WithExecutionIDs replaces the Execution id generator (random by default); tests use a counter.
@@ -41,7 +52,7 @@ func WithExecutionIDs(f func() string) Option { return func(c *Coordinator) { c.
 
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, wakeCh: make(chan struct{})}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, wakeCh: make(chan struct{})}
 	for _, o := range opts {
 		o(c)
 	}

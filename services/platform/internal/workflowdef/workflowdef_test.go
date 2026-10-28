@@ -84,6 +84,7 @@ func TestParseRefusesInvalidWorkflows(t *testing.T) {
 		"edge unknown":     header + oneStep + "edges:\n  - {from: a, to: zzz}\n",
 		"self edge":        header + oneStep + "edges:\n  - {from: a, to: a}\n",
 		"cycle":            header + "steps:\n  - {id: a, name: A, type: agent, prompt: p}\n  - {id: b, name: B, type: agent, prompt: p}\nedges:\n  - {from: a, to: b}\n  - {from: b, to: a}\n",
+		"negative timeout": header + "steps:\n  - {id: a, name: A, type: agent, prompt: p, timeoutSeconds: -5}\n",
 		"review no target": header + "steps:\n  - {id: a, name: A, type: review, teamId: team-one, role: reviewer}\n",
 	}
 	for name, doc := range cases {
@@ -148,5 +149,15 @@ func TestParseEnforcesLimits(t *testing.T) {
 				t.Fatalf("want ErrInvalid, got %v", err)
 			}
 		})
+	}
+}
+
+func TestParseReadsTheStepTimeout(t *testing.T) {
+	w, err := Parse([]byte(header + "steps:\n  - {id: a, name: A, type: agent, prompt: p, timeoutSeconds: 5400}\n  - {id: b, name: B, type: tool, capability: code.test}\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w.Steps[0].TimeoutSeconds != 5400 || w.Steps[1].TimeoutSeconds != 0 {
+		t.Fatalf("timeouts %d, %d", w.Steps[0].TimeoutSeconds, w.Steps[1].TimeoutSeconds)
 	}
 }
