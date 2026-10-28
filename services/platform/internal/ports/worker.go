@@ -18,8 +18,8 @@ var ErrLinkClosed = errors.New("worker link closed")
 // adapter, when it exists, maps between the two.
 //
 // Implemented messages: Offer, Assignment, AcceptAttempt, RejectAttempt, LeaseRenew, LeaseRevoked,
-// Result, ResultAck. Not implemented yet: handshake and enrollment, LeaseRelease, StepEvents,
-// Cancel, SecretDelivery, Drain, ProtocolError, outputs and usage in Result, the envelope's
+// Result, ResultAck, Cancel. Not implemented yet: handshake and enrollment, LeaseRelease, StepEvents,
+// SecretDelivery, Drain, ProtocolError, outputs and usage in Result, the envelope's
 // message and ack ids (an in-process link does not lose messages).
 
 // Link is one end of a bidirectional, ordered message channel. Send and Receive may be called from
@@ -109,6 +109,15 @@ type LeaseRevoked struct {
 	Reason    string `proto:"reason"`
 }
 
+// Cancel tells the Worker to stop an attempt because a person or a Policy rule cancelled the
+// Execution (FEAT-EXE-003). The Worker ends the attempt's whole process tree, within the grace
+// period, and then reports a Result with OutcomeCancelled; the Lease is still held until it does.
+// It differs from LeaseRevoked, after which the Worker reports nothing.
+type Cancel struct {
+	AttemptID string `proto:"attempt_id"`
+	Reason    string `proto:"reason"`
+}
+
 type ResultOutcome int
 
 const (
@@ -148,4 +157,5 @@ func (Result) workerMessage()        {}
 
 func (Assignment) platformMessage()   {}
 func (LeaseRevoked) platformMessage() {}
+func (Cancel) platformMessage()       {}
 func (ResultAck) platformMessage()    {}

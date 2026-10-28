@@ -61,6 +61,15 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 	// are not in that number, so they are taken off. pending holds those attempts.
 	credit := 0
 	pending := map[string]bool{}
+	// cancelCh carries Cancel messages for this session's attempts from Cancel to this loop, the
+	// only writer on the link. mine are the attempts registered for it.
+	cancelCh := make(chan ports.Cancel, 64)
+	mine := map[string]bool{}
+	defer func() {
+		for a := range mine {
+			c.unregister(a)
+		}
+	}()
 	for {
 		// Hand out work first: a Step may have been queued while no message arrived.
 		for credit > 0 {
@@ -72,6 +81,8 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 				break
 			}
 			pending[attempt] = true
+			mine[attempt] = true
+			c.register(attempt, cancelCh)
 			credit--
 		}
 		select {
@@ -83,6 +94,10 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 			}
 			return err
 		case <-c.wake():
+		case m := <-cancelCh:
+			if err := send(ctx, link, m); err != nil {
+				return err
+			}
 		case m := <-msgs:
 			switch m := m.(type) {
 			case ports.Offer:
@@ -94,6 +109,8 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 				}
 			case ports.RejectAttempt:
 				delete(pending, m.AttemptID)
+				delete(mine, m.AttemptID)
+				c.unregister(m.AttemptID)
 				if err := c.onReject(ctx, m); err != nil {
 					return err
 				}
@@ -106,6 +123,8 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 				if err := c.onResult(ctx, link, m); err != nil {
 					return err
 				}
+				delete(mine, m.AttemptID)
+				c.unregister(m.AttemptID)
 			}
 		}
 	}
@@ -312,6 +331,9 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 		return &change{events: []domain.ExecutionEvent{{Kind: kind, StepID: st.ID, Reason: st.Reason, At: now}}}, nil
 	})
 	if err != nil {
+		return err
+	}
+	if err := c.settleCancel(ctx, ref.ExecutionID); err != nil {
 		return err
 	}
 	c.Wake() // a finished Step frees a slot a queued Step may be waiting for

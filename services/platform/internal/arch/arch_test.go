@@ -20,7 +20,7 @@ var core = []string{"internal/domain"}
 
 // forbiddenInternal: module packages the core must never import, directly or transitively.
 // Adapters are wired in the composition root only.
-var forbiddenInternal = []string{"internal/adapter", "internal/provider", "internal/platform", "internal/store", "cmd"}
+var forbiddenInternal = []string{"internal/adapter", "internal/provider", "internal/platform", "internal/worker", "internal/store", "cmd"}
 
 // forbiddenStd: standard-library packages that reach the OS, a process or the network.
 var forbiddenStd = map[string]bool{
@@ -168,6 +168,7 @@ func TestStorageDoesNotTouchFiles(t *testing.T) {
 var onlyModuleImports = map[string][]string{
 	"internal/worker/embedded": {"internal/ports"},
 	"internal/worker/inproc":   {"internal/ports"},
+	"internal/worker/osproc":   {"internal/ports"},
 	"internal/coordinator":     {"internal/domain", "internal/ports"},
 }
 

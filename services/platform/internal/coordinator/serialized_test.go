@@ -64,6 +64,8 @@ func rebuild(f []byte) (any, error) {
 		v = new(ports.LeaseRevoked)
 	case name(ports.ResultAck{}):
 		v = new(ports.ResultAck)
+	case name(ports.Cancel{}):
+		v = new(ports.Cancel)
 	default:
 		return nil, fmt.Errorf("unknown message type %s", fr.Type)
 	}
@@ -86,6 +88,8 @@ func rebuild(f []byte) (any, error) {
 	case *ports.LeaseRevoked:
 		return *p, nil
 	case *ports.ResultAck:
+		return *p, nil
+	case *ports.Cancel:
 		return *p, nil
 	}
 	return nil, fmt.Errorf("unreachable")

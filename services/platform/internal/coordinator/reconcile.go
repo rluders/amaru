@@ -26,6 +26,8 @@ type Coordinator struct {
 
 	mu     sync.Mutex
 	wakeCh chan struct{}
+	// cancels maps an attempt to the Worker session that holds it, so Cancel can reach it.
+	cancels map[string]chan<- ports.Cancel
 }
 
 // Option configures a Coordinator.
@@ -52,7 +54,7 @@ func WithExecutionIDs(f func() string) Option { return func(c *Coordinator) { c.
 
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, wakeCh: make(chan struct{})}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, wakeCh: make(chan struct{}), cancels: map[string]chan<- ports.Cancel{}}
 	for _, o := range opts {
 		o(c)
 	}
@@ -92,6 +94,9 @@ func (c *Coordinator) Reconcile(ctx context.Context) (ReconcileReport, error) {
 	for _, id := range ids {
 		if err := c.reconcileOne(ctx, id, &rep); err != nil {
 			return rep, fmt.Errorf("reconcile: execution %s: %w", id, err)
+		}
+		if err := c.settleCancel(ctx, id); err != nil {
+			return rep, fmt.Errorf("reconcile: execution %s: settle cancel: %w", id, err)
 		}
 		rep.Executions++
 	}

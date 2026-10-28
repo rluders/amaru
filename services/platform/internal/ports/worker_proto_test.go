@@ -51,6 +51,7 @@ func TestMirroredMessagesMatchWorkerProto(t *testing.T) {
 		{RejectAttempt{}, "RejectAttempt", nil},
 		{LeaseRenew{}, "LeaseRenew", nil},
 		{LeaseRevoked{}, "LeaseRevoked", nil},
+		{Cancel{}, "Cancel", nil},
 		{Result{}, "Result", []string{"outputs", "usage"}},
 		{ResultAck{}, "ResultAck", nil},
 	}

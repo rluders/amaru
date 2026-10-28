@@ -278,6 +278,10 @@ func (a Actor) mayResume() bool {
 	return a.Kind == ActorHuman || (a.Kind == ActorPolicy && a.Authority != "")
 }
 
+// MayCancel reports whether the actor may cancel an Execution: a human, or a Policy rule that
+// names itself. An Agent, a Step or an unknown actor may not.
+func (a Actor) MayCancel() bool { return a.mayResume() }
+
 func (a Actor) permitted() bool {
 	switch a.Kind {
 	case ActorHuman:
