@@ -1,8 +1,8 @@
 ---
 title: Adapt the prototype git worktree provider into the Worker providers, without its commit-scratch and force-push parts
-status: proposed
+status: accepted
 date: 2026-10-28
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0056. Adapt the prototype git worktree provider into the Worker providers, without its commit-scratch and force-push parts
@@ -57,13 +57,13 @@ deciders:
 | # | Criterion | State | Evidence |
 |---|---|---|---|
 | 1 | Source side stable at `c8a2f6e` | **Met** | ADR-0032; the commit and the package tree id were read 2026-10-28 |
-| 2 | Inventory refreshed with tests run | **Not met** | The package source was read; its tests were **not run** for this draft (see Context). The owner or a later session records the run before the first file moves |
+| 2 | Inventory refreshed with tests run | **Gap, accepted** | The package source was read; its tests were **not run** for this draft (see Context). The owner or a later session records the run before the first file moves |
 | 3 | Target ADRs accepted | **Met** | ADR-0013, 0043, 0046 (amended), 0049, 0053 accepted |
 | 4 | Contracts stable, with fixtures, in Amaru | **Met for this scope** | The Worker providers port and the OS layer exist (WP-M3-03). A `Workspaces` port for the worktree provider is new and is defined by #154 with its fake |
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 5; becomes evidence in #154 |
 | 6 | Verified execution | **Partial** | The behavior is exercised by the prototype's tests against real git; it was used in the prototype's own delivery runs, which are not reproducible evidence here |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). No license file is added by this work |
-| 8 | Explicit product-owner approval | **Not met** | Awaiting acceptance |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-28 (see Approval) |
 
 ## Consequences
 - **Easier:** worktree isolation starts from a base refresh whose merge, conflict and race handling is already tested against real git, and the "never force-push" rule is checked by a test instead of by reading.
@@ -79,4 +79,4 @@ deciders:
 - **Move `Commit` and the scratch rules now:** pulls delivery-loop policy and prototype path names into M3.
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #85, 2026-10-28). Not yet approved: the product owner accepts, requests changes or rejects. Requires human decision: item 6 (worktree location), the not-moved rows of item 4, and whether criterion 2 must be met before acceptance.
+Proposed by: Claude (migration ADR draft for #85, 2026-10-28). Approved by: Ricardo Lüders (product owner) on 2026-10-28, in the WP-M3-07 session, after reviewing PR #305: "Accept ADR-0056, merge #305". The item 4 dispositions (including the not-moved rows), the proposed worktree location of item 6 and the criterion 2 gap (the prototype package tests were not run for this ADR) are accepted as drafted; the prototype test run is still to be recorded before the first file moves. #154 remains blocked by #120 (PRJ-001), which this approval does not resolve. Windows and macOS remain best-effort (owner decision of 2026-10-28).
