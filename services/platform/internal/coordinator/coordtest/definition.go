@@ -178,4 +178,99 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 			t.Fatalf("refused requests created %d Executions", len(open))
 		}
 	})
+
+	// Variables (FEAT-WFL-003).
+	withVars := func() domain.Workflow {
+		w := flow()
+		w.Variables = []domain.WorkflowVariable{{Name: "intent", Value: "default"}, {Name: "pkg", Value: "./..."}}
+		w.Steps[0].Input = map[string]string{"pkg": "{{pkg}}", "note": "do: {{intent}}!"}
+		return w
+	}
+	varSubmit := func(c *coordinator.Coordinator, key string, vars map[string]string) (coordinator.Submitted, error) {
+		w := withVars()
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: key, Workflow: &w, Revision: sha, Variables: vars})
+		return got, err
+	}
+
+	t.Run("placeholders in step inputs are replaced by the declared defaults or the override", func(t *testing.T) {
+		s := newStore(t)
+		c := build(s)
+		got, err := varSubmit(c, "k1", nil)
+		if err != nil || string(got.Steps[1].InputsJSON) != `{"note":"do: default!","pkg":"./..."}` {
+			t.Fatalf("defaults: %q, %v", got.Steps[1].InputsJSON, err)
+		}
+		got, err = varSubmit(c, "k2", map[string]string{"intent": "fix #7"})
+		if err != nil || string(got.Steps[1].InputsJSON) != `{"note":"do: fix #7!","pkg":"./..."}` {
+			t.Fatalf("override: %q, %v", got.Steps[1].InputsJSON, err)
+		}
+		// The pinned definition keeps the placeholders; the Step has the final value.
+		w, err := c.Definition(ctx, got.Execution.ID)
+		if err != nil || w.Steps[0].Input["note"] != "do: {{intent}}!" {
+			t.Fatalf("pinned definition: %+v, %v", w.Steps, err)
+		}
+	})
+
+	t.Run("a whole Work Item intent reaches the Step uncut (F-15)", func(t *testing.T) {
+		s := newStore(t)
+		intent := strings.Repeat("é", domain.MaxIntent)
+		got, err := varSubmit(build(s), "k1", map[string]string{"intent": intent})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(got.Steps[1].InputsJSON), intent) {
+			t.Fatalf("intent of %d characters was cut: %d bytes of inputs", domain.MaxIntent, len(got.Steps[1].InputsJSON))
+		}
+		// And the store returns it as written.
+		_, steps, err := reopen(t, s).Get(ctx, got.Execution.ID)
+		if err != nil || !strings.Contains(string(steps[1].InputsJSON), intent) {
+			t.Fatalf("stored intent differs: %v", err)
+		}
+	})
+
+	t.Run("the same key with other variables is refused", func(t *testing.T) {
+		s := newStore(t)
+		c := build(s)
+		first, err := varSubmit(c, "k1", map[string]string{"intent": "a"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Workflow: ptr(withVars()), Revision: sha, Variables: map[string]string{"intent": "a"}})
+		if err != nil || !replayed || again.Execution.ID != first.Execution.ID {
+			t.Fatalf("replay: %v replayed=%v", err, replayed)
+		}
+		if _, err := varSubmit(c, "k1", map[string]string{"intent": "b"}); !errors.Is(err, domain.ErrKeyReused) {
+			t.Fatalf("got %v, want ErrKeyReused", err)
+		}
+	})
+
+	t.Run("bad variables are refused and create nothing", func(t *testing.T) {
+		s := newStore(t)
+		c := build(s)
+		unknown := withVars()
+		unknown.Steps[0].Input["note"] = "{{missing}}"
+		long := map[string]string{"intent": strings.Repeat("x", domain.MaxVarValue+1)}
+		for name, tc := range map[string]struct {
+			w    domain.Workflow
+			vars map[string]string
+		}{
+			"undeclared override":      {withVars(), map[string]string{"intnet": "x"}},
+			"over the limit":           {withVars(), long},
+			"placeholder names no var": {unknown, nil},
+		} {
+			w := tc.w
+			_, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "bad", Workflow: &w, Variables: tc.vars})
+			if !errors.Is(err, domain.ErrInvalid) {
+				t.Fatalf("%s: got %v, want ErrInvalid", name, err)
+			}
+		}
+		_, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "bad", Variables: map[string]string{"a": "b"}, Steps: []coordinator.StepSpec{{Name: "a", Capability: "x.y"}}})
+		if !errors.Is(err, domain.ErrInvalid) {
+			t.Fatalf("variables without a workflow: got %v", err)
+		}
+		if open, _ := s.Open(ctx); len(open) != 0 {
+			t.Fatalf("refused requests created %d Executions", len(open))
+		}
+	})
 }
+
+func ptr[T any](v T) *T { return &v }
