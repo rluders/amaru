@@ -53,6 +53,11 @@ func (c *Coordinator) decide(ctx context.Context, req domain.PolicyRequest) (dom
 			return domain.PolicyResult{}, fmt.Errorf("load grants: %w", err)
 		}
 	}
+	standing, err := c.trustStanding(ctx, req)
+	if err != nil {
+		return domain.PolicyResult{}, err
+	}
+	req.ProjectTrust = standing
 	return domain.Evaluate(c.now(), req, grants, c.rules)
 }
 

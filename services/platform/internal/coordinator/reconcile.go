@@ -24,6 +24,7 @@ type Coordinator struct {
 	limits         Limits
 	timeouts       domain.Timeouts
 	grants         ports.GrantStore // nil: no Grants exist, only rules allow
+	trust          ports.TrustStore // nil: no Project is trusted, so no Step starts
 	rules          []domain.PolicyRule
 	assignMu       sync.Mutex // one lease decision at a time: count, check and lease are one step
 

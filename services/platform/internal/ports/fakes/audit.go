@@ -44,3 +44,6 @@ func (l *AuditLog) Audit(_ context.Context, after int64, limit int) ([]domain.Au
 // LinkAudit makes the Grant store write to the Execution store's audit log, so one log holds the
 // Grant and Approval events and Seq runs across both.
 func LinkAudit(e *ExecutionStore, g *GrantStore) { g.log = e.log }
+
+// LinkTrustAudit makes the Trust store write to the Execution store's audit log.
+func LinkTrustAudit(e *ExecutionStore, t *TrustStore) { t.log = e.log }

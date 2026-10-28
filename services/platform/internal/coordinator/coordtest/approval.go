@@ -29,7 +29,7 @@ func ApprovalSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStor
 	build := func(t *testing.T, store ports.ExecutionStore) *coordinator.Coordinator {
 		t.Helper()
 		var attempts, execs, apprs atomic.Int64
-		return coordinator.New(store, clock,
+		return coordinator.New(store, clock, NewOpenTrust().Option(),
 			coordinator.WithLeasePeriod(leasePeriod),
 			coordinator.WithAttemptIDs(func() string { return fmt.Sprintf("att-%d", attempts.Add(1)) }),
 			coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("e-%d", execs.Add(1)) }),

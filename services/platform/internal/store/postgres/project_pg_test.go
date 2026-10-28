@@ -74,6 +74,32 @@ func TestProjectStoreConformance(t *testing.T) {
 	porttest.ProjectStore(t, func(t *testing.T) ports.ProjectStore { return NewProjectStore(migratedDB(t)) })
 }
 
+func TestTrustStoreConformance(t *testing.T) {
+	porttest.TrustStore(t, func(t *testing.T) (ports.TrustStore, ports.ProjectStore) {
+		db := migratedDB(t)
+		return NewTrustStore(db), NewProjectStore(db)
+	})
+}
+
+func TestTrustIsNeverDeletedInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	ctx := context.Background()
+	key := domain.ProjectKey("ssh://github.com/acme/app#0123456789abcdef0123456789abcdef01234567")
+	if err := NewProjectStore(db).Create(ctx, domain.Project{Key: key, Name: "app", CreatedAt: time.Now().UTC()}); err != nil {
+		t.Fatal(err)
+	}
+	tr, _ := domain.NewTrust(time.Now().UTC(), domain.Principal{Kind: domain.PrincipalHuman, ID: "m", Role: domain.RoleMaintainer}, key, domain.TrustProject, "", "")
+	if err := NewTrustStore(db).Save(ctx, tr); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, `DELETE FROM project_trust`); err == nil {
+		t.Error("a trust was deleted")
+	}
+	if _, err := db.ExecContext(ctx, `UPDATE project_trust SET kind = 'workflow', ref = 'x', hash = 'nope'`); err == nil {
+		t.Error("a trust with a bad hash was stored")
+	}
+}
+
 func TestGrantStoreConformance(t *testing.T) {
 	porttest.GrantStore(t, func(t *testing.T) ports.GrantStore { return NewGrantStore(migratedDB(t)) })
 }
@@ -299,6 +325,13 @@ func TestApprovalStoreConformance(t *testing.T) {
 }
 
 // The approval workflow against the real store: a waiting Step and its Approval survive a restart.
+func TestTrustWithPostgres(t *testing.T) {
+	coordtest.TrustSuite(t, func(t *testing.T) (ports.ExecutionStore, ports.TrustStore, ports.ProjectStore) {
+		db := migratedDB(t)
+		return NewExecutionStore(db), NewTrustStore(db), NewProjectStore(db)
+	}, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}
+
 func TestApprovalWithPostgres(t *testing.T) {
 	var db *sql.DB
 	coordtest.ApprovalSuite(t,

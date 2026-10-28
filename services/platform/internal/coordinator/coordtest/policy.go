@@ -25,9 +25,14 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 	admin := domain.Principal{Kind: domain.PrincipalHuman, ID: "admin-1", Role: domain.RoleAdmin}
 	maintainer := domain.Principal{Kind: domain.PrincipalHuman, ID: "maint-1", Role: domain.RoleMaintainer}
 
+	// trust is the trust double of the Coordinator that build made last; submitFlow trusts the
+	// definition it pins, because these tests are about Grants, not about trust.
+	var trust *OpenTrust
 	build := func(t *testing.T, opts ...coordinator.Option) (ports.ExecutionStore, ports.GrantStore, *coordinator.Coordinator) {
 		t.Helper()
 		store, grants := newStores(t)
+		trust = NewOpenTrust()
+		opts = append([]coordinator.Option{trust.Option()}, opts...)
 		var attempts, execs atomic.Int64
 		c := coordinator.New(store, clock, append([]coordinator.Option{
 			coordinator.WithGrants(grants), coordinator.WithLeasePeriod(leasePeriod),
@@ -61,6 +66,9 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		Steps: []domain.WorkflowStep{{ID: "call", Name: "Call", Type: domain.StepTypeTool, Capability: "mcp.call"}}}
 	submitFlow := func(t *testing.T, c *coordinator.Coordinator, key, project string, w domain.Workflow) coordinator.Submitted {
 		t.Helper()
+		if pin, err := domain.Pin(w, ""); err == nil {
+			trust.Workflow(w.ID, pin.Hash)
+		}
 		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: key, ProjectID: project, Workflow: &w})
 		if err != nil {
 			t.Fatal(err)
@@ -365,6 +373,9 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 			t.Helper()
 			n++
 			w := flowFor(cp)
+			if pin, err := domain.Pin(w, ""); err == nil {
+				trust.Workflow(w.ID, pin.Hash)
+			}
 			got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: by, Trigger: trig, Key: fmt.Sprintf("k%d", n), ProjectID: "p1", Workflow: &w})
 			if err != nil {
 				t.Fatal(err)
