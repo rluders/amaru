@@ -25,3 +25,7 @@ func TestFakeTrustStore(t *testing.T) {
 		return NewTrustStore(p), p
 	})
 }
+
+func TestFakeSkillStore(t *testing.T) {
+	porttest.SkillStore(t, func(*testing.T) ports.SkillStore { return NewSkillStore() })
+}

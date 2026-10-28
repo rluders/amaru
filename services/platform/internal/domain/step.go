@@ -84,6 +84,10 @@ type StepExecution struct {
 	// TimeoutSeconds is the wall-clock timeout override copied when the Step is planned
 	// (FEAT-WFL-004); zero means the default for its kind (Timeouts.Effective).
 	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
+	// Skills are the Skills the Step pinned by name, version and hash. They are checked before the
+	// Step can start, at Submit and again at the lease (FEAT-SKL-001); a Step with none runs no
+	// Skill. Set once when the Step is created.
+	Skills []SkillRef `json:"skills,omitempty"`
 	// AttemptID names the latest attempt (one per Lease) and FenceToken is the fencing token
 	// issued with it, strictly increasing per Step. Both survive the Lease so that a late result
 	// can be told from a duplicate and from a stale one (ADR-0044 point 4).

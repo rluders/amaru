@@ -78,6 +78,9 @@ func (c *Coordinator) policyBlock(ctx context.Context, ref ports.StepRef) (strin
 		if st.ID != ref.StepID {
 			continue
 		}
+		if reason, err := c.skillBlock(ctx, e.ProjectID, st.Skills); err != nil || reason != "" {
+			return reason, err
+		}
 		req := policyRequest(e.RequestedBy, e.Trigger, e.ProjectID, e.Definition, st.Capability)
 		res, err := c.decide(ctx, req)
 		switch {

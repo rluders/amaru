@@ -33,6 +33,9 @@ type StepSpec struct {
 	Idempotent bool   `json:"idempotent,omitempty"`
 	// TimeoutSeconds overrides the default wall-clock timeout (FEAT-WFL-004); zero is the default.
 	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
+	// Skills are the Skills the Step pins (FEAT-SKL-001); see skill.go. A bad, unknown, changed
+	// or untrusted reference ends the Step refused before any Worker sees it.
+	Skills []domain.SkillRef `json:"skills,omitempty"`
 }
 
 // SubmitRequest creates one Execution. Key is the caller's idempotency key and is required.
@@ -118,6 +121,18 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 			st := domain.StepExecution{
 				ID: id + "." + sp.Name, ExecutionID: id, Version: 1, State: domain.StepPending,
 				Capability: sp.Capability, InputsJSON: sp.Inputs, Idempotent: sp.Idempotent, TimeoutSeconds: sp.TimeoutSeconds,
+				Skills: sp.Skills,
+			}
+			if _, err := c.resolveSkills(ctx, req.ProjectID, sp.Skills); err != nil {
+				se, ok := domain.IsSkillError(err)
+				if !ok {
+					return Submitted{}, false, fmt.Errorf("step %s: %w", sp.Name, err)
+				}
+				if err := st.Refuse(now, se.Error()); err != nil {
+					return Submitted{}, false, err
+				}
+				out.Steps = append(out.Steps, st)
+				continue
 			}
 			preq := policyRequest(req.By, req.Trigger, req.ProjectID, pin, sp.Capability)
 			res, err := c.decide(ctx, preq)
