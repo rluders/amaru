@@ -41,7 +41,15 @@ type SubmitRequest struct {
 	// store yet because Projects and Environments are not looked up here.
 	ProjectID     string
 	EnvironmentID string
-	Steps         []StepSpec
+	// Steps are the Steps to run when no Workflow is given. Exactly one of Steps and Workflow is set.
+	Steps []StepSpec
+	// Workflow is the definition to run. Submit pins a snapshot of it to the Execution
+	// (FEAT-WFL-002) and creates one Step per Workflow step, in Workflow order. Every step must
+	// name a Capability; agent and approval steps have none yet, so they are refused until the
+	// Agent and Approval Steps exist. Revision is the Git commit id the definition was read at,
+	// or empty if it was not committed.
+	Workflow *domain.Workflow
+	Revision string
 }
 
 // Submitted is the outcome of Submit: the Execution and its Steps as created.
@@ -53,16 +61,18 @@ type Submitted struct {
 // Submit creates an Execution whose Steps are all queued, and wakes Serve. It returns replayed
 // true, with the original outcome, when Key was used before with the same Steps.
 //
-// Until the Workflow graph exists (#138) every Step is queued at once; Workflow order, Approval
-// gates and Policy will decide which Steps start queued.
+// Every Step is queued at once, even when a Workflow gives them an order; edges, Approval gates
+// and Policy will decide which Steps start queued.
 func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted, bool, error) {
-	if err := validateSubmit(req); err != nil {
+	pin, specs, err := plan(req)
+	if err != nil {
 		return Submitted{}, false, err
 	}
 	fp, err := fingerprint(struct {
 		Project, Environment string
 		Steps                []StepSpec
-	}{req.ProjectID, req.EnvironmentID, req.Steps})
+		Definition           *domain.DefinitionPin
+	}{req.ProjectID, req.EnvironmentID, specs, pin})
 	if err != nil {
 		return Submitted{}, false, err
 	}
@@ -75,8 +85,8 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		now := c.now()
 		id := c.newExecutionID()
 		// The store creates every row at version 1, so the outcome can be recorded before the write.
-		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, ProjectID: req.ProjectID, EnvironmentID: req.EnvironmentID, State: domain.ExecQueued, CreatedAt: now}}
-		for _, sp := range req.Steps {
+		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, ProjectID: req.ProjectID, EnvironmentID: req.EnvironmentID, State: domain.ExecQueued, Definition: pin, CreatedAt: now}}
+		for _, sp := range specs {
 			st := domain.StepExecution{
 				ID: id + "." + sp.Name, ExecutionID: id, Version: 1, State: domain.StepPending,
 				Capability: sp.Capability, InputsJSON: sp.Inputs, Idempotent: sp.Idempotent,
@@ -122,24 +132,82 @@ func replay[T any](ctx context.Context, c *Coordinator, name, key, fp string) (o
 	return out, true, nil
 }
 
-func validateSubmit(req SubmitRequest) error {
+// plan returns the pin and the Steps a request creates: the Workflow's, in its order, or the
+// caller's.
+func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
 	if req.Key == "" {
-		return fmt.Errorf("%w: submit needs an idempotency key", domain.ErrInvalid)
+		return nil, nil, fmt.Errorf("%w: submit needs an idempotency key", domain.ErrInvalid)
 	}
 	if req.ProjectID == "" {
-		return fmt.Errorf("%w: submit needs a project id", domain.ErrInvalid)
+		return nil, nil, fmt.Errorf("%w: submit needs a project id", domain.ErrInvalid)
 	}
-	if len(req.Steps) == 0 {
-		return fmt.Errorf("%w: submit needs at least one step", domain.ErrInvalid)
+	var pin *domain.DefinitionPin
+	specs := req.Steps
+	switch {
+	case req.Workflow != nil && len(req.Steps) > 0:
+		return nil, nil, fmt.Errorf("%w: submit takes a workflow or steps, not both", domain.ErrInvalid)
+	case req.Workflow != nil:
+		p, err := domain.Pin(*req.Workflow, req.Revision)
+		if err != nil {
+			return nil, nil, err
+		}
+		pin = &p
+		if specs, err = workflowSpecs(*req.Workflow); err != nil {
+			return nil, nil, err
+		}
+	case req.Revision != "":
+		return nil, nil, fmt.Errorf("%w: a revision needs a workflow", domain.ErrInvalid)
+	}
+	if len(specs) == 0 {
+		return nil, nil, fmt.Errorf("%w: submit needs at least one step", domain.ErrInvalid)
 	}
 	seen := map[string]bool{}
-	for _, sp := range req.Steps {
+	for _, sp := range specs {
 		if sp.Name == "" || sp.Capability == "" || seen[sp.Name] {
-			return fmt.Errorf("%w: step %q needs a unique name and a capability", domain.ErrInvalid, sp.Name)
+			return nil, nil, fmt.Errorf("%w: step %q needs a unique name and a capability", domain.ErrInvalid, sp.Name)
 		}
 		seen[sp.Name] = true
 	}
-	return nil
+	return pin, specs, nil
+}
+
+func workflowSpecs(w domain.Workflow) ([]StepSpec, error) {
+	order, err := w.Order()
+	if err != nil {
+		return nil, err
+	}
+	specs := make([]StepSpec, 0, len(order))
+	for _, i := range order {
+		st := w.Steps[i]
+		if st.Capability == "" {
+			return nil, fmt.Errorf("%w: workflow step %s (%s) names no capability and cannot run yet", domain.ErrInvalid, st.ID, st.Type)
+		}
+		sp := StepSpec{Name: st.ID, Capability: string(st.Capability)}
+		if len(st.Input) > 0 {
+			in, err := json.Marshal(st.Input)
+			if err != nil {
+				return nil, fmt.Errorf("encode inputs of step %s: %w", st.ID, err)
+			}
+			sp.Inputs = in
+		}
+		specs = append(specs, sp)
+	}
+	return specs, nil
+}
+
+// Definition returns the Workflow the Execution was submitted with, read from the snapshot pinned
+// to it and not from any file, so editing the definition never changes what a running or past
+// Execution runs and a restarted Platform resumes with the same definition. It returns
+// domain.ErrNotFound when the Execution has no pinned definition.
+func (c *Coordinator) Definition(ctx context.Context, executionID string) (domain.Workflow, error) {
+	e, _, err := c.store.Get(ctx, executionID)
+	if err != nil {
+		return domain.Workflow{}, err
+	}
+	if e.Definition == nil {
+		return domain.Workflow{}, fmt.Errorf("%w: execution %s has no pinned definition", domain.ErrNotFound, executionID)
+	}
+	return e.Definition.Workflow()
 }
 
 func fingerprint(v any) (string, error) {
