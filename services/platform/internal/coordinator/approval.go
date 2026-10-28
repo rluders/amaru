@@ -31,13 +31,18 @@ const ErrCodeApprovalRejected = "approval_rejected"
 // Not implemented: the explicit Approval Step of a Workflow and Work Item acceptance gates, a
 // Workflow's choice to reroute after a rejection (a rejection ends the Step), expiry (no timer
 // exists), separation of duties and Team rules (FEAT-REV-007), re-requesting when the Evidence
-// changes and the commit, diff and check-result items (FEAT-REV-003: the Evidence today is the
-// Execution, the Step, its inputs and the pinned definition), the inbox (FEAT-REV-002) and an Event
+// changes (a Step whose Evidence changed after the request cannot be approved and is not
+// re-requested: reject or cancel it), the commit, diff and check-result items of FEAT-REV-003
+// (the Platform records none: the Evidence is the Execution, the Step, its inputs, the pinned
+// definition, Skills and Agent, and the assembled context), the inbox (FEAT-REV-002) and an Event
 // for a refused decision attempt.
 
 // approvalEvidence is what an approver is shown for a gated Step: which run and Step, exactly what
-// the Step is asked to do, and the definition it came from.
-func approvalEvidence(e domain.Execution, st domain.StepExecution) (domain.Evidence, error) {
+// the Step is asked to do, the definition it came from, the Skills and Agent definition the Step
+// pinned, and the context its Agent will be told once one is assembled. An approval is only good
+// for these exact items: if any changes, the digest changes and the approval no longer covers the
+// Step (FEAT-REV-003).
+func approvalEvidence(e domain.Execution, st domain.StepExecution, sc *domain.StepContext) (domain.Evidence, error) {
 	sum := sha256.Sum256(append([]byte(st.Capability+"\x00"), st.InputsJSON...))
 	items := []domain.EvidenceItem{
 		{Kind: "execution", ID: e.ID},
@@ -47,7 +52,33 @@ func approvalEvidence(e domain.Execution, st domain.StepExecution) (domain.Evide
 	if e.Definition != nil {
 		items = append(items, domain.EvidenceItem{Kind: "definition", ID: e.Definition.WorkflowID, Hash: e.Definition.Hash})
 	}
+	for _, sk := range st.Skills {
+		items = append(items, domain.EvidenceItem{Kind: "skill", ID: sk.Name + "@" + sk.Version, Hash: "sha256:" + sk.Hash})
+	}
+	if st.Agent != nil {
+		items = append(items, domain.EvidenceItem{Kind: "agent", ID: st.Agent.ID, Hash: st.Agent.Hash})
+	}
+	if sc != nil {
+		items = append(items, domain.EvidenceItem{Kind: "context", ID: st.ID, Hash: sc.Hash})
+	}
 	return domain.NewEvidence(items...)
+}
+
+// currentEvidence is the Evidence the Step has now, read from the stores: what the Platform would
+// show an approver if it asked today. It is compared with the Evidence an Approval recorded.
+func (c *Coordinator) currentEvidence(ctx context.Context, e domain.Execution, st domain.StepExecution) (domain.Evidence, error) {
+	var sc *domain.StepContext
+	if c.contexts != nil {
+		got, err := c.contexts.Get(ctx, e.ID, st.ID)
+		switch {
+		case err == nil:
+			sc = &got
+		case errors.Is(err, domain.ErrNotFound): // no context was assembled yet
+		default:
+			return domain.Evidence{}, err
+		}
+	}
+	return approvalEvidence(e, st, sc)
 }
 
 // DecideRequest is a human's decision on an Approval.
@@ -93,7 +124,7 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 		if err != nil {
 			return Decided{}, false, err
 		}
-		_, steps, err := c.store.Get(ctx, a.Gate.ExecutionID)
+		e, steps, err := c.store.Get(ctx, a.Gate.ExecutionID)
 		if err != nil {
 			return Decided{}, false, err
 		}
@@ -106,6 +137,17 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 			return Decided{}, false, err
 		}
 		st := steps[i]
+		if req.Outcome == domain.OutcomeApproved {
+			// An approval is for the Evidence as it is now. A Step whose Evidence changed since
+			// the Approval was requested cannot be approved; a rejection is always allowed.
+			cur, err := c.currentEvidence(ctx, e, st)
+			if err != nil {
+				return Decided{}, false, err
+			}
+			if cur.Digest != a.Evidence.Digest {
+				return Decided{}, false, fmt.Errorf("%w: approval %s was requested for other Evidence than step %s has now", domain.ErrEvidenceChanged, a.ID, st.ID)
+			}
+		}
 		ev := domain.ExecutionEvent{StepID: st.ID, Reason: req.Rationale, At: now}
 		if req.Outcome == domain.OutcomeApproved {
 			err, ev.Kind = st.Approve(), domain.EventApprovalApproved
@@ -170,16 +212,20 @@ func (c *Coordinator) voidWaiting(ctx context.Context, executionID string, ended
 	return out, nil
 }
 
-// approved reports whether an approved Approval covers the Step.
-func approved(approvals []domain.Approval, stepID string) bool {
-	return slices.ContainsFunc(approvals, func(a domain.Approval) bool {
+// approvedFor returns the approved Approval that covers the Step, if there is one.
+func approvedFor(approvals []domain.Approval, stepID string) (domain.Approval, bool) {
+	i := slices.IndexFunc(approvals, func(a domain.Approval) bool {
 		return a.Gate.StepID == stepID && a.State == domain.ApprovalApproved
 	})
+	if i < 0 {
+		return domain.Approval{}, false
+	}
+	return approvals[i], true
 }
 
 // request puts a pending Step into awaiting_approval and returns the requested Approval for it.
 func (c *Coordinator) request(now time.Time, e domain.Execution, st *domain.StepExecution, by domain.Principal) (domain.Approval, error) {
-	ev, err := approvalEvidence(e, *st)
+	ev, err := approvalEvidence(e, *st, nil)
 	if err != nil {
 		return domain.Approval{}, err
 	}

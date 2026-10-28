@@ -95,7 +95,18 @@ func (c *Coordinator) policyBlock(ctx context.Context, ref ports.StepRef) (strin
 			if err != nil {
 				return "", err
 			}
-			if approved(approvals, st.ID) {
+			if a, ok := approvedFor(approvals, st.ID); ok {
+				// The Approval is good for the Evidence it was requested for (FEAT-REV-003,
+				// ADR-0048): a Step whose Evidence changed since, for example a context built
+				// after the decision, is held with the reason like any other block. Nothing
+				// re-requests an Approval, so it stays held until it is cancelled.
+				cur, err := c.currentEvidence(ctx, e, st)
+				if err != nil {
+					return "", err
+				}
+				if cur.Digest != a.Evidence.Digest {
+					return "approval: " + a.ID + " was given for other Evidence than the step has now", nil
+				}
 				return "", nil
 			}
 			return "policy: " + refusal(req, res), nil
