@@ -412,6 +412,101 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 			t.Fatalf("got %v, want [e1 e3]", got)
 		}
 	})
+
+	rec := func(key string) domain.CommandRecord {
+		return domain.CommandRecord{Name: "execution.submit", Key: key, Fingerprint: "fp-" + key, Result: []byte(`{"id":"` + key + `"}`), At: t0}
+	}
+
+	t.Run("a command record is stored with the Execution and survives a restart", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		if _, _, err := s.CreateOnce(ctx, rec("k1"), e, steps); err != nil {
+			t.Fatal(err)
+		}
+		got, err := reopen(t, s).Command(ctx, "execution.submit", "k1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := rec("k1")
+		if got.Fingerprint != want.Fingerprint || string(got.Result) != string(want.Result) || !got.At.Equal(want.At) {
+			t.Fatalf("got %+v, want %+v", got, want)
+		}
+		if _, err := s.Command(ctx, "execution.submit", "other"); !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("unknown key: got %v, want ErrNotFound", err)
+		}
+		if _, err := s.Command(ctx, "other.command", "k1"); !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("a key is scoped to its command: got %v, want ErrNotFound", err)
+		}
+	})
+
+	t.Run("a taken key writes nothing", func(t *testing.T) {
+		s := newStore(t)
+		e1, steps1 := newExec("e1", "s1")
+		if _, _, err := s.CreateOnce(ctx, rec("k1"), e1, steps1); err != nil {
+			t.Fatal(err)
+		}
+		e2, steps2 := newExec("e2", "e2-s1")
+		if _, _, err := s.CreateOnce(ctx, rec("k1"), e2, steps2); !errors.Is(err, domain.ErrDuplicateCommand) {
+			t.Fatalf("got %v, want ErrDuplicateCommand", err)
+		}
+		if _, _, err := reopen(t, s).Get(ctx, "e2"); !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("the Execution of a refused command was stored: %v", err)
+		}
+	})
+
+	t.Run("an invalid record is refused", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		for _, bad := range []domain.CommandRecord{{}, {Name: "n", Key: "k"}, {Name: "n", Fingerprint: "f"}, {Key: "k", Fingerprint: "f"}} {
+			if _, _, err := s.CreateOnce(ctx, bad, e, steps); !errors.Is(err, domain.ErrInvalid) {
+				t.Fatalf("%+v: got %v, want ErrInvalid", bad, err)
+			}
+		}
+	})
+
+	t.Run("a commit stores its record atomically", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		e, steps = mustCreate(t, s, e, steps)
+		_ = steps[0].Plan()
+		c := rec("cancel-1")
+		c.Name = "execution.test"
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps, Command: &c}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := reopen(t, s).Command(ctx, "execution.test", "cancel-1"); err != nil {
+			t.Fatal(err)
+		}
+		// The same key again: the second write is refused as a whole.
+		_, cur, _ := s.Get(ctx, "e1")
+		_ = cur[0].Lease("w1", "att-1", t0.Add(time.Minute))
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: cur, Command: &c}); !errors.Is(err, domain.ErrDuplicateCommand) {
+			t.Fatalf("got %v, want ErrDuplicateCommand", err)
+		}
+		_, after, _ := reopen(t, s).Get(ctx, "e1")
+		if after[0].State != domain.StepQueued {
+			t.Fatalf("a refused command changed the Step to %s", after[0].State)
+		}
+	})
+
+	t.Run("a stale commit leaves no record", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		_, steps = mustCreate(t, s, e, steps)
+		stale := steps[0]
+		_ = steps[0].Plan()
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps}); err != nil {
+			t.Fatal(err)
+		}
+		_ = stale.Plan()
+		c := rec("late")
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: []domain.StepExecution{stale}, Command: &c}); !errors.Is(err, domain.ErrConflict) {
+			t.Fatalf("got %v, want ErrConflict", err)
+		}
+		if _, err := reopen(t, s).Command(ctx, c.Name, c.Key); !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("a refused write left its record: %v", err)
+		}
+	})
 }
 
 func mustCreate(t *testing.T, s ports.ExecutionStore, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution) {

@@ -92,3 +92,12 @@ func TestAssignmentWithPostgres(t *testing.T) {
 	newStore := func(t *testing.T) ports.ExecutionStore { return NewExecutionStore(migratedDB(t)) }
 	coordtest.AssignmentSuite(t, newStore, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+// A repeated command returns the original result, also after a restart and under a race, against
+// the real store.
+func TestCommandsWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.CommandSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}

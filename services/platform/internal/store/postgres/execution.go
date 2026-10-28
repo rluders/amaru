@@ -43,6 +43,47 @@ func timePtr(n sql.NullTime) *time.Time {
 func nullString(s string) sql.NullString { return sql.NullString{String: s, Valid: s != ""} }
 
 func (s *ExecutionStore) Create(ctx context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+	return s.create(ctx, nil, e, steps)
+}
+
+func (s *ExecutionStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Execution{}, nil, err
+	}
+	return s.create(ctx, &rec, e, steps)
+}
+
+// insertCommand stores the record in the caller's transaction. A taken (name, key) is
+// ErrDuplicateCommand.
+func insertCommand(ctx context.Context, tx *sql.Tx, rec domain.CommandRecord) error {
+	_, err := tx.ExecContext(ctx,
+		`INSERT INTO commands (name, key, fingerprint, result, at) VALUES ($1, $2, $3, $4, $5)`,
+		rec.Name, rec.Key, rec.Fingerprint, rec.Result, rec.At.UTC())
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code == uniqueViolation {
+		return fmt.Errorf("%w: %s %q", domain.ErrDuplicateCommand, rec.Name, rec.Key)
+	}
+	if err != nil {
+		return fmt.Errorf("postgres: record command: %w", err)
+	}
+	return nil
+}
+
+func (s *ExecutionStore) Command(ctx context.Context, name, key string) (domain.CommandRecord, error) {
+	rec := domain.CommandRecord{Name: name, Key: key}
+	err := s.db.QueryRowContext(ctx, `SELECT fingerprint, result, at FROM commands WHERE name = $1 AND key = $2`, name, key).
+		Scan(&rec.Fingerprint, &rec.Result, &rec.At)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.CommandRecord{}, fmt.Errorf("%w: command %s %q", domain.ErrNotFound, name, key)
+	}
+	if err != nil {
+		return domain.CommandRecord{}, fmt.Errorf("postgres: command %s: %w", name, err)
+	}
+	rec.At = rec.At.UTC()
+	return rec, nil
+}
+
+func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
 	if e.ID == "" {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution needs an id", domain.ErrInvalid)
 	}
@@ -59,6 +100,11 @@ func (s *ExecutionStore) Create(ctx context.Context, e domain.Execution, steps [
 	}
 	defer tx.Rollback()
 
+	if rec != nil {
+		if err := insertCommand(ctx, tx, *rec); err != nil {
+			return domain.Execution{}, nil, err
+		}
+	}
 	e.Version = 1
 	var code, msg sql.NullString
 	if e.Error != nil {
@@ -148,6 +194,14 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 
 	out := ports.ExecutionChange{}
 	var lastSeq int64
+	if c.Command != nil {
+		if err := c.Command.Valid(); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		if err := insertCommand(ctx, tx, *c.Command); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+	}
 	// The Execution row is locked first, always, so two commits to one Execution never deadlock
 	// on row order and the event counter is serialized.
 	switch {
