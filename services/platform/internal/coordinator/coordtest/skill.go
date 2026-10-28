@@ -18,6 +18,8 @@ type SkillStores struct {
 	Trust      ports.TrustStore
 	Projects   ports.ProjectStore
 	Skills     ports.SkillStore
+	// Contexts is used by ContextSuite only.
+	Contexts ports.ContextStore
 }
 
 // SkillSuite checks trusted, hash-pinned Skills through the Coordinator and the Worker link

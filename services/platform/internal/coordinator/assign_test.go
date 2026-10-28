@@ -57,8 +57,10 @@ func newSkillStores(*testing.T) coordtest.SkillStores {
 	e, p := fakes.NewExecutionStore(), fakes.NewProjectStore()
 	tr := fakes.NewTrustStore(p)
 	fakes.LinkTrustAudit(e, tr)
-	return coordtest.SkillStores{Executions: e, Trust: tr, Projects: p, Skills: fakes.NewSkillStore()}
+	return coordtest.SkillStores{Executions: e, Trust: tr, Projects: p, Skills: fakes.NewSkillStore(), Contexts: fakes.NewContextStore()}
 }
+
+func TestContextAssembly(t *testing.T) { coordtest.ContextSuite(t, newSkillStores) }
 
 func TestSkillOverInProcessLink(t *testing.T) {
 	coordtest.SkillSuite(t, newSkillStores, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
