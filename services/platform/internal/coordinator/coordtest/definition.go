@@ -37,11 +37,11 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 	}
 	build := func(s ports.ExecutionStore) *coordinator.Coordinator {
 		var n atomic.Int32
-		return coordinator.New(s, clock, coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("exec-%d", n.Add(1)) }))
+		return coordinator.New(s, clock, Permissive, coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("exec-%d", n.Add(1)) }))
 	}
 	submit := func(t *testing.T, c *coordinator.Coordinator, key string, w domain.Workflow) coordinator.Submitted {
 		t.Helper()
-		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: key, Workflow: &w, Revision: sha})
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: key, Workflow: &w, Revision: sha})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -127,15 +127,15 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		c := build(s)
 		w := flow()
 		first := submit(t, c, "k1", w)
-		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Workflow: &w, Revision: sha})
+		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Workflow: &w, Revision: sha})
 		if err != nil || !replayed || again.Execution.ID != first.Execution.ID || again.Execution.Definition == nil || again.Execution.Definition.Hash != first.Execution.Definition.Hash {
 			t.Fatalf("replay: %+v replayed=%v, %v", again, replayed, err)
 		}
 		w.Name = "Another"
-		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Workflow: &w, Revision: sha}); !errors.Is(err, domain.ErrKeyReused) {
+		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Workflow: &w, Revision: sha}); !errors.Is(err, domain.ErrKeyReused) {
 			t.Fatalf("got %v, want ErrKeyReused", err)
 		}
-		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Workflow: &w}); !errors.Is(err, domain.ErrKeyReused) {
+		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Workflow: &w}); !errors.Is(err, domain.ErrKeyReused) {
 			t.Fatalf("a different revision under the key: got %v, want ErrKeyReused", err)
 		}
 	})
@@ -143,7 +143,7 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 	t.Run("an Execution without a Workflow has no pinned definition", func(t *testing.T) {
 		s := newStore(t)
 		c := build(s)
-		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test"}}})
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test"}}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -170,6 +170,7 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 			"revision without workflow": {ProjectID: "p1", Key: "d", Revision: sha, Steps: []coordinator.StepSpec{{Name: "a", Capability: "x.y"}}},
 			"bad revision":              {ProjectID: "p1", Key: "e", Workflow: &w, Revision: "main"},
 		} {
+			req.By = Requester // so the request fails for the reason the case names
 			if _, _, err := c.Submit(ctx, req); !errors.Is(err, domain.ErrInvalid) {
 				t.Fatalf("%s: got %v, want ErrInvalid", name, err)
 			}
@@ -188,7 +189,7 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 	}
 	varSubmit := func(c *coordinator.Coordinator, key string, vars map[string]string) (coordinator.Submitted, error) {
 		w := withVars()
-		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: key, Workflow: &w, Revision: sha, Variables: vars})
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: key, Workflow: &w, Revision: sha, Variables: vars})
 		return got, err
 	}
 
@@ -234,7 +235,7 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		if err != nil {
 			t.Fatal(err)
 		}
-		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Workflow: ptr(withVars()), Revision: sha, Variables: map[string]string{"intent": "a"}})
+		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Workflow: ptr(withVars()), Revision: sha, Variables: map[string]string{"intent": "a"}})
 		if err != nil || !replayed || again.Execution.ID != first.Execution.ID {
 			t.Fatalf("replay: %v replayed=%v", err, replayed)
 		}
@@ -258,12 +259,12 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 			"placeholder names no var": {unknown, nil},
 		} {
 			w := tc.w
-			_, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "bad", Workflow: &w, Variables: tc.vars})
+			_, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "bad", Workflow: &w, Variables: tc.vars})
 			if !errors.Is(err, domain.ErrInvalid) {
 				t.Fatalf("%s: got %v, want ErrInvalid", name, err)
 			}
 		}
-		_, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "bad", Variables: map[string]string{"a": "b"}, Steps: []coordinator.StepSpec{{Name: "a", Capability: "x.y"}}})
+		_, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "bad", Variables: map[string]string{"a": "b"}, Steps: []coordinator.StepSpec{{Name: "a", Capability: "x.y"}}})
 		if !errors.Is(err, domain.ErrInvalid) {
 			t.Fatalf("variables without a workflow: got %v", err)
 		}

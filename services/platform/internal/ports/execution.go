@@ -17,6 +17,10 @@ type ExecutionChange struct {
 	// Command, when set, is stored in the same write. A record with the same Name and Key makes
 	// the whole write fail with domain.ErrDuplicateCommand.
 	Command *domain.CommandRecord
+	// Approvals are Approvals of this Execution that change in the same write, each at the
+	// version it was read at (an Approval is created by CreateOnce, never here). The store
+	// records the audit event of each change in the same write.
+	Approvals []domain.Approval
 }
 
 // ExecutionStore keeps Executions, their Steps and their event log in the Platform store
@@ -29,7 +33,10 @@ type ExecutionStore interface {
 	Create(ctx context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error)
 	// CreateOnce is Create plus the command record, in one write. It returns
 	// domain.ErrDuplicateCommand, and writes nothing, when the record's Name and Key are stored.
-	CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error)
+	//
+	// approvals are stored with the Execution, at version 1, each with its `approval.requested`
+	// audit event in the same write; each must be requested and gate a Step in steps.
+	CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals ...domain.Approval) (domain.Execution, []domain.StepExecution, error)
 	// Command returns the stored record for (name, key), or domain.ErrNotFound.
 	Command(ctx context.Context, name, key string) (domain.CommandRecord, error)
 	// Commit applies the change and returns the stored rows with their new versions (the
@@ -43,6 +50,13 @@ type ExecutionStore interface {
 	Open(ctx context.Context) ([]string, error)
 	// Events returns the Execution's log in Seq order.
 	Events(ctx context.Context, id string) ([]domain.ExecutionEvent, error)
+	// Approval returns the Approval, or domain.ErrNotFound.
+	Approval(ctx context.Context, id string) (domain.Approval, error)
+	// Approvals returns the Execution's Approvals in request order, or domain.ErrNotFound for an
+	// Execution that does not exist.
+	Approvals(ctx context.Context, executionID string) ([]domain.Approval, error)
+	// AuditLog is the log that records every Approval change made through this store.
+	AuditLog
 	ExecutionQueue
 }
 

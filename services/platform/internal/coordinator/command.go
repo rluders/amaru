@@ -43,6 +43,11 @@ type SubmitRequest struct {
 	// store yet because Projects and Environments are not looked up here.
 	ProjectID     string
 	EnvironmentID string
+	// By is who submits and Trigger how the Execution was started (a domain.Trigger* value; empty
+	// is manual). Both are required for Policy: By needs an id, and an Agent, trigger or plugin
+	// needs a human sponsor. A request without them is refused, never run unattributed.
+	By      domain.Principal
+	Trigger string
 	// Steps are the Steps to run when no Workflow is given. Exactly one of Steps and Workflow is set.
 	Steps []StepSpec
 	// Workflow is the definition to run. Submit pins a snapshot of it to the Execution
@@ -64,13 +69,17 @@ type SubmitRequest struct {
 type Submitted struct {
 	Execution domain.Execution       `json:"execution"`
 	Steps     []domain.StepExecution `json:"steps"`
+	// Approvals are the requested Approvals of the Steps that wait for a person.
+	Approvals []domain.Approval `json:"approvals,omitempty"`
 }
 
 // Submit creates an Execution whose Steps are all queued, and wakes Serve. It returns replayed
 // true, with the original outcome, when Key was used before with the same Steps.
 //
-// Every Step is queued at once, even when a Workflow gives them an order; edges, Approval gates
-// and Policy will decide which Steps start queued.
+// Every Step Policy allows is queued at once, even when a Workflow gives them an order; edges and
+// Approval gates will decide which Steps start queued. A Step Policy does not allow is created
+// refused, with the reason (see policy.go), and the Execution is still created so the refusal is
+// on record. Nothing finishes an Execution whose Steps are all refused yet: it stays queued.
 func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted, bool, error) {
 	pin, specs, err := plan(req)
 	if err != nil {
@@ -81,12 +90,17 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 			return Submitted{}, false, fmt.Errorf("step %s: %w", sp.Name, err)
 		}
 	}
+	if req.Trigger == "" {
+		req.Trigger = domain.TriggerManual
+	}
 	fp, err := fingerprint(struct {
 		Project, Environment string
+		By                   domain.Principal
+		Trigger              string
 		Steps                []StepSpec
 		Definition           *domain.DefinitionPin
 		Variables            map[string]string
-	}{req.ProjectID, req.EnvironmentID, specs, pin, req.Variables})
+	}{req.ProjectID, req.EnvironmentID, req.By, req.Trigger, specs, pin, req.Variables})
 	if err != nil {
 		return Submitted{}, false, err
 	}
@@ -99,13 +113,29 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		now := c.now()
 		id := c.newExecutionID()
 		// The store creates every row at version 1, so the outcome can be recorded before the write.
-		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, ProjectID: req.ProjectID, EnvironmentID: req.EnvironmentID, State: domain.ExecQueued, Definition: pin, CreatedAt: now}}
+		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, ProjectID: req.ProjectID, EnvironmentID: req.EnvironmentID, State: domain.ExecQueued, RequestedBy: req.By, Trigger: req.Trigger, Definition: pin, CreatedAt: now}}
 		for _, sp := range specs {
 			st := domain.StepExecution{
 				ID: id + "." + sp.Name, ExecutionID: id, Version: 1, State: domain.StepPending,
 				Capability: sp.Capability, InputsJSON: sp.Inputs, Idempotent: sp.Idempotent, TimeoutSeconds: sp.TimeoutSeconds,
 			}
-			if err := st.Plan(); err != nil {
+			preq := policyRequest(req.By, req.Trigger, req.ProjectID, pin, sp.Capability)
+			res, err := c.decide(ctx, preq)
+			if err != nil {
+				return Submitted{}, false, fmt.Errorf("step %s: %w", sp.Name, err)
+			}
+			switch res.Decision {
+			case domain.DecisionAllow:
+				err = st.Plan()
+			case domain.DecisionRequireApproval:
+				var a domain.Approval
+				if a, err = c.request(now, out.Execution, &st, req.By); err == nil {
+					out.Approvals = append(out.Approvals, a)
+				}
+			default:
+				err = st.Refuse(now, refusal(preq, res))
+			}
+			if err != nil {
 				return Submitted{}, false, err
 			}
 			out.Steps = append(out.Steps, st)
@@ -114,7 +144,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		if err != nil {
 			return Submitted{}, false, fmt.Errorf("encode outcome: %w", err)
 		}
-		_, _, err = c.store.CreateOnce(ctx, domain.CommandRecord{Name: CmdSubmit, Key: req.Key, Fingerprint: fp, Result: result, At: now}, out.Execution, out.Steps)
+		_, _, err = c.store.CreateOnce(ctx, domain.CommandRecord{Name: CmdSubmit, Key: req.Key, Fingerprint: fp, Result: result, At: now}, out.Execution, out.Steps, out.Approvals...)
 		if errors.Is(err, domain.ErrDuplicateCommand) {
 			continue
 		}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -43,14 +44,14 @@ func timePtr(n sql.NullTime) *time.Time {
 func nullString(s string) sql.NullString { return sql.NullString{String: s, Valid: s != ""} }
 
 func (s *ExecutionStore) Create(ctx context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
-	return s.create(ctx, nil, e, steps)
+	return s.create(ctx, nil, e, steps, nil)
 }
 
-func (s *ExecutionStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals ...domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if err := rec.Valid(); err != nil {
 		return domain.Execution{}, nil, err
 	}
-	return s.create(ctx, &rec, e, steps)
+	return s.create(ctx, &rec, e, steps, approvals)
 }
 
 // insertCommand stores the record in the caller's transaction. A taken (name, key) is
@@ -83,7 +84,7 @@ func (s *ExecutionStore) Command(ctx context.Context, name, key string) (domain.
 	return rec, nil
 }
 
-func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals []domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if e.ID == "" {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution needs an id", domain.ErrInvalid)
 	}
@@ -93,6 +94,11 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 			return domain.Execution{}, nil, fmt.Errorf("%w: step %q does not belong to execution %s", domain.ErrInvalid, st.ID, e.ID)
 		}
 		seen[st.ID] = true
+	}
+	for _, a := range approvals {
+		if a.Gate.ExecutionID != e.ID || !seen[a.Gate.StepID] {
+			return domain.Execution{}, nil, fmt.Errorf("%w: approval %s does not gate a step of execution %s", domain.ErrInvalid, a.ID, e.ID)
+		}
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -111,12 +117,16 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 		code, msg = nullString(e.Error.Code), nullString(e.Error.Message)
 	}
 	def := pinArgs(e.Definition)
+	by, err := json.Marshal(e.RequestedBy)
+	if err != nil {
+		return domain.Execution{}, nil, fmt.Errorf("postgres: encode requester: %w", err)
+	}
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO executions (id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 		e.ID, e.Version, string(e.State), e.CreatedAt.UTC(), nullTime(e.StartedAt), nullTime(e.EndedAt), code, msg, e.ProjectID, e.EnvironmentID,
-		def.workflow, def.revision, def.hash, def.snapshot)
+		def.workflow, def.revision, def.hash, def.snapshot, by, e.Trigger)
 	if err != nil {
 		return domain.Execution{}, nil, mapCreateErr(err, "execution", e.ID)
 	}
@@ -127,6 +137,11 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 			return domain.Execution{}, nil, mapCreateErr(err, "step", st.ID)
 		}
 		out[i] = st
+	}
+	for _, a := range approvals {
+		if err := insertApproval(ctx, tx, a); err != nil {
+			return domain.Execution{}, nil, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return domain.Execution{}, nil, fmt.Errorf("postgres: create execution: %w", err)
@@ -261,6 +276,22 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 		out.Steps[i] = st
 	}
 
+	if len(c.Approvals) > 0 {
+		as := slices.Clone(c.Approvals)
+		sort.Slice(as, func(a, b int) bool { return as[a].ID < as[b].ID })
+		stored, err := s.updateApprovals(ctx, tx, execID, as)
+		if err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		byID := map[string]domain.Approval{}
+		for _, a := range stored {
+			byID[a.ID] = a
+		}
+		for _, a := range c.Approvals {
+			out.Approvals = append(out.Approvals, byID[a.ID])
+		}
+	}
+
 	first := lastSeq - int64(len(c.Events))
 	for i, ev := range c.Events {
 		ev.ExecutionID, ev.Seq = execID, first+int64(i)+1
@@ -309,11 +340,12 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	var state string
 	var started, ended sql.NullTime
 	var code, msg, defWorkflow, defRevision, defHash, defSnapshot sql.NullString
+	var requestedBy []byte
 	err = tx.QueryRowContext(ctx,
 		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot FROM executions WHERE id = $1`, id).
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind FROM executions WHERE id = $1`, id).
 		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg, &e.ProjectID, &e.EnvironmentID,
-			&defWorkflow, &defRevision, &defHash, &defSnapshot)
+			&defWorkflow, &defRevision, &defHash, &defSnapshot, &requestedBy, &e.Trigger)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	}
@@ -323,6 +355,9 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	e.State, e.StartedAt, e.EndedAt = domain.ExecState(state), timePtr(started), timePtr(ended)
 	if defWorkflow.Valid {
 		e.Definition = &domain.DefinitionPin{WorkflowID: defWorkflow.String, Revision: defRevision.String, Hash: defHash.String, Snapshot: []byte(defSnapshot.String)}
+	}
+	if err := json.Unmarshal(requestedBy, &e.RequestedBy); err != nil {
+		return domain.Execution{}, nil, fmt.Errorf("postgres: decode requester of execution %s: %w", id, err)
 	}
 	if code.Valid {
 		e.Error = &domain.ExecError{Code: code.String, Message: msg.String}
