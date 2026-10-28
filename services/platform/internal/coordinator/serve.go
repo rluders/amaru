@@ -325,6 +325,9 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 		}
 		var kind string
 		var ferr error
+		// The Worker removed the secret values it knew; the Platform removes known patterns again
+		// before anything is stored (DATA_ARCHITECTURE §5).
+		detail, _ := c.redactor.Redact(m.ErrorDetail)
 		switch m.Outcome {
 		case ports.OutcomeSucceeded:
 			kind, ferr = domain.EventStepSucceeded, st.Finish(now, domain.StepSucceeded, nil)
@@ -334,14 +337,14 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 			if m.ErrorCode == domain.CodeTimeout {
 				// ADR-0044: a Step past its timeout is timed_out, never retried; a person decides.
 				kind, ferr = domain.EventStepTimedOut, st.TimeOut(now)
-				st.Error = &domain.ExecError{Code: domain.CodeTimeout, Message: m.ErrorDetail}
+				st.Error = &domain.ExecError{Code: domain.CodeTimeout, Message: detail}
 				break
 			}
 			code := m.ErrorCode
 			if code == "" {
 				code = "step_failed"
 			}
-			kind, ferr = domain.EventStepFailed, st.Finish(now, domain.StepFailed, &domain.ExecError{Code: code, Message: m.ErrorDetail})
+			kind, ferr = domain.EventStepFailed, st.Finish(now, domain.StepFailed, &domain.ExecError{Code: code, Message: detail})
 		default:
 			return nil, fmt.Errorf("%w: result outcome %d", domain.ErrInvalid, m.Outcome)
 		}

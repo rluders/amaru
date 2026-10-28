@@ -3,6 +3,7 @@ package coordtest
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -198,6 +199,28 @@ func AssignmentSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		_, st := s.step("e1", "s1")
 		if st.State != domain.StepFailed || st.Error == nil || st.Error.Code != "tests_failed" || st.Error.Message != "2 failed" {
 			t.Fatalf("step: %+v", st)
+		}
+	})
+
+	t.Run("a failed result is redacted before it is stored", func(t *testing.T) {
+		store := newStore(t)
+		queued(t, store, "e1", t0, "s1")
+		s := startSession(t, store, newCoordinator(store), nl, "w1")
+		s.send(ports.Offer{FreeSlots: 1})
+		a := s.assignment()
+		s.send(ports.AcceptAttempt{AttemptID: a.AttemptID, FencingToken: 1})
+		// built from parts so no literal here looks like a real credential
+		secret := "ghp_" + strings.Repeat("k3", 18)
+		s.send(ports.Result{AttemptID: a.AttemptID, FencingToken: 1, Outcome: ports.OutcomeFailed, ErrorCode: "push_failed", ErrorDetail: "push with " + secret + " denied"})
+		s.recv()
+		_, st := s.step("e1", "s1")
+		if st.Error == nil || strings.Contains(st.Error.Message, secret) || st.Error.Message != "push with "+domain.RedactionMarker+" denied" {
+			t.Fatalf("stored error: %+v", st.Error)
+		}
+		for _, ev := range s.events("e1") {
+			if strings.Contains(ev.Reason, secret) {
+				t.Fatalf("event %s carries the secret", ev.Kind)
+			}
 		}
 	})
 
