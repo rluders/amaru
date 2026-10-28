@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
@@ -31,7 +32,7 @@ type rig struct {
 func newRig(t *testing.T, w *embedded.Worker, lease time.Duration) *rig {
 	t.Helper()
 	store := fakes.NewExecutionStore()
-	c := coordinator.New(store, time.Now, coordinator.WithLeasePeriod(lease))
+	c := coordinator.New(store, time.Now, coordtest.Permissive, coordinator.WithLeasePeriod(lease))
 	pl, wl := inproc.Pair()
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &rig{t: t, store: store, c: c, pl: pl, wl: wl, ctx: ctx, done: make(chan error, 1)}
@@ -45,7 +46,7 @@ func newRig(t *testing.T, w *embedded.Worker, lease time.Duration) *rig {
 
 func (r *rig) queue(execID string, steps ...string) {
 	r.t.Helper()
-	e := domain.Execution{ID: execID, State: domain.ExecQueued, CreatedAt: created}
+	e := domain.Execution{ID: execID, State: domain.ExecQueued, CreatedAt: created, RequestedBy: coordtest.Requester, Trigger: domain.TriggerManual}
 	ss := make([]domain.StepExecution, len(steps))
 	for i, id := range steps {
 		ss[i] = domain.StepExecution{ID: id, ExecutionID: execID, State: domain.StepPending, Capability: "code.test"}
@@ -229,7 +230,7 @@ func TestWorkerNeedsARunner(t *testing.T) {
 // Assignment carries a real Deadline.
 func (r *rig) submitTimed(key string, timeoutSeconds int) string {
 	r.t.Helper()
-	got, _, err := r.c.Submit(r.ctx, coordinator.SubmitRequest{Key: key, ProjectID: "p1", Steps: []coordinator.StepSpec{
+	got, _, err := r.c.Submit(r.ctx, coordinator.SubmitRequest{By: coordtest.Requester, Key: key, ProjectID: "p1", Steps: []coordinator.StepSpec{
 		{Name: "s", Capability: "code.test", TimeoutSeconds: timeoutSeconds}}})
 	if err != nil {
 		r.t.Fatal(err)
@@ -240,7 +241,7 @@ func (r *rig) submitTimed(key string, timeoutSeconds int) string {
 func newTimedRig(t *testing.T, tool time.Duration, run embedded.RunnerFunc) *rig {
 	t.Helper()
 	store := fakes.NewExecutionStore()
-	c := coordinator.New(store, time.Now, coordinator.WithTimeouts(domain.Timeouts{Agent: tool, Tool: tool, Max: time.Hour}))
+	c := coordinator.New(store, time.Now, coordtest.Permissive, coordinator.WithTimeouts(domain.Timeouts{Agent: tool, Tool: tool, Max: time.Hour}))
 	pl, wl := inproc.Pair()
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &rig{t: t, store: store, c: c, pl: pl, wl: wl, ctx: ctx, done: make(chan error, 1)}

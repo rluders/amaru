@@ -172,6 +172,16 @@ func (c *Coordinator) leaseOne(ctx context.Context, workerID string) (ports.Assi
 	}
 	used := countUsage(active)
 	for _, ref := range refs {
+		reason, perr := c.policyBlock(ctx, ref)
+		if perr != nil {
+			return ports.Assignment{}, false, fmt.Errorf("policy for step %s: %w", ref.StepID, perr)
+		}
+		if reason != "" {
+			if err := c.wait(ctx, ref, reason); err != nil {
+				return ports.Assignment{}, false, err
+			}
+			continue
+		}
 		if reason := c.limits.blocked(used, ref); reason != "" {
 			if err := c.wait(ctx, ref, reason); err != nil {
 				return ports.Assignment{}, false, err

@@ -15,6 +15,7 @@ import (
 func limited(store ports.ExecutionStore, opts ...coordinator.Option) *coordinator.Coordinator {
 	var attempts, execs atomic.Int64
 	return coordinator.New(store, clock, append([]coordinator.Option{
+		Permissive,
 		coordinator.WithLeasePeriod(leasePeriod),
 		coordinator.WithAttemptIDs(func() string { return fmt.Sprintf("att-%d", attempts.Add(1)) }),
 		coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("e-%d", execs.Add(1)) }),
@@ -27,7 +28,7 @@ func submit(t *testing.T, c *coordinator.Coordinator, key, project, env string, 
 	for i := range steps {
 		steps[i] = coordinator.StepSpec{Name: fmt.Sprintf("s%d", i+1), Capability: "code.test"}
 	}
-	got, _, err := c.Submit(context.Background(), coordinator.SubmitRequest{Key: key, ProjectID: project, EnvironmentID: env, Steps: steps})
+	got, _, err := c.Submit(context.Background(), coordinator.SubmitRequest{By: Requester, Key: key, ProjectID: project, EnvironmentID: env, Steps: steps})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
@@ -83,7 +84,7 @@ type platform struct {
 
 func startPlatform(t *testing.T, store *fakes.ExecutionStore, run embedded.Runner) *platform {
 	t.Helper()
-	c := coordinator.New(store, time.Now)
+	c := coordinator.New(store, time.Now, coordtest.Permissive)
 	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := c.Reconcile(ctx); err != nil {
 		t.Fatal(err)
@@ -120,7 +121,7 @@ func stepOf(t *testing.T, store *fakes.ExecutionStore, exec string) domain.StepE
 
 func submitJob(t *testing.T, p *platform) string {
 	t.Helper()
-	got, _, err := p.c.Submit(context.Background(), coordinator.SubmitRequest{Key: "k1", ProjectID: "p1",
+	got, _, err := p.c.Submit(context.Background(), coordinator.SubmitRequest{By: coordtest.Requester, Key: "k1", ProjectID: "p1",
 		Steps: []coordinator.StepSpec{{Name: "render", Capability: "code.test"}}})
 	if err != nil {
 		t.Fatal(err)

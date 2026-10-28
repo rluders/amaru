@@ -111,7 +111,7 @@ func (s *session) events(exec string) []domain.ExecutionEvent {
 
 func queued(t *testing.T, store ports.ExecutionStore, execID string, created time.Time, steps ...string) {
 	t.Helper()
-	e := domain.Execution{ID: execID, State: domain.ExecQueued, CreatedAt: created}
+	e := domain.Execution{ID: execID, State: domain.ExecQueued, CreatedAt: created, RequestedBy: Requester, Trigger: domain.TriggerManual}
 	ss := make([]domain.StepExecution, len(steps))
 	for i, id := range steps {
 		ss[i] = domain.StepExecution{ID: id, ExecutionID: execID, State: domain.StepPending, Capability: "code.test", InputsJSON: []byte(`{"n":1}`), Idempotent: i == 0}
@@ -132,7 +132,7 @@ func queued(t *testing.T, store ports.ExecutionStore, execID string, created tim
 
 func newCoordinator(store ports.ExecutionStore) *coordinator.Coordinator {
 	var n atomic.Int64
-	return coordinator.New(store, clock,
+	return coordinator.New(store, clock, Permissive,
 		coordinator.WithLeasePeriod(leasePeriod),
 		coordinator.WithAttemptIDs(func() string { return fmt.Sprintf("att-%d", n.Add(1)) }))
 }
@@ -289,7 +289,7 @@ func AssignmentSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		queued(t, store, "e1", t0, "s1")
 		clk := now
 		var mu sync.Mutex
-		c := coordinator.New(store, func() time.Time { mu.Lock(); defer mu.Unlock(); return clk },
+		c := coordinator.New(store, func() time.Time { mu.Lock(); defer mu.Unlock(); return clk }, Permissive,
 			coordinator.WithLeasePeriod(leasePeriod), coordinator.WithAttemptIDs(func() string { return "att-1" }))
 		s := startSession(t, store, c, nl, "w1")
 		s.send(ports.Offer{FreeSlots: 1})

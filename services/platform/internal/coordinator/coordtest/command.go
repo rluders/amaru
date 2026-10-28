@@ -30,14 +30,14 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	// "second answer".
 	build := func(t *testing.T, s ports.ExecutionStore) (*coordinator.Coordinator, *atomic.Int32) {
 		var n atomic.Int32
-		c := coordinator.New(s, clock, coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("exec-%d", n.Add(1)) }))
+		c := coordinator.New(s, clock, Permissive, coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("exec-%d", n.Add(1)) }))
 		return c, &n
 	}
 
 	t.Run("a Submit creates a queued Execution with its Steps", func(t *testing.T) {
 		s := newStore(t)
 		c, _ := build(t, s)
-		got, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		got, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil || replayed {
 			t.Fatalf("got replayed=%v, %v", replayed, err)
 		}
@@ -61,11 +61,11 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("the same key and request returns the original result", func(t *testing.T) {
 		s := newStore(t)
 		c, made := build(t, s)
-		first, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		first, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil {
 			t.Fatal(err)
 		}
-		second, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		second, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil || !replayed {
 			t.Fatalf("got replayed=%v, %v", replayed, err)
 		}
@@ -85,7 +85,7 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("a replay returns the original outcome, not the state since", func(t *testing.T) {
 		s := newStore(t)
 		c, _ := build(t, s)
-		first, _, _ := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		first, _, _ := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		e, _, _ := s.Get(ctx, first.Execution.ID)
 		if err := e.Finish(clock(), domain.ExecCancelled, nil); err != nil {
 			t.Fatal(err)
@@ -93,7 +93,7 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &e}); err != nil {
 			t.Fatal(err)
 		}
-		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil || !replayed || again.Execution.State != domain.ExecQueued {
 			t.Fatalf("got %+v replayed=%v, %v", again.Execution, replayed, err)
 		}
@@ -102,8 +102,8 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("a different key is a different command", func(t *testing.T) {
 		s := newStore(t)
 		c, _ := build(t, s)
-		a, _, _ := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
-		b, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k2", Steps: steps})
+		a, _, _ := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
+		b, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k2", Steps: steps})
 		if err != nil || replayed || a.Execution.ID == b.Execution.ID {
 			t.Fatalf("got %+v replayed=%v, %v", b.Execution, replayed, err)
 		}
@@ -112,11 +112,11 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("a key reused for another request is refused and changes nothing", func(t *testing.T) {
 		s := newStore(t)
 		c, _ := build(t, s)
-		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps}); err != nil {
+		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps}); err != nil {
 			t.Fatal(err)
 		}
 		other := []coordinator.StepSpec{{Name: "build", Capability: "code.lint"}}
-		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: other}); !errors.Is(err, domain.ErrKeyReused) {
+		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: other}); !errors.Is(err, domain.ErrKeyReused) {
 			t.Fatalf("got %v, want ErrKeyReused", err)
 		}
 		if open, _ := s.Open(ctx); len(open) != 1 {
@@ -135,6 +135,7 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 			"no name":         {Key: "k", ProjectID: "p1", Steps: []coordinator.StepSpec{{Capability: "c"}}},
 			"duplicate names": {Key: "k", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "x", Capability: "c"}, {Name: "x", Capability: "c"}}},
 		} {
+			req.By = Requester // so the request fails for the reason the case names
 			if _, _, err := c.Submit(ctx, req); !errors.Is(err, domain.ErrInvalid) {
 				t.Fatalf("%s: got %v, want ErrInvalid", name, err)
 			}
@@ -147,13 +148,13 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("the answer survives a restart", func(t *testing.T) {
 		s := newStore(t)
 		c, _ := build(t, s)
-		first, _, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		first, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil {
 			t.Fatal(err)
 		}
 		// The caller never saw the answer, the Platform restarted, the caller retries.
 		restarted, _ := build(t, reopen(t, s))
-		again, replayed, err := restarted.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "k1", Steps: steps})
+		again, replayed, err := restarted.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "k1", Steps: steps})
 		if err != nil || !replayed || again.Execution.ID != first.Execution.ID {
 			t.Fatalf("got %+v replayed=%v, %v", again.Execution, replayed, err)
 		}
@@ -174,7 +175,7 @@ func CommandSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				got, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{ProjectID: "p1", Key: "race", Steps: steps})
+				got, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "race", Steps: steps})
 				ids[i], fresh[i], errs[i] = got.Execution.ID, !replayed, err
 			}()
 		}

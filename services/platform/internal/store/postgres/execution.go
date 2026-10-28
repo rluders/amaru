@@ -111,12 +111,16 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 		code, msg = nullString(e.Error.Code), nullString(e.Error.Message)
 	}
 	def := pinArgs(e.Definition)
+	by, err := json.Marshal(e.RequestedBy)
+	if err != nil {
+		return domain.Execution{}, nil, fmt.Errorf("postgres: encode requester: %w", err)
+	}
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO executions (id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 		e.ID, e.Version, string(e.State), e.CreatedAt.UTC(), nullTime(e.StartedAt), nullTime(e.EndedAt), code, msg, e.ProjectID, e.EnvironmentID,
-		def.workflow, def.revision, def.hash, def.snapshot)
+		def.workflow, def.revision, def.hash, def.snapshot, by, e.Trigger)
 	if err != nil {
 		return domain.Execution{}, nil, mapCreateErr(err, "execution", e.ID)
 	}
@@ -309,11 +313,12 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	var state string
 	var started, ended sql.NullTime
 	var code, msg, defWorkflow, defRevision, defHash, defSnapshot sql.NullString
+	var requestedBy []byte
 	err = tx.QueryRowContext(ctx,
 		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot FROM executions WHERE id = $1`, id).
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind FROM executions WHERE id = $1`, id).
 		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg, &e.ProjectID, &e.EnvironmentID,
-			&defWorkflow, &defRevision, &defHash, &defSnapshot)
+			&defWorkflow, &defRevision, &defHash, &defSnapshot, &requestedBy, &e.Trigger)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	}
@@ -323,6 +328,9 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	e.State, e.StartedAt, e.EndedAt = domain.ExecState(state), timePtr(started), timePtr(ended)
 	if defWorkflow.Valid {
 		e.Definition = &domain.DefinitionPin{WorkflowID: defWorkflow.String, Revision: defRevision.String, Hash: defHash.String, Snapshot: []byte(defSnapshot.String)}
+	}
+	if err := json.Unmarshal(requestedBy, &e.RequestedBy); err != nil {
+		return domain.Execution{}, nil, fmt.Errorf("postgres: decode requester of execution %s: %w", id, err)
 	}
 	if code.Valid {
 		e.Error = &domain.ExecError{Code: code.String, Message: msg.String}

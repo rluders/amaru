@@ -508,6 +508,27 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 		}
 	})
 
+	t.Run("the requester and trigger are stored with the Execution", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		e.RequestedBy = domain.Principal{Kind: domain.PrincipalTrigger, ID: "hook-1", Sponsor: "u1"}
+		e.Trigger = domain.TriggerWebhook
+		mustCreate(t, s, e, steps)
+		got, _, err := reopen(t, s).Get(ctx, "e1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.RequestedBy != e.RequestedBy || got.Trigger != domain.TriggerWebhook {
+			t.Fatalf("got %+v %q", got.RequestedBy, got.Trigger)
+		}
+		// An Execution created without one reads back with the zero requester.
+		e2, steps2 := newExec("e2", "s2")
+		mustCreate(t, s, e2, steps2)
+		if got, _, _ := reopen(t, s).Get(ctx, "e2"); got.RequestedBy != (domain.Principal{}) || got.Trigger != "" {
+			t.Fatalf("zero requester read back as %+v %q", got.RequestedBy, got.Trigger)
+		}
+	})
+
 	t.Run("scopes are stored with the Execution, listed with Queued and Active, and never change", func(t *testing.T) {
 		s := newStore(t)
 		e, steps := newExec("e1", "s1", "s2")

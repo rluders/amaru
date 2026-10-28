@@ -47,6 +47,11 @@ type Execution struct {
 	ProjectID     string    `json:"projectId,omitempty"`
 	EnvironmentID string    `json:"environmentId,omitempty"`
 	State         ExecState `json:"state"`
+	// RequestedBy is who submitted the Execution and Trigger how it was started; Policy is
+	// evaluated for them before each Step starts. Both are set when the Execution is created
+	// and never change.
+	RequestedBy Principal `json:"requestedBy"`
+	Trigger     string    `json:"trigger,omitempty"`
 	// Definition is the Workflow definition the Execution runs, pinned when it is created and
 	// never changed (FEAT-WFL-002). Nil for an Execution submitted without a Workflow.
 	Definition *DefinitionPin `json:"definition,omitempty"`
