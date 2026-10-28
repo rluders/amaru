@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -14,9 +15,13 @@ import (
 type GrantStore struct {
 	mu   sync.Mutex
 	byID map[string]domain.Grant
+	log  []domain.AuditEvent
 }
 
-var _ ports.GrantStore = (*GrantStore)(nil)
+var (
+	_ ports.GrantStore = (*GrantStore)(nil)
+	_ ports.AuditLog   = (*GrantStore)(nil)
+)
 
 func NewGrantStore() *GrantStore { return &GrantStore{byID: map[string]domain.Grant{}} }
 
@@ -29,8 +34,13 @@ func (s *GrantStore) Create(_ context.Context, g domain.Grant) (domain.Grant, er
 	if _, ok := s.byID[g.ID]; ok {
 		return domain.Grant{}, fmt.Errorf("%w: grant %s", domain.ErrExists, g.ID)
 	}
+	ev, err := domain.GrantAuditEvent(nil, g, time.Now().UTC())
+	if err != nil {
+		return domain.Grant{}, err
+	}
 	g.Version = 1
 	s.byID[g.ID] = cloneGrant(g)
+	s.appendAudit(ev)
 	return cloneGrant(g), nil
 }
 
@@ -65,6 +75,13 @@ func (s *GrantStore) Update(_ context.Context, g domain.Grant) (domain.Grant, er
 	}
 	if old.Status != domain.GrantActive && g.Status != old.Status {
 		return domain.Grant{}, fmt.Errorf("%w: grant %s is %s", domain.ErrInvalidTransition, g.ID, old.Status)
+	}
+	if g.Status != old.Status {
+		ev, err := domain.GrantAuditEvent(&old, g, time.Now().UTC())
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		s.appendAudit(ev)
 	}
 	g.Version = old.Version + 1
 	s.byID[g.ID] = cloneGrant(g)
@@ -111,4 +128,27 @@ func sameGrant(a, b domain.Grant) bool {
 		a.Resource == b.Resource && a.DefinitionHash == b.DefinitionHash && a.GrantedBy == b.GrantedBy &&
 		a.CreatedAt.Equal(b.CreatedAt) && ((a.ExpiresAt == nil) == (b.ExpiresAt == nil)) &&
 		(a.ExpiresAt == nil || a.ExpiresAt.Equal(*b.ExpiresAt))
+}
+
+// appendAudit stores ev with the next Seq. The caller holds s.mu and has already checked the
+// write it records, so the Grant and its event change together.
+func (s *GrantStore) appendAudit(ev domain.AuditEvent) {
+	ev.Seq = int64(len(s.log)) + 1
+	s.log = append(s.log, ev)
+}
+
+// Audit implements ports.AuditLog.
+func (s *GrantStore) Audit(_ context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
+	if limit <= 0 {
+		limit = 1000
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := []domain.AuditEvent{}
+	for _, ev := range s.log {
+		if ev.Seq > after && len(out) < limit {
+			out = append(out, ev)
+		}
+	}
+	return out, nil
 }

@@ -9,10 +9,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -74,6 +76,76 @@ func TestProjectStoreConformance(t *testing.T) {
 
 func TestGrantStoreConformance(t *testing.T) {
 	porttest.GrantStore(t, func(t *testing.T) ports.GrantStore { return NewGrantStore(migratedDB(t)) })
+}
+
+func TestAuditTrailConformance(t *testing.T) {
+	porttest.AuditTrail(t, func(t *testing.T) ports.GrantAuditStore { return NewGrantStore(migratedDB(t)) })
+}
+
+func TestAuditLogIsAppendOnlyAndGaplessInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	s := NewGrantStore(db)
+	ctx := context.Background()
+	mk := func(id string) domain.Grant {
+		return domain.Grant{ID: id, Level: domain.GrantOrganization, Subject: domain.Subject{Kind: domain.SubjectAgent, ID: "a"},
+			Capabilities: []domain.Capability{"mcp.call"}, GrantedBy: "u1", CreatedAt: time.Date(2026, 10, 28, 9, 0, 0, 0, time.UTC), Status: domain.GrantActive}
+	}
+	if _, err := s.Create(ctx, mk("g1")); err != nil {
+		t.Fatal(err)
+	}
+	// A refused write rolls back its event and gives its number back: no gap.
+	if _, err := s.Create(ctx, mk("g1")); !errors.Is(err, domain.ErrExists) {
+		t.Fatalf("duplicate: %v", err)
+	}
+	if _, err := s.Create(ctx, mk("g2")); err != nil {
+		t.Fatal(err)
+	}
+	evs, err := s.Audit(ctx, 0, 0)
+	if err != nil || len(evs) != 2 || evs[0].Seq != 1 || evs[1].Seq != 2 {
+		t.Fatalf("events %+v, %v: want seq 1 and 2", evs, err)
+	}
+	for name, q := range map[string]string{
+		"edit":   `UPDATE audit_events SET actor = 'x' WHERE seq = 1`,
+		"delete": `DELETE FROM audit_events WHERE seq = 1`,
+	} {
+		if _, err := db.Exec(q); err == nil {
+			t.Errorf("%s of an audit event was allowed", name)
+		}
+	}
+}
+
+func TestAuditSeqHasNoGapsUnderConcurrentWriters(t *testing.T) {
+	s := NewGrantStore(migratedDB(t))
+	ctx := context.Background()
+	const n = 12
+	var wg sync.WaitGroup
+	errs := make(chan error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := s.Create(ctx, domain.Grant{ID: fmt.Sprintf("g%02d", i), Level: domain.GrantOrganization,
+				Subject: domain.Subject{Kind: domain.SubjectAgent, ID: "a"}, Capabilities: []domain.Capability{"mcp.call"},
+				GrantedBy: "u1", CreatedAt: time.Date(2026, 10, 28, 9, 0, 0, 0, time.UTC), Status: domain.GrantActive})
+			errs <- err
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	evs, err := s.Audit(ctx, 0, 0)
+	if err != nil || len(evs) != n {
+		t.Fatalf("%d events, %v; want %d", len(evs), err, n)
+	}
+	for i, ev := range evs {
+		if ev.Seq != int64(i+1) {
+			t.Fatalf("event %d has seq %d: not gapless", i, ev.Seq)
+		}
+	}
 }
 
 func TestGrantsAreAppendOnlyInTheDatabase(t *testing.T) {
