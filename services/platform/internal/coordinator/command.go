@@ -35,8 +35,13 @@ type StepSpec struct {
 
 // SubmitRequest creates one Execution. Key is the caller's idempotency key and is required.
 type SubmitRequest struct {
-	Key   string
-	Steps []StepSpec
+	Key string
+	// ProjectID is required: every Execution belongs to a Project, and the per-Project limit
+	// counts in it. EnvironmentID is optional. Both are opaque ids; neither is checked against a
+	// store yet because Projects and Environments are not looked up here.
+	ProjectID     string
+	EnvironmentID string
+	Steps         []StepSpec
 }
 
 // Submitted is the outcome of Submit: the Execution and its Steps as created.
@@ -54,7 +59,10 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	if err := validateSubmit(req); err != nil {
 		return Submitted{}, false, err
 	}
-	fp, err := fingerprint(req.Steps)
+	fp, err := fingerprint(struct {
+		Project, Environment string
+		Steps                []StepSpec
+	}{req.ProjectID, req.EnvironmentID, req.Steps})
 	if err != nil {
 		return Submitted{}, false, err
 	}
@@ -67,7 +75,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		now := c.now()
 		id := c.newExecutionID()
 		// The store creates every row at version 1, so the outcome can be recorded before the write.
-		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, State: domain.ExecQueued, CreatedAt: now}}
+		out := Submitted{Execution: domain.Execution{ID: id, Version: 1, ProjectID: req.ProjectID, EnvironmentID: req.EnvironmentID, State: domain.ExecQueued, CreatedAt: now}}
 		for _, sp := range req.Steps {
 			st := domain.StepExecution{
 				ID: id + "." + sp.Name, ExecutionID: id, Version: 1, State: domain.StepPending,
@@ -117,6 +125,9 @@ func replay[T any](ctx context.Context, c *Coordinator, name, key, fp string) (o
 func validateSubmit(req SubmitRequest) error {
 	if req.Key == "" {
 		return fmt.Errorf("%w: submit needs an idempotency key", domain.ErrInvalid)
+	}
+	if req.ProjectID == "" {
+		return fmt.Errorf("%w: submit needs a project id", domain.ErrInvalid)
 	}
 	if len(req.Steps) == 0 {
 		return fmt.Errorf("%w: submit needs at least one step", domain.ErrInvalid)

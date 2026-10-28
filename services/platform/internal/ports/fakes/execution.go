@@ -180,6 +180,7 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 	out := ports.ExecutionChange{}
 	if c.Execution != nil {
 		e := clone(*c.Execution)
+		e.ProjectID, e.EnvironmentID = s.execs[e.ID].ProjectID, s.execs[e.ID].EnvironmentID // scopes never change
 		e.Version++
 		s.execs[e.ID] = e
 		cp := clone(e)
@@ -256,10 +257,30 @@ func (s *ExecutionStore) Queued(_ context.Context, limit int) ([]ports.StepRef, 
 	for _, id := range ids {
 		for _, st := range s.steps[id] {
 			if st.State == domain.StepQueued && len(out) < limit {
-				out = append(out, ports.StepRef{ExecutionID: id, StepID: st.ID})
+				out = append(out, ports.StepRef{ExecutionID: id, StepID: st.ID, ProjectID: s.execs[id].ProjectID, EnvironmentID: s.execs[id].EnvironmentID})
 			}
 		}
 	}
+	return out, nil
+}
+
+func (s *ExecutionStore) Active(_ context.Context) ([]ports.StepRef, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := []ports.StepRef{}
+	for id, e := range s.execs {
+		if e.State.Terminal() {
+			continue
+		}
+		for _, st := range s.steps[id] {
+			if st.State == domain.StepLeased || st.State == domain.StepRunning {
+				out = append(out, ports.StepRef{ExecutionID: id, StepID: st.ID, ProjectID: e.ProjectID, EnvironmentID: e.EnvironmentID})
+			}
+		}
+	}
+	sort.Slice(out, func(a, b int) bool {
+		return out[a].ExecutionID+"/"+out[a].StepID < out[b].ExecutionID+"/"+out[b].StepID
+	})
 	return out, nil
 }
 

@@ -365,3 +365,25 @@ func TestReleaseLeaseNeedsReasonAndLeasedStep(t *testing.T) {
 		t.Fatalf("empty attempt: got %v", err)
 	}
 }
+
+func TestDeferRecordsWhyAQueuedStepWaits(t *testing.T) {
+	s := StepExecution{ID: "s", ExecutionID: "e", State: StepQueued}
+	if changed, err := s.Defer(ReasonLimitProject); err != nil || !changed || s.Reason != ReasonLimitProject {
+		t.Fatalf("first: %v %v %q", changed, err, s.Reason)
+	}
+	if changed, err := s.Defer(ReasonLimitProject); err != nil || changed {
+		t.Fatalf("same reason again: changed=%v err=%v", changed, err)
+	}
+	if changed, _ := s.Defer(ReasonLimitGlobal); !changed || s.Reason != ReasonLimitGlobal {
+		t.Fatalf("a new reason replaces the old: %q", s.Reason)
+	}
+	if _, err := s.Defer(""); !errors.Is(err, ErrReasonRequired) {
+		t.Fatalf("empty reason: %v", err)
+	}
+	if err := s.Lease("w", "att", time.Now().Add(time.Minute)); err != nil || s.Reason != "" {
+		t.Fatalf("a Lease clears the reason: %v %q", err, s.Reason)
+	}
+	if _, err := s.Defer(ReasonLimitGlobal); !errors.Is(err, ErrInvalidTransition) {
+		t.Fatalf("only a queued Step waits for a slot: %v", err)
+	}
+}

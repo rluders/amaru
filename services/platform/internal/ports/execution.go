@@ -69,7 +69,8 @@ func (c ExecutionChange) ExecutionID() (string, error) {
 }
 
 // StepRef names a Step and its Execution.
-type StepRef struct{ ExecutionID, StepID string }
+// ProjectID and EnvironmentID are the Execution's scopes; they are set by Queued and Active only.
+type StepRef struct{ ExecutionID, StepID, ProjectID, EnvironmentID string }
 
 // ExecutionQueue is the part of the store the coordinator uses to hand out work and to find the
 // Step a Worker message is about.
@@ -77,6 +78,9 @@ type ExecutionQueue interface {
 	// Queued returns the Steps in state queued whose Execution is not finished, oldest Execution
 	// first, then in Step order, at most limit of them.
 	Queued(ctx context.Context, limit int) ([]StepRef, error)
+	// Active returns the Steps that hold a slot: state leased or running, in an Execution that is
+	// not finished.
+	Active(ctx context.Context) ([]StepRef, error)
 	// ByAttempt returns the Step that was leased as attemptID, even after its Lease ended, or
 	// domain.ErrNotFound.
 	ByAttempt(ctx context.Context, attemptID string) (StepRef, error)

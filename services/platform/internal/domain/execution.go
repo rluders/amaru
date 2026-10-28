@@ -40,12 +40,17 @@ func (s ExecState) CanTransitionTo(to ExecState) bool { return slices.Contains(e
 type Execution struct {
 	ID string `json:"id"`
 	// Version is the optimistic-concurrency counter of the stored row, set by the store.
-	Version   int64      `json:"version"`
-	State     ExecState  `json:"state"`
-	CreatedAt time.Time  `json:"createdAt"`
-	StartedAt *time.Time `json:"startedAt,omitempty"`
-	EndedAt   *time.Time `json:"endedAt,omitempty"`
-	Error     *ExecError `json:"error,omitempty"`
+	Version int64 `json:"version"`
+	// ProjectID and EnvironmentID are the scopes the concurrency limits count in (FEAT-EXE-006).
+	// They are opaque ids set when the Execution is created and never change; empty means the
+	// Execution is not in that scope and its Steps do not count against it.
+	ProjectID     string     `json:"projectId,omitempty"`
+	EnvironmentID string     `json:"environmentId,omitempty"`
+	State         ExecState  `json:"state"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	StartedAt     *time.Time `json:"startedAt,omitempty"`
+	EndedAt       *time.Time `json:"endedAt,omitempty"`
+	Error         *ExecError `json:"error,omitempty"`
 }
 
 // move changes state only from the one state the calling method is defined for, and only along

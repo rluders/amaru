@@ -507,6 +507,60 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 			t.Fatalf("a refused write left its record: %v", err)
 		}
 	})
+
+	t.Run("scopes are stored with the Execution, listed with Queued and Active, and never change", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1", "s2")
+		e.ProjectID, e.EnvironmentID = "p1", "dev"
+		e, steps = mustCreate(t, s, e, steps)
+		for i := range steps {
+			_ = steps[i].Plan()
+		}
+		out, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, _, _ := reopen(t, s).Get(ctx, "e1")
+		if got.ProjectID != "p1" || got.EnvironmentID != "dev" {
+			t.Fatalf("scopes: %q %q", got.ProjectID, got.EnvironmentID)
+		}
+		q, err := reopen(t, s).Queued(ctx, 10)
+		if err != nil || len(q) != 2 || q[0].ProjectID != "p1" || q[0].EnvironmentID != "dev" {
+			t.Fatalf("queued %+v, %v", q, err)
+		}
+		if a, err := s.Active(ctx); err != nil || len(a) != 0 {
+			t.Fatalf("active before any Lease: %+v, %v", a, err)
+		}
+		st := out.Steps[0]
+		_ = st.Lease("w1", "att-1", t0.Add(time.Minute))
+		out, err = s.Commit(ctx, ports.ExecutionChange{Steps: []domain.StepExecution{st}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		a, err := reopen(t, s).Active(ctx)
+		if err != nil || len(a) != 1 || a[0].StepID != "s1" || a[0].ProjectID != "p1" {
+			t.Fatalf("active %+v, %v", a, err)
+		}
+		// A write that names other scopes does not move the Execution.
+		e.ProjectID, e.EnvironmentID = "other", "prod"
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &e}); err != nil {
+			t.Fatal(err)
+		}
+		got, _, _ = reopen(t, s).Get(ctx, "e1")
+		if got.ProjectID != "p1" || got.EnvironmentID != "dev" {
+			t.Fatalf("scopes changed to %q %q", got.ProjectID, got.EnvironmentID)
+		}
+		// A finished Execution holds no slot.
+		if err := got.Finish(t0, domain.ExecCancelled, nil); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &got}); err != nil {
+			t.Fatal(err)
+		}
+		if a, err := s.Active(ctx); err != nil || len(a) != 0 {
+			t.Fatalf("active after the Execution finished: %+v, %v", a, err)
+		}
+	})
 }
 
 func mustCreate(t *testing.T, s ports.ExecutionStore, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution) {
