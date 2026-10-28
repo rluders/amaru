@@ -25,14 +25,14 @@ import (
 // WithSkills sets where Skills are read.
 func WithSkills(s ports.SkillStore) Option { return func(c *Coordinator) { c.skills = s } }
 
-// resolveSkills resolves every reference of a Step in the Project. It returns the audit records of
-// the uses, or a *domain.SkillError for the first reference that may not be used, or any other
+// resolveSkills resolves every reference of a Step in the Project. It returns the Skills with
+// their audit records, in the order of refs, or a *domain.SkillError for the first reference that may not be used, or any other
 // error for a store failure.
-func (c *Coordinator) resolveSkills(ctx context.Context, projectID string, refs []domain.SkillRef) ([]domain.SkillUse, error) {
+func (c *Coordinator) resolveSkills(ctx context.Context, projectID string, refs []domain.SkillRef) ([]domain.ContextSkill, error) {
 	if len(refs) > domain.MaxStepSkills {
 		return nil, &domain.SkillError{Code: domain.ReasonSkillInvalid, Message: fmt.Sprintf("at most %d skills per step", domain.MaxStepSkills)}
 	}
-	uses := make([]domain.SkillUse, 0, len(refs))
+	resolved := make([]domain.ContextSkill, 0, len(refs))
 	seen := map[string]bool{}
 	for _, ref := range refs {
 		if seen[ref.Name] {
@@ -63,9 +63,9 @@ func (c *Coordinator) resolveSkills(ctx context.Context, projectID string, refs 
 		if err != nil {
 			return nil, err
 		}
-		uses = append(uses, use)
+		resolved = append(resolved, domain.ContextSkill{Use: use, Body: found.Body})
 	}
-	return uses, nil
+	return resolved, nil
 }
 
 // skillBlock returns why a Step's Skills may not be used now, or "" when they may. A store failure

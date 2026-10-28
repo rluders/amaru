@@ -29,3 +29,9 @@ func TestFakeTrustStore(t *testing.T) {
 func TestFakeSkillStore(t *testing.T) {
 	porttest.SkillStore(t, func(*testing.T) ports.SkillStore { return NewSkillStore() })
 }
+
+func TestFakeContextStore(t *testing.T) {
+	porttest.ContextStore(t, func(*testing.T) (ports.ContextStore, func(string, string)) {
+		return NewContextStore(), func(string, string) {}
+	})
+}
