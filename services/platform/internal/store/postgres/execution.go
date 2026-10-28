@@ -111,9 +111,9 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 		code, msg = nullString(e.Error.Code), nullString(e.Error.Message)
 	}
 	_, err = tx.ExecContext(ctx,
-		`INSERT INTO executions (id, version, state, created_at, started_at, ended_at, error_code, error_message)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		e.ID, e.Version, string(e.State), e.CreatedAt.UTC(), nullTime(e.StartedAt), nullTime(e.EndedAt), code, msg)
+		`INSERT INTO executions (id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		e.ID, e.Version, string(e.State), e.CreatedAt.UTC(), nullTime(e.StartedAt), nullTime(e.EndedAt), code, msg, e.ProjectID, e.EnvironmentID)
 	if err != nil {
 		return domain.Execution{}, nil, mapCreateErr(err, "execution", e.ID)
 	}
@@ -307,8 +307,8 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	var started, ended sql.NullTime
 	var code, msg sql.NullString
 	err = tx.QueryRowContext(ctx,
-		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message FROM executions WHERE id = $1`, id).
-		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg)
+		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id FROM executions WHERE id = $1`, id).
+		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg, &e.ProjectID, &e.EnvironmentID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	}
@@ -425,7 +425,7 @@ func (s *ExecutionStore) Events(ctx context.Context, id string) ([]domain.Execut
 
 func (s *ExecutionStore) Queued(ctx context.Context, limit int) ([]ports.StepRef, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT st.execution_id, st.id FROM step_executions st JOIN executions e ON e.id = st.execution_id
+		`SELECT st.execution_id, st.id, e.project_id, e.environment_id FROM step_executions st JOIN executions e ON e.id = st.execution_id
 		 WHERE st.state = 'queued' AND e.state NOT IN ('succeeded', 'failed', 'cancelled')
 		 ORDER BY e.created_at, e.id COLLATE "C", st.ord LIMIT $1`, limit)
 	if err != nil {
@@ -435,13 +435,36 @@ func (s *ExecutionStore) Queued(ctx context.Context, limit int) ([]ports.StepRef
 	out := []ports.StepRef{}
 	for rows.Next() {
 		var r ports.StepRef
-		if err := rows.Scan(&r.ExecutionID, &r.StepID); err != nil {
+		if err := rows.Scan(&r.ExecutionID, &r.StepID, &r.ProjectID, &r.EnvironmentID); err != nil {
 			return nil, fmt.Errorf("postgres: queued steps: %w", err)
 		}
 		out = append(out, r)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("postgres: queued steps: %w", err)
+	}
+	return out, nil
+}
+
+func (s *ExecutionStore) Active(ctx context.Context) ([]ports.StepRef, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT st.execution_id, st.id, e.project_id, e.environment_id FROM step_executions st JOIN executions e ON e.id = st.execution_id
+		 WHERE st.state IN ('leased', 'running') AND e.state NOT IN ('succeeded', 'failed', 'cancelled')
+		 ORDER BY st.execution_id COLLATE "C", st.id COLLATE "C"`)
+	if err != nil {
+		return nil, fmt.Errorf("postgres: active steps: %w", err)
+	}
+	defer rows.Close()
+	out := []ports.StepRef{}
+	for rows.Next() {
+		var r ports.StepRef
+		if err := rows.Scan(&r.ExecutionID, &r.StepID, &r.ProjectID, &r.EnvironmentID); err != nil {
+			return nil, fmt.Errorf("postgres: active steps: %w", err)
+		}
+		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("postgres: active steps: %w", err)
 	}
 	return out, nil
 }

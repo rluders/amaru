@@ -16,3 +16,7 @@ func TestAssignmentOverInProcessLink(t *testing.T) {
 }
 
 func TestCommandsIdempotent(t *testing.T) { coordtest.CommandSuite(t, newFake, nil) }
+
+func TestLimitsOverInProcessLink(t *testing.T) {
+	coordtest.LimitsSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}

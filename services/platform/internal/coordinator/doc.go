@@ -3,5 +3,5 @@
 // so a restarted process continues from what was committed and from nothing else.
 //
 // Implemented so far: restart reconciliation (Reconcile), leasing and Worker reports (Serve),
-// and idempotent commands (Submit). Timers and the outbox arrive with their own issues.
+// idempotent commands (Submit) and concurrency limits. Timers and the outbox arrive with their own issues.
 package coordinator

@@ -142,6 +142,8 @@ Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsup
 
 **Idempotent commands (2026-10-27, [#157](https://github.com/rluders/amaru/issues/157)):** a mutating command carries an idempotency key. The Platform stores the command's name, key, a fingerprint of the request and the outcome in the same write as the change (`commands`, unique on name and key). The same key with the same request returns the stored outcome (not the state reached since) and changes nothing; the same key with a different request is refused. Implemented for `execution.submit`; Worker messages are not commands, because the fencing token already makes a repeated Result a duplicate. Records are kept; their retention is not decided.
 
+**Concurrency limits (2026-10-28, [#158](https://github.com/rluders/amaru/issues/158)):** an Execution carries a `projectId` and an optional `environmentId`, fixed at creation. The Platform leases a queued Step only while the Steps that are leased or running stay under the global, per-Project (default 2) and per-Environment limits. A Step held back stays `queued` with a reason (`limit:global`, `limit:project`, `limit:environment`) and a `step.deferred` event; leasing it clears the reason. Slots are derived from Step states, not stored, so they cannot leak.
+
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 

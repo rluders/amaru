@@ -184,7 +184,31 @@ func (s *StepExecution) Lease(owner, attemptID string, expiresAt time.Time) erro
 	}
 	s.AttemptID, s.FenceToken = attemptID, s.FenceToken+1
 	s.CurrentLease = &LeaseInfo{Owner: owner, ExpiresAt: expiresAt}
+	s.Reason = "" // whatever kept the Step queued no longer applies
 	return nil
+}
+
+// Reasons a queued Step is not leased yet: the named scope has no free slot (FEAT-EXE-006).
+const (
+	ReasonLimitGlobal      = "limit:global"
+	ReasonLimitProject     = "limit:project"
+	ReasonLimitEnvironment = "limit:environment"
+)
+
+// Defer records why a queued Step waits. It changes nothing else and reports whether the reason
+// changed, so a caller writes only when there is something new to show.
+func (s *StepExecution) Defer(reason string) (changed bool, err error) {
+	if s.State != StepQueued {
+		return false, fmt.Errorf("%w: only a queued step can wait for a slot, this one is %s", ErrInvalidTransition, s.State)
+	}
+	if reason == "" {
+		return false, fmt.Errorf("%w: a deferral needs a reason", ErrReasonRequired)
+	}
+	if s.Reason == reason {
+		return false, nil
+	}
+	s.Reason = reason
+	return true, nil
 }
 
 // HoldsLease reports whether the Step is leased or running under exactly this attempt and token.

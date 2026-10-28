@@ -20,6 +20,8 @@ type Coordinator struct {
 	leasePeriod    time.Duration
 	newAttemptID   func() string
 	newExecutionID func() string
+	limits         Limits
+	assignMu       sync.Mutex // one lease decision at a time: count, check and lease are one step
 
 	mu     sync.Mutex
 	wakeCh chan struct{}
@@ -39,7 +41,7 @@ func WithExecutionIDs(f func() string) Option { return func(c *Coordinator) { c.
 
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, wakeCh: make(chan struct{})}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, wakeCh: make(chan struct{})}
 	for _, o := range opts {
 		o(c)
 	}

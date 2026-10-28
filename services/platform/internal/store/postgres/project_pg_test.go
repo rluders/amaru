@@ -101,3 +101,9 @@ func TestCommandsWithPostgres(t *testing.T) {
 		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
 }
+
+// The concurrency limits against the real store, which counts the Steps that hold a slot.
+func TestLimitsWithPostgres(t *testing.T) {
+	newStore := func(t *testing.T) ports.ExecutionStore { return NewExecutionStore(migratedDB(t)) }
+	coordtest.LimitsSuite(t, newStore, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}

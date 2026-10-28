@@ -114,13 +114,47 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 // assignOne leases the oldest queued Step to workerID and sends the Assignment. It returns the
 // attempt id, or "" when no Step could be leased.
 func (c *Coordinator) assignOne(ctx context.Context, link ports.PlatformLink, workerID string) (string, error) {
-	refs, err := c.store.Queued(ctx, 16)
-	if err != nil {
-		return "", fmt.Errorf("list queued steps: %w", err)
+	asg, ok, err := c.leaseOne(ctx, workerID)
+	if err != nil || !ok {
+		return "", err
 	}
+	if err := link.Send(ctx, asg); err != nil {
+		if errors.Is(err, ports.ErrLinkClosed) || ctx.Err() != nil {
+			return "", nil
+		}
+		return "", err
+	}
+	return asg.AttemptID, nil
+}
+
+// leaseOne leases the oldest queued Step that no limit holds back. Counting the slots in use,
+// checking the limits and committing the Lease happen under one lock, so two Worker sessions
+// cannot both take the last slot. (Several Platform processes over one store would need the check
+// in the store; one Platform is what exists.)
+func (c *Coordinator) leaseOne(ctx context.Context, workerID string) (ports.Assignment, bool, error) {
+	c.assignMu.Lock()
+	defer c.assignMu.Unlock()
+	refs, err := c.store.Queued(ctx, queueScan)
+	if err != nil {
+		return ports.Assignment{}, false, fmt.Errorf("list queued steps: %w", err)
+	}
+	if len(refs) == 0 {
+		return ports.Assignment{}, false, nil
+	}
+	active, err := c.store.Active(ctx)
+	if err != nil {
+		return ports.Assignment{}, false, fmt.Errorf("list active steps: %w", err)
+	}
+	used := countUsage(active)
 	for _, ref := range refs {
+		if reason := c.limits.blocked(used, ref); reason != "" {
+			if err := c.wait(ctx, ref, reason); err != nil {
+				return ports.Assignment{}, false, err
+			}
+			continue
+		}
 		var asg ports.Assignment
-		err := c.edit(ctx, ref, func(_ *domain.Execution, st *domain.StepExecution) (*change, error) {
+		err := c.edit(ctx, ports.StepRef{ExecutionID: ref.ExecutionID, StepID: ref.StepID}, func(_ *domain.Execution, st *domain.StepExecution) (*change, error) {
 			now := c.now()
 			if err := st.Lease(workerID, c.newAttemptID(), now.Add(c.leasePeriod)); err != nil {
 				return nil, err
@@ -136,20 +170,14 @@ func (c *Coordinator) assignOne(ctx context.Context, link ports.PlatformLink, wo
 			return &change{events: []domain.ExecutionEvent{{Kind: domain.EventStepLeased, StepID: st.ID, Reason: workerID, At: now}}}, nil
 		})
 		if errors.Is(err, domain.ErrInvalidTransition) || errors.Is(err, domain.ErrConflict) || errors.Is(err, domain.ErrExists) {
-			continue // another session took it, or it moved on
+			continue // it moved on
 		}
 		if err != nil {
-			return "", err
+			return ports.Assignment{}, false, err
 		}
-		if err := link.Send(ctx, asg); err != nil {
-			if errors.Is(err, ports.ErrLinkClosed) || ctx.Err() != nil {
-				return "", nil
-			}
-			return "", err
-		}
-		return asg.AttemptID, nil
+		return asg, true, nil
 	}
-	return "", nil
+	return ports.Assignment{}, false, nil
 }
 
 func (c *Coordinator) onAccept(ctx context.Context, link ports.PlatformLink, m ports.AcceptAttempt) error {
@@ -278,6 +306,7 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 	if err != nil {
 		return err
 	}
+	c.Wake() // a finished Step frees a slot a queued Step may be waiting for
 	return ack(disp)
 }
 
