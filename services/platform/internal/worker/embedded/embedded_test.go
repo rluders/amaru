@@ -224,3 +224,86 @@ func TestWorkerNeedsARunner(t *testing.T) {
 		t.Fatal("a Worker with no Runner started")
 	}
 }
+
+// submitTimed submits one Step with the given timeout override through the coordinator, so the
+// Assignment carries a real Deadline.
+func (r *rig) submitTimed(key string, timeoutSeconds int) string {
+	r.t.Helper()
+	got, _, err := r.c.Submit(r.ctx, coordinator.SubmitRequest{Key: key, ProjectID: "p1", Steps: []coordinator.StepSpec{
+		{Name: "s", Capability: "code.test", TimeoutSeconds: timeoutSeconds}}})
+	if err != nil {
+		r.t.Fatal(err)
+	}
+	return got.Execution.ID
+}
+
+func newTimedRig(t *testing.T, tool time.Duration, run embedded.RunnerFunc) *rig {
+	t.Helper()
+	store := fakes.NewExecutionStore()
+	c := coordinator.New(store, time.Now, coordinator.WithTimeouts(domain.Timeouts{Agent: tool, Tool: tool, Max: time.Hour}))
+	pl, wl := inproc.Pair()
+	ctx, cancel := context.WithCancel(context.Background())
+	r := &rig{t: t, store: store, c: c, pl: pl, wl: wl, ctx: ctx, done: make(chan error, 1)}
+	w := &embedded.Worker{HeartbeatPeriod: time.Hour, Runner: run}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); _ = c.Serve(ctx, pl, "embedded") }()
+	go func() { defer wg.Done(); r.done <- w.Run(ctx, wl) }()
+	t.Cleanup(func() { cancel(); pl.Close(); wg.Wait() })
+	return r
+}
+
+func TestAHangingStepTimesOutAndIsNotRunAgain(t *testing.T) {
+	var runs, stopped atomic.Int32
+	r := newTimedRig(t, 100*time.Millisecond, func(ctx context.Context, a ports.Assignment) embedded.Outcome {
+		runs.Add(1)
+		<-ctx.Done() // a hanging provider that stops when its context ends, as a Runner must
+		stopped.Add(1)
+		return embedded.Outcome{Result: ports.OutcomeFailed, ErrorCode: "cancelled"}
+	})
+	start := time.Now()
+	id := r.submitTimed("k1", 0)
+	r.until("the Step to time out", func() bool { return r.states(id)[id+".s"] == domain.StepTimedOut })
+	if d := time.Since(start); d < 90*time.Millisecond || d > 3*time.Second {
+		t.Fatalf("timed out after %s, want about 100ms", d)
+	}
+	_, steps, _ := r.store.Get(r.ctx, id)
+	if e := steps[0].Error; e == nil || e.Code != domain.CodeTimeout || steps[0].Reason != domain.ReasonStepTimeout {
+		t.Fatalf("step %+v", steps[0])
+	}
+	if stopped.Load() != 1 {
+		t.Fatal("the Runner was not stopped")
+	}
+	time.Sleep(200 * time.Millisecond)
+	r.c.Wake()
+	time.Sleep(100 * time.Millisecond)
+	if runs.Load() != 1 {
+		t.Fatalf("the Step ran %d times, want once", runs.Load())
+	}
+}
+
+func TestAnOverrideLetsAStepRunLongerThanTheDefault(t *testing.T) {
+	r := newTimedRig(t, 50*time.Millisecond, func(ctx context.Context, a ports.Assignment) embedded.Outcome {
+		select {
+		case <-time.After(300 * time.Millisecond):
+			return embedded.Outcome{Result: ports.OutcomeSucceeded}
+		case <-ctx.Done():
+			return embedded.Outcome{Result: ports.OutcomeFailed, ErrorCode: "cancelled"}
+		}
+	})
+	id := r.submitTimed("k1", 5)
+	r.until("the Step to succeed", func() bool { return r.states(id)[id+".s"] == domain.StepSucceeded })
+}
+
+func TestAStepThatFinishesInTimeIsNotTimedOut(t *testing.T) {
+	var deadline time.Time
+	r := newTimedRig(t, time.Minute, func(_ context.Context, a ports.Assignment) embedded.Outcome {
+		deadline = a.Deadline
+		return embedded.Outcome{Result: ports.OutcomeSucceeded}
+	})
+	id := r.submitTimed("k1", 0)
+	r.until("the Step to succeed", func() bool { return r.states(id)[id+".s"] == domain.StepSucceeded })
+	if time.Until(deadline) < 50*time.Second {
+		t.Fatalf("deadline %s is not about a minute away", deadline)
+	}
+}

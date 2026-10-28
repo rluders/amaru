@@ -79,6 +79,9 @@ type StepExecution struct {
 	// its resolved inputs as canonical JSON. Both are set when the Step is planned.
 	Capability string `json:"capability,omitempty"`
 	InputsJSON []byte `json:"inputs,omitempty"`
+	// TimeoutSeconds is the wall-clock timeout override copied when the Step is planned
+	// (FEAT-WFL-004); zero means the default for its kind (Timeouts.Effective).
+	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
 	// AttemptID names the latest attempt (one per Lease) and FenceToken is the fencing token
 	// issued with it, strictly increasing per Step. Both survive the Lease so that a late result
 	// can be told from a duplicate and from a stale one (ADR-0044 point 4).

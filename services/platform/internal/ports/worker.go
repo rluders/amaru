@@ -58,7 +58,9 @@ type Assignment struct {
 	AttemptID  string `proto:"attempt_id"`
 	Capability string `proto:"capability"`
 	InputsJSON []byte `proto:"inputs_json"`
-	// Deadline is the zero time until per-Step timeouts exist (FEAT-WFL-004).
+	// Deadline is the wall-clock time the attempt must end by (FEAT-WFL-004). A Worker that
+	// reaches it stops the attempt, kills the process tree it started and reports a failed Result
+	// with error code "timeout". The zero time means no deadline.
 	Deadline time.Time `proto:"deadline"`
 	Lease    Lease     `proto:"lease"`
 	// IdempotencyKey is stable across attempts of the same Step, so a re-run side effect is deduplicated.

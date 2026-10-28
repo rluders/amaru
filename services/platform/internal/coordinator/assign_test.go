@@ -22,3 +22,7 @@ func TestLimitsOverInProcessLink(t *testing.T) {
 }
 
 func TestDefinitionPinned(t *testing.T) { coordtest.DefinitionSuite(t, newFake, nil) }
+
+func TestTimeoutsOverInProcessLink(t *testing.T) {
+	coordtest.TimeoutSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
+}

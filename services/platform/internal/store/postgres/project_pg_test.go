@@ -134,3 +134,12 @@ func TestLimitsWithPostgres(t *testing.T) {
 	newStore := func(t *testing.T) ports.ExecutionStore { return NewExecutionStore(migratedDB(t)) }
 	coordtest.LimitsSuite(t, newStore, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+// Per-Step timeouts against the real store: the override is stored and a timed_out Step stays so.
+func TestTimeoutsWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.TimeoutSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}

@@ -34,6 +34,8 @@ func TestWorkflowValidate(t *testing.T) {
 		"input without cap":   func(w *Workflow) { w.Steps[0].Input = map[string]string{"k": "v"} },
 		"bad input name":      func(w *Workflow) { two(w); w.Steps[1].Input = map[string]string{"Bad": "v"} },
 		"agentId on a tool":   func(w *Workflow) { two(w); w.Steps[1].AgentID = "coder-agent" },
+		"negative timeout":    func(w *Workflow) { w.Steps[0].TimeoutSeconds = -1 },
+		"approval timeout":    func(w *Workflow) { w.Steps[0].Type = StepTypeApproval; w.Steps[0].TimeoutSeconds = 60 },
 		"agentId and team": func(w *Workflow) {
 			w.Steps[0].AgentID = "coder-agent"
 			w.Steps[0].TeamID = "team-one"

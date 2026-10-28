@@ -160,7 +160,24 @@ func (w *Worker) execute(ctx context.Context, link ports.WorkerLink, a ports.Ass
 	return false
 }
 
+// timeoutCode is the error code of a Result for an attempt that ran past its Deadline. It equals
+// domain.CodeTimeout; the Worker does not import the domain.
+const timeoutCode = "timeout"
+
 func (w *Worker) runSafely(ctx context.Context, a ports.Assignment) (out Outcome) {
+	if !a.Deadline.IsZero() {
+		// The Runner's context ends at the Deadline. It must stop what it started, the whole process
+		// tree, before it returns; this Worker reports the timeout once it has.
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, a.Deadline)
+		defer cancel()
+		defer func() {
+			// A success that arrives at the Deadline stands; anything else past it is a timeout.
+			if ctx.Err() == context.DeadlineExceeded && out.Result != ports.OutcomeSucceeded {
+				out = Outcome{Result: ports.OutcomeFailed, ErrorCode: timeoutCode, ErrorDetail: "the step ran past its deadline"}
+			}
+		}()
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			out = Outcome{Result: ports.OutcomeFailed, ErrorCode: "runner_panic", ErrorDetail: fmt.Sprint(r)}
