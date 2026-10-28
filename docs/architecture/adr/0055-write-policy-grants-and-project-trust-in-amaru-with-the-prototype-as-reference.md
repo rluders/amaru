@@ -1,6 +1,6 @@
 ---
 title: Write Policy evaluation, Grants and Project trust in Amaru, with the prototype grant and trust types as reference
-status: proposed
+status: accepted
 date: 2026-10-28
 deciders: Ricardo Lüders (product owner)
 ---
@@ -58,7 +58,7 @@ deciders: Ricardo Lüders (product owner)
 - **Follow-up:** WP-M3-04 sub-issues implement items 2 to 5; docs ([DOMAIN_MODEL](../DOMAIN_MODEL.md), [POLICY_AND_APPROVAL_SHAPES](../POLICY_AND_APPROVAL_SHAPES.md)) are updated with each.
 
 ## Requires human decision
-- Accept this ADR (and with it, item 4: no `canery` in M3).
+- ~~Accept this ADR (and with it, item 4: no `canery` in M3).~~ Accepted 2026-10-28 (see Approval).
 - **Egress consent (#168).** The feature catalog says FEAT-POL-004 reuses `runtime/internal/transport/webhook/sender.go` (private-host block, per-URL consent). Issue #168 names migration ADR #83 (`transport/httpapi`) as its gate, while the webhook sender falls under #95 (`transport/webhook`). The mismatch is not resolved here; `internal/provider/remotejob` already refuses non-public addresses at connect time ([ADR-0054](0054-adapt-the-prototype-remote-job-http-helpers-into-the-worker-providers.md)). Which ADR gates #168, and whether it is written fresh like the others, needs the owner's call.
 - `hook`, `settings` and `playbook` dispositions (item 1) remain open.
 
@@ -69,4 +69,4 @@ deciders: Ricardo Lüders (product owner)
 - **Keep Policy in the coordinator instead of the domain:** mixes I/O with evaluation and loses the property-test surface ADR-0037 asks for.
 
 ## Approval
-Proposed by: Claude (migration and design ADR draft for #16, 2026-10-28). Not yet approved. Approval line is added by the product owner when this is accepted.
+Proposed by: Claude (migration and design ADR draft for #16, 2026-10-28). Approved by: Ricardo Lüders (product owner) on 2026-10-28 ("Accept, and merge #290"), including item 4 (no `canery` in M3). The #168 gate and the `hook`, `settings` and `playbook` dispositions stay open.
