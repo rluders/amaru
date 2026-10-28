@@ -25,3 +25,11 @@ func TestFakeTrustStore(t *testing.T) {
 		return NewTrustStore(p), p
 	})
 }
+
+func TestFakeBlobStore(t *testing.T) {
+	porttest.BlobStore(t, func(*testing.T) ports.BlobStore { return NewBlobStore() })
+}
+
+func TestFakeArtifactIndex(t *testing.T) {
+	porttest.ArtifactIndex(t, func(*testing.T) ports.ArtifactIndex { return NewArtifactIndex() })
+}
