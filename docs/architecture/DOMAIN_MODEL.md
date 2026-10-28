@@ -69,7 +69,7 @@ erDiagram
 | Artifact | Path or object key, role, hash, size, producing Step. | Step Execution | Artifact store | [Prototype] |
 | Check result | Local Check, CI or Verification Run outcome bound to a commit or Artifact. | Step Execution / Work Item | Run history | [Prototype ADR-029]; [Prototype: VerificationRun] |
 | Approval | Request and decision, approver identity, Evidence references, expiry. | Step Execution | Run history | [Prototype: approval steps]; evidence binding [Prototype] |
-| Policy / Grant | Rules and standing authorizations for Capabilities, egress, plugins. | Organization / Project | Platform store | [Prototype: grants ADR-024]; general Policy [Proposed] |
+| Policy / Grant | Rules and standing authorizations for Capabilities, egress, plugins. | Organization / Project | Platform store | [Prototype: grants ADR-024]; general Policy [Proposed]; Grants and the pure Policy function [Implemented-and-verified locally in `services/platform`, FEAT-POL-001 (fakes and PostgreSQL, Linux)]; rule 12 defaults, audit log and Approvals not yet |
 | Execution Environment | A machine or sandbox class with OS, tools, labels, trust level. | Organization | Platform store | [Proposed] |
 | Worker | A connected process in an Environment with identity, manifest, health. | Execution Environment | Operational state | [Proposed] |
 | Plugin installation / component | Installed package version, granted permissions, enabled components per target. | Organization (the implicit Organization in a local Instance; [ADR-0021](adr/0021-plugin-packaging-signing-permissions-and-compatibility.md)) | Platform store | [Proposed] |

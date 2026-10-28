@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
@@ -39,7 +40,7 @@ func TestCancelEndsTheProcessTreeOfARunningStep(t *testing.T) {
 			})
 
 			store := fakes.NewExecutionStore()
-			c := coordinator.New(store, time.Now)
+			c := coordinator.New(store, time.Now, coordtest.Permissive)
 			pl, wl := inproc.Pair()
 			ctx, stop := context.WithCancel(context.Background())
 			var wg sync.WaitGroup
@@ -51,7 +52,7 @@ func TestCancelEndsTheProcessTreeOfARunningStep(t *testing.T) {
 			}()
 			t.Cleanup(func() { stop(); pl.Close(); wg.Wait() })
 
-			got, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "run", Capability: "code.test"}}})
+			got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: coordtest.Requester, Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "run", Capability: "code.test"}}})
 			if err != nil {
 				t.Fatal(err)
 			}

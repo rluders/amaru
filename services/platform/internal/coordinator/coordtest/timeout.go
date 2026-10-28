@@ -23,7 +23,7 @@ func TimeoutSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	ctx := context.Background()
 	two := func(t *testing.T, store ports.ExecutionStore, c *coordinator.Coordinator) (coordinator.Submitted, error) {
 		t.Helper()
-		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{
 			{Name: "default", Capability: "code.test"},
 			{Name: "short", Capability: "code.test", TimeoutSeconds: 90},
 		}})
@@ -67,12 +67,12 @@ func TimeoutSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 		store := newStore(t)
 		c := limited(store, coordinator.WithTimeouts(domain.Timeouts{Agent: time.Hour, Tool: 10 * time.Minute, Max: time.Hour}))
 		for name, secs := range map[string]int{"above the maximum": 3601, "negative": -1} {
-			_, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "k-" + name, ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", TimeoutSeconds: secs}}})
+			_, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "k-" + name, ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", TimeoutSeconds: secs}}})
 			if !errors.Is(err, domain.ErrInvalid) {
 				t.Fatalf("%s: got %v, want ErrInvalid", name, err)
 			}
 		}
-		_, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "ok", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", TimeoutSeconds: 3600}}})
+		_, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "ok", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", TimeoutSeconds: 3600}}})
 		if err != nil {
 			t.Fatalf("exactly the maximum must pass: %v", err)
 		}
@@ -84,7 +84,7 @@ func TimeoutSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 	t.Run("a Result with code timeout ends the Step as timed_out, and it is not run again", func(t *testing.T) {
 		store := newStore(t)
 		c := limited(store)
-		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", Idempotent: true}}})
+		got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "k1", ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test", Idempotent: true}}})
 		if err != nil {
 			t.Fatal(err)
 		}

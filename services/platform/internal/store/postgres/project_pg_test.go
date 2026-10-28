@@ -72,6 +72,52 @@ func TestProjectStoreConformance(t *testing.T) {
 	porttest.ProjectStore(t, func(t *testing.T) ports.ProjectStore { return NewProjectStore(migratedDB(t)) })
 }
 
+func TestGrantStoreConformance(t *testing.T) {
+	porttest.GrantStore(t, func(t *testing.T) ports.GrantStore { return NewGrantStore(migratedDB(t)) })
+}
+
+func TestGrantsAreAppendOnlyInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	s := NewGrantStore(db)
+	g := domain.Grant{ID: "g1", Level: domain.GrantOrganization, Subject: domain.Subject{Kind: domain.SubjectAgent, ID: "a"},
+		Capabilities: []domain.Capability{"mcp.call"}, GrantedBy: "u1", CreatedAt: time.Date(2026, 10, 28, 9, 0, 0, 0, time.UTC), Status: domain.GrantActive}
+	if _, err := s.Create(context.Background(), g); err != nil {
+		t.Fatal(err)
+	}
+	// A direct write that edits what was granted, or deletes the row, is refused by the trigger.
+	for name, q := range map[string]string{
+		"edit capabilities": `UPDATE grants SET capabilities = '["git.push"]' WHERE id = 'g1'`,
+		"edit granted_by":   `UPDATE grants SET granted_by = 'x' WHERE id = 'g1'`,
+		"delete":            `DELETE FROM grants WHERE id = 'g1'`,
+	} {
+		if _, err := db.Exec(q); err == nil {
+			t.Errorf("%s was allowed", name)
+		}
+	}
+	if _, err := db.Exec(`UPDATE grants SET status = 'revoked', revoked_by = 'u2', revoked_at = now(), revoke_reason = 'r' WHERE id = 'g1'`); err != nil {
+		t.Fatalf("revoking is allowed: %v", err)
+	}
+	if _, err := db.Exec(`UPDATE grants SET status = 'active', revoked_by = '', revoked_at = NULL WHERE id = 'g1'`); err == nil {
+		t.Error("a revoked grant was brought back")
+	}
+}
+
+func TestExecutionRequesterIsFixedInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	s := NewExecutionStore(db)
+	e := domain.Execution{ID: "e1", Version: 1, State: domain.ExecQueued, CreatedAt: time.Now(), RequestedBy: domain.Principal{Kind: domain.PrincipalHuman, ID: "u1", Role: domain.RoleContributor}, Trigger: domain.TriggerManual}
+	st := domain.StepExecution{ID: "e1.s", ExecutionID: "e1", Version: 1, State: domain.StepPending, Capability: "code.test"}
+	if _, _, err := s.Create(context.Background(), e, []domain.StepExecution{st}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE executions SET requested_by = '{"kind":"human","id":"other"}' WHERE id = 'e1'`); err == nil {
+		t.Error("the requester was changed")
+	}
+	if _, err := db.Exec(`UPDATE executions SET trigger_kind = 'webhook' WHERE id = 'e1'`); err == nil {
+		t.Error("the trigger was changed")
+	}
+}
+
 func TestExecutionStoreConformance(t *testing.T) {
 	// reopen builds a second store over the same database: a restarted Platform sees only what was committed.
 	var db *sql.DB
@@ -160,4 +206,15 @@ func TestRemoteJobWithPostgres(t *testing.T) {
 		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
 		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+// Policy against the real stores: Grants and the requester are stored, and a revoked Grant
+// stops a queued Step from starting.
+func TestPolicyWithPostgres(t *testing.T) {
+	coordtest.PolicySuite(t,
+		func(t *testing.T) (ports.ExecutionStore, ports.GrantStore) {
+			db := migratedDB(t)
+			return NewExecutionStore(db), NewGrantStore(db)
+		},
+		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }

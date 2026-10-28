@@ -280,6 +280,14 @@ status: active                            # active | lapsed | revoked | expired
 | Granting a rule-12 default away (making the action `allow`) is itself a Grant created by Owner or Admin; Workflows and plugins cannot. | SECURITY_MODEL rule 12 |
 | Create, lapse and revoke are Events. | ADR-0037 |
 
+**Implementation note (FEAT-POL-001, #132, 2026-10-28).** `domain.Evaluate`, `domain.Grant` and the Grant lifecycle are implemented in `services/platform` and verified locally on Linux (unit tests, `porttest`/`coordtest` suites on the fake and on PostgreSQL). They follow §4 with these differences, all deliberate and smaller than the shape above:
+- A Grant's `resource` is `{type, value}` where `value` is a pattern (`*` at the end is a prefix), not `match`; `capabilities` are exact ids, never wildcards; the stored `status` is `active`, `revoked` (or `lapsed`/`expired` once recorded), and a Grant that is expired or whose definition hash differs stops matching without the stored status changing yet. `revokedBy`, `revokedAt` and `revokeReason` are added.
+- A request names a `subject` (`agent`, `workflow`, `plugin_component`); a Submit with a Workflow carries `workflow:<id>` and the pinned definition hash. A direct Submit without a Workflow names no subject, so no Grant covers it and only rules can allow it.
+- The result has `decision`, `reasons[]` with codes (`policy.explicit_deny`, `policy.uncovered`, `grant.matched`, `rule.require_approval`, `rule.allow`) and `matchedGrantId`. It has no `approval` block, `effectiveConfigHash` or `policyVersion` yet: Approvals (FEAT-REV-001/003) and configuration scopes (ADR-0039) are not implemented.
+- Rules are `{id, source, effect, capabilities, resourceType, resourceMatch, message}` with effects `deny`, `require_approval` and `allow`; a Project rule may not `allow`. They come from `domain.DefaultRules` and `coordinator.WithRules` only.
+- A `require_approval` result ends the Step `refused` with a message saying approvals are not implemented; it does not create an Approval.
+- Property tests cover purity, totality and monotonicity in denies (see `domain/policy_test.go`).
+
 ## 5. Default consequential actions mapped onto Capabilities
 
 [SECURITY_MODEL rule 12](../security/SECURITY_MODEL.md#baseline-rules): without a standing Grant these return `require_approval`; Workflows and plugins cannot lower them; only an Owner or Admin can, by Grant.

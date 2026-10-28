@@ -254,5 +254,5 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 
 // submitOne is a request for one Step; idem marks the Step idempotent.
 func submitOne(key string, idem bool) coordinator.SubmitRequest {
-	return coordinator.SubmitRequest{Key: key, ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "s1", Capability: "code.test", Idempotent: idem}}}
+	return coordinator.SubmitRequest{By: Requester, Key: key, ProjectID: "p1", Steps: []coordinator.StepSpec{{Name: "s1", Capability: "code.test", Idempotent: idem}}}
 }

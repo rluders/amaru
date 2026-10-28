@@ -34,3 +34,11 @@ func TestCancelOverInProcessLink(t *testing.T) {
 func TestRemoteJobOverInProcessLink(t *testing.T) {
 	coordtest.RemoteJobSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
 }
+
+func newFakes(*testing.T) (ports.ExecutionStore, ports.GrantStore) {
+	return fakes.NewExecutionStore(), fakes.NewGrantStore()
+}
+
+func TestPolicyOverInProcessLink(t *testing.T) {
+	coordtest.PolicySuite(t, newFakes, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}
