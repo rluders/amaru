@@ -15,14 +15,10 @@ import (
 // path asks again, so a Grant revoked after Submit keeps a queued Step from starting; that Step
 // waits with the reason and starts when a Grant covers it again.
 //
-// Not implemented yet: a require_approval result ends the Step refused with a message saying
-// approvals do not exist (FEAT-REV-001 replaces that with awaiting_approval); rules come only from
-// DefaultRules and WithRules, not from configuration scopes (ADR-0039); the evaluation is not
-// written to an audit log (FEAT-POL-003). The refusal is the Step's own Reason and, at the lease
-// path, a step.deferred event.
-
-// reasonApprovalsUnavailable is added to a refusal that needed an Approval.
-const reasonApprovalsUnavailable = "this needs an approval, and approvals are not implemented yet"
+// A require_approval result makes the Step wait for a person (see approval.go). Not implemented
+// yet: rules come only from DefaultRules and WithRules, not from configuration scopes (ADR-0039);
+// the evaluation itself is not written to the audit log (the Grant and Approval changes are,
+// FEAT-POL-003). A refusal is the Step's own Reason and, at the lease path, a step.deferred event.
 
 // WithGrants sets where Grants are read and written. Without it no Grant exists, so only the
 // rules can allow a Step: the Coordinator fails closed.
@@ -62,11 +58,7 @@ func (c *Coordinator) decide(ctx context.Context, req domain.PolicyRequest) (dom
 
 // refusal is the Step Reason for a request that was not allowed.
 func refusal(req domain.PolicyRequest, res domain.PolicyResult) string {
-	msg := res.Explain(req)
-	if res.Decision == domain.DecisionRequireApproval {
-		msg += "; " + reasonApprovalsUnavailable
-	}
-	return msg
+	return res.Explain(req)
 }
 
 // policyBlock returns why a queued Step may not start now, or "" when Policy allows it. It
@@ -88,6 +80,17 @@ func (c *Coordinator) policyBlock(ctx context.Context, ref ports.StepRef) (strin
 			return "policy: cannot be evaluated: " + err.Error(), nil
 		case err != nil:
 			return "", err
+		case res.Decision == domain.DecisionRequireApproval:
+			// An approved Approval for this Step covers the requirement: it authorizes this
+			// occurrence. It does not lift a deny.
+			approvals, err := c.store.Approvals(ctx, e.ID)
+			if err != nil {
+				return "", err
+			}
+			if approved(approvals, st.ID) {
+				return "", nil
+			}
+			return "policy: " + refusal(req, res), nil
 		case res.Decision != domain.DecisionAllow:
 			return "policy: " + refusal(req, res), nil
 		}

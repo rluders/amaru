@@ -290,3 +290,57 @@ func TestPolicyWithPostgres(t *testing.T) {
 		},
 		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+func TestApprovalStoreConformance(t *testing.T) {
+	var db *sql.DB
+	porttest.ApprovalStore(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+// The approval workflow against the real store: a waiting Step and its Approval survive a restart.
+func TestApprovalWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.ApprovalSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+func TestApprovalsAreFinalInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	s := NewExecutionStore(db)
+	e := domain.Execution{ID: "e1", State: domain.ExecQueued, CreatedAt: time.Date(2026, 10, 28, 9, 0, 0, 0, time.UTC), ProjectID: "p1"}
+	st := domain.StepExecution{ID: "e1.s", ExecutionID: "e1", State: domain.StepAwaitingApproval}
+	ev, _ := domain.NewEvidence(domain.EvidenceItem{Kind: "execution", ID: "e1"})
+	a, err := domain.NewApproval(e.CreatedAt, "a1", "p1", domain.ApprovalGate{Kind: domain.GatePolicyRequired, ExecutionID: "e1", StepID: "e1.s", Capability: "git.push"},
+		domain.Principal{Kind: domain.PrincipalHuman, ID: "u", Role: domain.RoleContributor}, ev)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := s.CreateOnce(context.Background(), domain.CommandRecord{Name: "execution.submit", Key: "k", Fingerprint: "f", Result: []byte(`{}`), At: e.CreatedAt}, e, []domain.StepExecution{st}, a); err != nil {
+		t.Fatal(err)
+	}
+	for name, q := range map[string]string{
+		"edit the capability":        `UPDATE approvals SET capability = 'deploy.run' WHERE id = 'a1'`,
+		"edit the evidence":          `UPDATE approvals SET evidence_digest = 'sha256:x' WHERE id = 'a1'`,
+		"edit the requester":         `UPDATE approvals SET requester = '{}' WHERE id = 'a1'`,
+		"delete":                     `DELETE FROM approvals WHERE id = 'a1'`,
+		"approve without a decision": `UPDATE approvals SET state = 'approved' WHERE id = 'a1'`,
+	} {
+		if _, err := db.Exec(q); err == nil {
+			t.Errorf("%s was allowed", name)
+		}
+	}
+	if _, err := db.Exec(`UPDATE approvals SET state = 'approved', decision = '{"outcome":"approved"}' WHERE id = 'a1'`); err != nil {
+		t.Fatalf("deciding is allowed: %v", err)
+	}
+	for name, q := range map[string]string{
+		"change a decided approval": `UPDATE approvals SET state = 'rejected', decision = '{"outcome":"rejected"}' WHERE id = 'a1'`,
+		"void a decided approval":   `UPDATE approvals SET state = 'voided', decision = NULL, voided_at = now(), void_reason = 'x' WHERE id = 'a1'`,
+	} {
+		if _, err := db.Exec(q); err == nil {
+			t.Errorf("%s was allowed", name)
+		}
+	}
+}

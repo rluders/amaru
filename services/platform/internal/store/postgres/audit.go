@@ -30,10 +30,14 @@ func appendAudit(ctx context.Context, tx *sql.Tx, ev domain.AuditEvent) error {
 
 // Audit implements ports.AuditLog.
 func (s *GrantStore) Audit(ctx context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
+	return readAudit(ctx, s.db, after, limit)
+}
+
+func readAudit(ctx context.Context, db *sql.DB, after int64, limit int) ([]domain.AuditEvent, error) {
 	if limit <= 0 {
 		limit = defaultAuditLimit
 	}
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := db.QueryContext(ctx,
 		`SELECT seq, at, kind, actor, actor_kind, target_type, target_id, project_id, reason FROM audit_events WHERE seq > $1 ORDER BY seq LIMIT $2`, after, limit)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: read audit log: %w", err)

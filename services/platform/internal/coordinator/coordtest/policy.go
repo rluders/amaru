@@ -295,7 +295,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 			t.Fatal(err)
 		}
 		got := submit(t, c, "k1", "p1", "code.test", "scm.pr.merge", "git.push")
-		want := []domain.StepState{domain.StepQueued, domain.StepRefused, domain.StepRefused}
+		want := []domain.StepState{domain.StepQueued, domain.StepRefused, domain.StepAwaitingApproval}
 		for i, st := range got.Steps {
 			if st.State != want[i] {
 				t.Errorf("%s: %s, want %s", st.Capability, st.State, want[i])
@@ -306,12 +306,12 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
-	t.Run("a rule that requires an approval refuses the Step and says approvals do not exist yet", func(t *testing.T) {
+	t.Run("a rule that requires an approval makes the Step wait for one", func(t *testing.T) {
 		_, _, c := build(t, coordinator.WithRules(domain.PolicyRule{ID: "org.push", Source: domain.SourceOrganization,
 			Effect: domain.EffectRequireApproval, Capabilities: []string{"git.push"}, Message: "pushing needs a human"}))
-		st := submit(t, c, "k1", "p1", "git.push").Steps[0]
-		if st.State != domain.StepRefused || !strings.Contains(st.Reason, "pushing needs a human") || !strings.Contains(st.Reason, "approvals are not implemented") {
-			t.Fatalf("%s %q", st.State, st.Reason)
+		got := submit(t, c, "k1", "p1", "git.push")
+		if st := got.Steps[0]; st.State != domain.StepAwaitingApproval || len(got.Approvals) != 1 || got.Approvals[0].Gate.StepID != st.ID {
+			t.Fatalf("%s, %d approvals", st.State, len(got.Approvals))
 		}
 	})
 
@@ -350,7 +350,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
-	t.Run("every consequential action is refused for every trigger without a Grant, and runs with one", func(t *testing.T) {
+	t.Run("every consequential action waits for an approval for every trigger without a Grant, and runs with one", func(t *testing.T) {
 		// fs.delete is not here: a Step carries no resource yet, and the delete rules need one.
 		caps := []string{"git.push", "deploy.run", "tracker.write", "scm.pr.create", "net.egress", "plugin.install", "plugin.upgrade", "spend.paid"}
 		_, _, c := build(t)
@@ -375,7 +375,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		for _, cp := range caps {
 			for _, trig := range triggers {
 				st := run(cp, trig)
-				if st.State != domain.StepRefused || !strings.HasPrefix(st.Reason, domain.ReasonRuleRequiresAppr+" ("+cp+")") {
+				if st.State != domain.StepAwaitingApproval {
 					t.Errorf("%s via %s: %s %q", cp, trig, st.State, st.Reason)
 				}
 			}

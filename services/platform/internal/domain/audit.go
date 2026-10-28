@@ -12,6 +12,11 @@ const (
 	AuditGrantRevoked = "grant.revoked"
 	AuditGrantLapsed  = "grant.lapsed"
 	AuditGrantExpired = "grant.expired"
+
+	AuditApprovalRequested = "approval.requested"
+	AuditApprovalApproved  = "approval.approved"
+	AuditApprovalRejected  = "approval.rejected"
+	AuditApprovalVoided    = "approval.voided"
 )
 
 // Who made a change. A person's change records the person's id; a change nobody asked for, such
@@ -20,6 +25,9 @@ const (
 	// ActorPlatform is the actor of a change nobody asked for, and its id.
 	ActorPlatform ActorKind = "platform"
 )
+
+// actorPolicyID is the id of the actor (ActorPolicy, work.go) of an Approval Policy asked for.
+const actorPolicyID = "policy"
 
 // AuditEvent is one entry of the Platform's append-only audit log of approvals, grants and
 // policy changes. Seq starts at 1 and has no gaps across the whole log; the store assigns it, in
@@ -74,6 +82,34 @@ func GrantAuditEvent(prev *Grant, next Grant, now time.Time) (AuditEvent, error)
 		ev.Kind, ev.Actor, ev.ActorKind, ev.Reason = AuditGrantExpired, string(ActorPlatform), ActorPlatform, AuditReasonExpired
 	default:
 		return AuditEvent{}, fmt.Errorf("%w: grant %s: unknown status %q", ErrInvalid, next.ID, next.Status)
+	}
+	return ev, nil
+}
+
+// ApprovalAuditEvent returns the event that records the change from prev to next. A nil prev means
+// next was just requested. Like GrantAuditEvent, the store calls it inside the write. Seq is left
+// for the store. The time is the Approval's own.
+func ApprovalAuditEvent(prev *Approval, next Approval) (AuditEvent, error) {
+	ev := AuditEvent{TargetType: "approval", TargetID: next.ID, ProjectID: next.ProjectID}
+	switch {
+	case prev == nil:
+		if next.State != ApprovalRequested {
+			return AuditEvent{}, invalid("approval %s: a new approval is requested, not %s", next.ID, next.State)
+		}
+		ev.Kind, ev.Actor, ev.ActorKind, ev.At = AuditApprovalRequested, actorPolicyID, ActorPolicy, next.RequestedAt
+		ev.Reason = fmt.Sprintf("%s needs approval; requested by %s %s", next.Gate.Capability, next.Requester.Kind, next.Requester.ID)
+	case prev.State != ApprovalRequested || next.State == ApprovalRequested:
+		return AuditEvent{}, invalid("approval %s: %s to %s is not a lifecycle change", next.ID, prev.State, next.State)
+	case (next.State == ApprovalApproved || next.State == ApprovalRejected) && next.Decision != nil:
+		d := next.Decision
+		ev.Kind, ev.Actor, ev.ActorKind, ev.At, ev.Reason = AuditApprovalApproved, d.Approver, ActorHuman, d.DecidedAt, d.Rationale
+		if next.State == ApprovalRejected {
+			ev.Kind = AuditApprovalRejected
+		}
+	case next.State == ApprovalVoided && next.VoidedAt != nil:
+		ev.Kind, ev.Actor, ev.ActorKind, ev.At, ev.Reason = AuditApprovalVoided, string(ActorPlatform), ActorPlatform, *next.VoidedAt, next.VoidReason
+	default:
+		return AuditEvent{}, invalid("approval %s: %s to %s is not recorded", next.ID, prev.State, next.State)
 	}
 	return ev, nil
 }

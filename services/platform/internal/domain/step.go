@@ -33,7 +33,7 @@ var StepStates = []StepState{StepPending, StepSkipped, StepRefused, StepAwaiting
 // stepTransitions is the complete set of documented transitions. Anything absent is invalid.
 var stepTransitions = map[StepState][]StepState{
 	StepPending:          {StepSkipped, StepRefused, StepAwaitingApproval, StepQueued},
-	StepAwaitingApproval: {StepQueued, StepFailed},
+	StepAwaitingApproval: {StepQueued, StepFailed, StepCancelled},
 	StepQueued:           {StepLeased, StepCancelled},
 	StepLeased:           {StepRunning, StepQueued},
 	StepRunning:          {StepSucceeded, StepFailed, StepTimedOut, StepQueued, StepInterrupted, StepCancelled},
@@ -176,6 +176,16 @@ func (s *StepExecution) Approve() error { return s.move(StepAwaitingApproval, St
 // Reject moves awaiting_approval → failed because the Approval was rejected or expired.
 func (s *StepExecution) Reject(now time.Time, err *ExecError) error {
 	return s.fail(now, StepAwaitingApproval, err)
+}
+
+// CancelAwaiting moves awaiting_approval → cancelled: the Execution was cancelled while the Step
+// waited for a person, so the request is withdrawn.
+func (s *StepExecution) CancelAwaiting(now time.Time) error {
+	if err := s.move(StepAwaitingApproval, StepCancelled); err != nil {
+		return err
+	}
+	s.EndedAt = &now
+	return nil
 }
 
 // Lease moves queued → leased when a Worker is offered the Step as attempt attemptID, until

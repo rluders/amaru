@@ -69,6 +69,8 @@ type SubmitRequest struct {
 type Submitted struct {
 	Execution domain.Execution       `json:"execution"`
 	Steps     []domain.StepExecution `json:"steps"`
+	// Approvals are the requested Approvals of the Steps that wait for a person.
+	Approvals []domain.Approval `json:"approvals,omitempty"`
 }
 
 // Submit creates an Execution whose Steps are all queued, and wakes Serve. It returns replayed
@@ -122,9 +124,15 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 			if err != nil {
 				return Submitted{}, false, fmt.Errorf("step %s: %w", sp.Name, err)
 			}
-			if res.Decision == domain.DecisionAllow {
+			switch res.Decision {
+			case domain.DecisionAllow:
 				err = st.Plan()
-			} else {
+			case domain.DecisionRequireApproval:
+				var a domain.Approval
+				if a, err = c.request(now, out.Execution, &st, req.By); err == nil {
+					out.Approvals = append(out.Approvals, a)
+				}
+			default:
 				err = st.Refuse(now, refusal(preq, res))
 			}
 			if err != nil {
@@ -136,7 +144,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		if err != nil {
 			return Submitted{}, false, fmt.Errorf("encode outcome: %w", err)
 		}
-		_, _, err = c.store.CreateOnce(ctx, domain.CommandRecord{Name: CmdSubmit, Key: req.Key, Fingerprint: fp, Result: result, At: now}, out.Execution, out.Steps)
+		_, _, err = c.store.CreateOnce(ctx, domain.CommandRecord{Name: CmdSubmit, Key: req.Key, Fingerprint: fp, Result: result, At: now}, out.Execution, out.Steps, out.Approvals...)
 		if errors.Is(err, domain.ErrDuplicateCommand) {
 			continue
 		}

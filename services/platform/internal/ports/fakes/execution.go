@@ -19,9 +19,15 @@ type ExecutionStore struct {
 	steps  map[string][]domain.StepExecution // by Execution id, creation order
 	events map[string][]domain.ExecutionEvent
 	cmds   map[[2]string]domain.CommandRecord
+	apprs  map[string]domain.Approval // by id
+	byExec map[string][]string        // Approval ids by Execution id, request order
+	log    *AuditLog
 }
 
-var _ ports.ExecutionStore = (*ExecutionStore)(nil)
+var (
+	_ ports.ExecutionStore = (*ExecutionStore)(nil)
+	_ ports.AuditLog       = (*ExecutionStore)(nil)
+)
 
 func NewExecutionStore() *ExecutionStore {
 	return &ExecutionStore{
@@ -29,6 +35,9 @@ func NewExecutionStore() *ExecutionStore {
 		steps:  map[string][]domain.StepExecution{},
 		events: map[string][]domain.ExecutionEvent{},
 		cmds:   map[[2]string]domain.CommandRecord{},
+		apprs:  map[string]domain.Approval{},
+		byExec: map[string][]string{},
+		log:    &AuditLog{},
 	}
 }
 
@@ -45,14 +54,14 @@ func clone[T any](v T) T {
 }
 
 func (s *ExecutionStore) Create(_ context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
-	return s.create(nil, e, steps)
+	return s.create(nil, e, steps, nil)
 }
 
-func (s *ExecutionStore) CreateOnce(_ context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) CreateOnce(_ context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals ...domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if err := rec.Valid(); err != nil {
 		return domain.Execution{}, nil, err
 	}
-	return s.create(&rec, e, steps)
+	return s.create(&rec, e, steps, approvals)
 }
 
 func (s *ExecutionStore) Command(_ context.Context, name, key string) (domain.CommandRecord, error) {
@@ -65,7 +74,7 @@ func (s *ExecutionStore) Command(_ context.Context, name, key string) (domain.Co
 	return clone(rec), nil
 }
 
-func (s *ExecutionStore) create(rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) create(rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals []domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if e.ID == "" {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution needs an id", domain.ErrInvalid)
 	}
@@ -76,8 +85,27 @@ func (s *ExecutionStore) create(rec *domain.CommandRecord, e domain.Execution, s
 		}
 		seen[st.ID] = true
 	}
+	var requested []domain.AuditEvent
+	for _, a := range approvals {
+		ev, err := domain.ApprovalAuditEvent(nil, a)
+		if err == nil {
+			err = a.Validate()
+		}
+		if err == nil && (a.Gate.ExecutionID != e.ID || !seen[a.Gate.StepID]) {
+			err = fmt.Errorf("%w: approval %s does not gate a step of execution %s", domain.ErrInvalid, a.ID, e.ID)
+		}
+		if err != nil {
+			return domain.Execution{}, nil, err
+		}
+		requested = append(requested, ev)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for _, a := range approvals {
+		if _, ok := s.apprs[a.ID]; ok {
+			return domain.Execution{}, nil, fmt.Errorf("%w: approval %s", domain.ErrExists, a.ID)
+		}
+	}
 	if rec != nil {
 		if _, dup := s.cmds[[2]string{rec.Name, rec.Key}]; dup {
 			return domain.Execution{}, nil, fmt.Errorf("%w: %s %q", domain.ErrDuplicateCommand, rec.Name, rec.Key)
@@ -105,6 +133,13 @@ func (s *ExecutionStore) create(rec *domain.CommandRecord, e domain.Execution, s
 	s.steps[e.ID] = out
 	if rec != nil {
 		s.cmds[[2]string{rec.Name, rec.Key}] = clone(*rec)
+	}
+	for i, a := range approvals {
+		a = clone(a)
+		a.Version = 1
+		s.apprs[a.ID] = a
+		s.byExec[e.ID] = append(s.byExec[e.ID], a.ID)
+		s.log.append(requested[i])
 	}
 	return clone(e), clone(out), nil
 }
@@ -154,6 +189,27 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		}
 		idx[i] = n
 	}
+	var apprEvents []domain.AuditEvent
+	for _, a := range c.Approvals {
+		cur, ok := s.apprs[a.ID]
+		if !ok || cur.Gate.ExecutionID != evExec {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: approval %s", domain.ErrNotFound, a.ID)
+		}
+		if cur.Version != a.Version {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: approval %s is at version %d, change read %d", domain.ErrConflict, a.ID, cur.Version, a.Version)
+		}
+		ev, err := domain.ApprovalAuditEvent(&cur, a)
+		if err == nil {
+			err = a.Validate()
+		}
+		if err == nil && (a.Gate != cur.Gate || a.Requester != cur.Requester || a.Evidence.Digest != cur.Evidence.Digest || a.MinRole != cur.MinRole || a.ProjectID != cur.ProjectID) {
+			err = fmt.Errorf("%w: approval %s: only its state, decision and void record may change", domain.ErrInvalid, a.ID)
+		}
+		if err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		apprEvents = append(apprEvents, ev)
+	}
 	// An attempt id names one Step.
 	changing := map[string]bool{}
 	for _, st := range c.Steps {
@@ -195,6 +251,13 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 	}
 	if c.Command != nil {
 		s.cmds[[2]string{c.Command.Name, c.Command.Key}] = clone(*c.Command)
+	}
+	for i, a := range c.Approvals {
+		a = clone(a)
+		a.Version++
+		s.apprs[a.ID] = a
+		s.log.append(apprEvents[i])
+		out.Approvals = append(out.Approvals, clone(a))
 	}
 	for _, ev := range c.Events {
 		ev = clone(ev)
@@ -298,4 +361,32 @@ func (s *ExecutionStore) ByAttempt(_ context.Context, attemptID string) (ports.S
 		}
 	}
 	return ports.StepRef{}, fmt.Errorf("%w: attempt %q", domain.ErrNotFound, attemptID)
+}
+
+func (s *ExecutionStore) Approval(_ context.Context, id string) (domain.Approval, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	a, ok := s.apprs[id]
+	if !ok {
+		return domain.Approval{}, fmt.Errorf("%w: approval %s", domain.ErrNotFound, id)
+	}
+	return clone(a), nil
+}
+
+func (s *ExecutionStore) Approvals(_ context.Context, executionID string) ([]domain.Approval, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.execs[executionID]; !ok {
+		return nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, executionID)
+	}
+	out := []domain.Approval{}
+	for _, id := range s.byExec[executionID] {
+		out = append(out, clone(s.apprs[id]))
+	}
+	return out, nil
+}
+
+// Audit implements ports.AuditLog.
+func (s *ExecutionStore) Audit(ctx context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
+	return s.log.Audit(ctx, after, limit)
 }
