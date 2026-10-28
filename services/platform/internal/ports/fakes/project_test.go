@@ -43,3 +43,9 @@ func TestFakeContextStore(t *testing.T) {
 		return NewContextStore(), func(string, string) {}
 	})
 }
+
+func TestFakeExecutionEvidence(t *testing.T) {
+	porttest.ExecutionEvidence(t, func(*testing.T) porttest.EvidenceStores {
+		return porttest.EvidenceStores{Executions: NewExecutionStore(), Contexts: NewContextStore(), Artifacts: NewArtifactIndex()}
+	})
+}
