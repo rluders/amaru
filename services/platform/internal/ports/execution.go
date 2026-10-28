@@ -14,6 +14,9 @@ type ExecutionChange struct {
 	Execution *domain.Execution       // optional
 	Steps     []domain.StepExecution  // optional
 	Events    []domain.ExecutionEvent // appended in order; Seq and ExecutionID are set by the store
+	// Command, when set, is stored in the same write. A record with the same Name and Key makes
+	// the whole write fail with domain.ErrDuplicateCommand.
+	Command *domain.CommandRecord
 }
 
 // ExecutionStore keeps Executions, their Steps and their event log in the Platform store
@@ -24,6 +27,11 @@ type ExecutionStore interface {
 	// domain.ErrExists when the Execution id is stored, domain.ErrInvalid when a Step does not
 	// belong to the Execution.
 	Create(ctx context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error)
+	// CreateOnce is Create plus the command record, in one write. It returns
+	// domain.ErrDuplicateCommand, and writes nothing, when the record's Name and Key are stored.
+	CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error)
+	// Command returns the stored record for (name, key), or domain.ErrNotFound.
+	Command(ctx context.Context, name, key string) (domain.CommandRecord, error)
 	// Commit applies the change and returns the stored rows with their new versions (the
 	// Execution, if any, then the Steps in the order given) and the appended events with their Seq.
 	// It returns domain.ErrConflict when any version is stale and domain.ErrNotFound when a row

@@ -15,10 +15,11 @@ import (
 
 // Coordinator reconciles Executions at start and hands their Steps to Workers.
 type Coordinator struct {
-	store        ports.ExecutionStore
-	now          func() time.Time
-	leasePeriod  time.Duration
-	newAttemptID func() string
+	store          ports.ExecutionStore
+	now            func() time.Time
+	leasePeriod    time.Duration
+	newAttemptID   func() string
+	newExecutionID func() string
 
 	mu     sync.Mutex
 	wakeCh chan struct{}
@@ -33,9 +34,12 @@ func WithLeasePeriod(d time.Duration) Option { return func(c *Coordinator) { c.l
 // WithAttemptIDs replaces the attempt id generator (random by default); tests use a counter.
 func WithAttemptIDs(f func() string) Option { return func(c *Coordinator) { c.newAttemptID = f } }
 
+// WithExecutionIDs replaces the Execution id generator (random by default); tests use a counter.
+func WithExecutionIDs(f func() string) Option { return func(c *Coordinator) { c.newExecutionID = f } }
+
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, wakeCh: make(chan struct{})}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, wakeCh: make(chan struct{})}
 	for _, o := range opts {
 		o(c)
 	}

@@ -2,6 +2,6 @@
 // ADR-0052). It drives Executions through ports only: all state lives in ports.ExecutionStore,
 // so a restarted process continues from what was committed and from nothing else.
 //
-// Implemented so far: restart reconciliation (Reconcile). Leasing, Worker reports, timers and the
-// outbox arrive with their own issues.
+// Implemented so far: restart reconciliation (Reconcile), leasing and Worker reports (Serve),
+// and idempotent commands (Submit). Timers and the outbox arrive with their own issues.
 package coordinator

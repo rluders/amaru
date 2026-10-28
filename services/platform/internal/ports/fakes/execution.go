@@ -18,6 +18,7 @@ type ExecutionStore struct {
 	execs  map[string]domain.Execution
 	steps  map[string][]domain.StepExecution // by Execution id, creation order
 	events map[string][]domain.ExecutionEvent
+	cmds   map[[2]string]domain.CommandRecord
 }
 
 var _ ports.ExecutionStore = (*ExecutionStore)(nil)
@@ -27,6 +28,7 @@ func NewExecutionStore() *ExecutionStore {
 		execs:  map[string]domain.Execution{},
 		steps:  map[string][]domain.StepExecution{},
 		events: map[string][]domain.ExecutionEvent{},
+		cmds:   map[[2]string]domain.CommandRecord{},
 	}
 }
 
@@ -43,6 +45,27 @@ func clone[T any](v T) T {
 }
 
 func (s *ExecutionStore) Create(_ context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+	return s.create(nil, e, steps)
+}
+
+func (s *ExecutionStore) CreateOnce(_ context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Execution{}, nil, err
+	}
+	return s.create(&rec, e, steps)
+}
+
+func (s *ExecutionStore) Command(_ context.Context, name, key string) (domain.CommandRecord, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rec, ok := s.cmds[[2]string{name, key}]
+	if !ok {
+		return domain.CommandRecord{}, fmt.Errorf("%w: command %s %q", domain.ErrNotFound, name, key)
+	}
+	return clone(rec), nil
+}
+
+func (s *ExecutionStore) create(rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
 	if e.ID == "" {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution needs an id", domain.ErrInvalid)
 	}
@@ -55,6 +78,11 @@ func (s *ExecutionStore) Create(_ context.Context, e domain.Execution, steps []d
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if rec != nil {
+		if _, dup := s.cmds[[2]string{rec.Name, rec.Key}]; dup {
+			return domain.Execution{}, nil, fmt.Errorf("%w: %s %q", domain.ErrDuplicateCommand, rec.Name, rec.Key)
+		}
+	}
 	if _, ok := s.execs[e.ID]; ok {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution %s", domain.ErrExists, e.ID)
 	}
@@ -75,6 +103,9 @@ func (s *ExecutionStore) Create(_ context.Context, e domain.Execution, steps []d
 	}
 	s.execs[e.ID] = e
 	s.steps[e.ID] = out
+	if rec != nil {
+		s.cmds[[2]string{rec.Name, rec.Key}] = clone(*rec)
+	}
 	return clone(e), clone(out), nil
 }
 
@@ -87,6 +118,14 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 	defer s.mu.Unlock()
 
 	// Validate everything before writing anything.
+	if c.Command != nil {
+		if err := c.Command.Valid(); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		if _, dup := s.cmds[[2]string{c.Command.Name, c.Command.Key}]; dup {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: %s %q", domain.ErrDuplicateCommand, c.Command.Name, c.Command.Key)
+		}
+	}
 	if c.Execution != nil {
 		cur, ok := s.execs[c.Execution.ID]
 		if !ok {
@@ -151,6 +190,9 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		st.Version++
 		s.steps[st.ExecutionID][idx[i]] = st
 		out.Steps = append(out.Steps, clone(st))
+	}
+	if c.Command != nil {
+		s.cmds[[2]string{c.Command.Name, c.Command.Key}] = clone(*c.Command)
 	}
 	for _, ev := range c.Events {
 		ev = clone(ev)
