@@ -148,6 +148,8 @@ Prototype states: `queued, running, succeeded, failed, cancelled, skipped, unsup
 
 **Definition pinning (2026-10-28, [#210](https://github.com/rluders/amaru/issues/210), FEAT-WFL-002):** an Execution submitted from a Workflow stores a `DefinitionPin`: the workflow id, the Git commit id it was read at (empty if uncommitted), the SHA-256 of the snapshot, and the snapshot (canonical JSON of the Workflow). Only an `active` Workflow can be pinned. The pin is written with the Execution and never changes; the Platform reads the running definition from it, so resume does not depend on Git. Implemented and unit/integration-tested against the fake and PostgreSQL; the commit id is supplied by the caller, and nothing reads `.amaru/` yet.
 
+**Variables (2026-10-28, [#211](https://github.com/rluders/amaru/issues/211), FEAT-WFL-003):** a Workflow declares named string variables with a default (at most `MaxVarValue` = 10000 characters, never below `MaxIntent`, so a Work Item intent is not cut, F-15). A run may override declared variables only. `{{name}}` in a step input is replaced once when the Execution is submitted; an unknown or unclosed placeholder, an undeclared override, an over-limit value or a result over `MaxResolvedValue` (20000) is refused rather than truncated. There is no escape for a literal `{{` yet. Implemented and integration-tested against the fake and PostgreSQL for step inputs; prompts are not substituted until agent Steps run, and values are strings only (no other types).
+
 ### 5.3 Work Item
 `todo → in_progress → done`, with `blocked` reachable from `todo` and `in_progress` and back. Status is human-set; the delivery loop may move an item only as its Policy allows and records the transition as an Event **[Prototype]**.
 

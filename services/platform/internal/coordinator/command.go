@@ -50,6 +50,12 @@ type SubmitRequest struct {
 	// or empty if it was not committed.
 	Workflow *domain.Workflow
 	Revision string
+	// Variables overrides the Workflow's declared variables for this Execution, for example the
+	// intent of a Work Item (FEAT-WFL-003). Each name must be declared by the Workflow and each
+	// value is at most domain.MaxVarValue characters; a value is refused, never cut. Placeholders
+	// in step inputs are replaced before the Steps are created, so a Step's inputs are final.
+	// Without a Workflow it must be empty.
+	Variables map[string]string
 }
 
 // Submitted is the outcome of Submit: the Execution and its Steps as created.
@@ -72,7 +78,8 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		Project, Environment string
 		Steps                []StepSpec
 		Definition           *domain.DefinitionPin
-	}{req.ProjectID, req.EnvironmentID, specs, pin})
+		Variables            map[string]string
+	}{req.ProjectID, req.EnvironmentID, specs, pin, req.Variables})
 	if err != nil {
 		return Submitted{}, false, err
 	}
@@ -152,11 +159,13 @@ func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
 			return nil, nil, err
 		}
 		pin = &p
-		if specs, err = workflowSpecs(*req.Workflow); err != nil {
+		if specs, err = workflowSpecs(*req.Workflow, req.Variables); err != nil {
 			return nil, nil, err
 		}
 	case req.Revision != "":
 		return nil, nil, fmt.Errorf("%w: a revision needs a workflow", domain.ErrInvalid)
+	case len(req.Variables) > 0:
+		return nil, nil, fmt.Errorf("%w: variables need a workflow", domain.ErrInvalid)
 	}
 	if len(specs) == 0 {
 		return nil, nil, fmt.Errorf("%w: submit needs at least one step", domain.ErrInvalid)
@@ -171,8 +180,12 @@ func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
 	return pin, specs, nil
 }
 
-func workflowSpecs(w domain.Workflow) ([]StepSpec, error) {
+func workflowSpecs(w domain.Workflow, overrides map[string]string) ([]StepSpec, error) {
 	order, err := w.Order()
+	if err != nil {
+		return nil, err
+	}
+	vars, err := w.Resolve(overrides)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +197,13 @@ func workflowSpecs(w domain.Workflow) ([]StepSpec, error) {
 		}
 		sp := StepSpec{Name: st.ID, Capability: string(st.Capability)}
 		if len(st.Input) > 0 {
-			in, err := json.Marshal(st.Input)
+			resolved := make(map[string]string, len(st.Input))
+			for k, v := range st.Input {
+				if resolved[k], err = domain.Substitute(v, vars); err != nil {
+					return nil, fmt.Errorf("input %s of step %s: %w", k, st.ID, err)
+				}
+			}
+			in, err := json.Marshal(resolved)
 			if err != nil {
 				return nil, fmt.Errorf("encode inputs of step %s: %w", st.ID, err)
 			}
