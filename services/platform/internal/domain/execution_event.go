@@ -21,6 +21,8 @@ const (
 	EventStepCancelled       = "step.cancelled"
 	EventResultStale         = "result.rejected_stale"
 	EventStepDeferred        = "step.deferred"
+	EventApprovalApproved    = "approval.approved"
+	EventApprovalRejected    = "approval.rejected"
 )
 
 // ExecutionEvent is one entry of an Execution's ordered, append-only log. Seq starts at 1 and has

@@ -20,6 +20,7 @@ type Coordinator struct {
 	leasePeriod    time.Duration
 	newAttemptID   func() string
 	newExecutionID func() string
+	newApprovalID  func() string
 	limits         Limits
 	timeouts       domain.Timeouts
 	grants         ports.GrantStore // nil: no Grants exist, only rules allow
@@ -54,9 +55,12 @@ func WithAttemptIDs(f func() string) Option { return func(c *Coordinator) { c.ne
 // WithExecutionIDs replaces the Execution id generator (random by default); tests use a counter.
 func WithExecutionIDs(f func() string) Option { return func(c *Coordinator) { c.newExecutionID = f } }
 
+// WithApprovalIDs replaces the Approval id generator (random by default); tests use a counter.
+func WithApprovalIDs(f func() string) Option { return func(c *Coordinator) { c.newApprovalID = f } }
+
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, rules: domain.DefaultRules(), wakeCh: make(chan struct{}), cancels: map[string]chan<- ports.Cancel{}}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, newApprovalID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, rules: domain.DefaultRules(), wakeCh: make(chan struct{}), cancels: map[string]chan<- ports.Cancel{}}
 	for _, o := range opts {
 		o(c)
 	}

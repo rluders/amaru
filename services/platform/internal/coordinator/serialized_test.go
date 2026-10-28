@@ -114,3 +114,11 @@ func TestPolicyOverSerializedLink(t *testing.T) {
 			serialized[ports.WorkerMessage, ports.PlatformMessage]{Link: wl}
 	})
 }
+
+func TestApprovalOverSerializedLink(t *testing.T) {
+	coordtest.ApprovalSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) {
+		pl, wl := inproc.Pair()
+		return serialized[ports.PlatformMessage, ports.WorkerMessage]{Link: pl},
+			serialized[ports.WorkerMessage, ports.PlatformMessage]{Link: wl}
+	}, nil)
+}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -43,14 +44,14 @@ func timePtr(n sql.NullTime) *time.Time {
 func nullString(s string) sql.NullString { return sql.NullString{String: s, Valid: s != ""} }
 
 func (s *ExecutionStore) Create(ctx context.Context, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
-	return s.create(ctx, nil, e, steps)
+	return s.create(ctx, nil, e, steps, nil)
 }
 
-func (s *ExecutionStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals ...domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if err := rec.Valid(); err != nil {
 		return domain.Execution{}, nil, err
 	}
-	return s.create(ctx, &rec, e, steps)
+	return s.create(ctx, &rec, e, steps, approvals)
 }
 
 // insertCommand stores the record in the caller's transaction. A taken (name, key) is
@@ -83,7 +84,7 @@ func (s *ExecutionStore) Command(ctx context.Context, name, key string) (domain.
 	return rec, nil
 }
 
-func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution) (domain.Execution, []domain.StepExecution, error) {
+func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals []domain.Approval) (domain.Execution, []domain.StepExecution, error) {
 	if e.ID == "" {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution needs an id", domain.ErrInvalid)
 	}
@@ -93,6 +94,11 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 			return domain.Execution{}, nil, fmt.Errorf("%w: step %q does not belong to execution %s", domain.ErrInvalid, st.ID, e.ID)
 		}
 		seen[st.ID] = true
+	}
+	for _, a := range approvals {
+		if a.Gate.ExecutionID != e.ID || !seen[a.Gate.StepID] {
+			return domain.Execution{}, nil, fmt.Errorf("%w: approval %s does not gate a step of execution %s", domain.ErrInvalid, a.ID, e.ID)
+		}
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -131,6 +137,11 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 			return domain.Execution{}, nil, mapCreateErr(err, "step", st.ID)
 		}
 		out[i] = st
+	}
+	for _, a := range approvals {
+		if err := insertApproval(ctx, tx, a); err != nil {
+			return domain.Execution{}, nil, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return domain.Execution{}, nil, fmt.Errorf("postgres: create execution: %w", err)
@@ -263,6 +274,22 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 			return ports.ExecutionChange{}, s.missOrStale(ctx, tx, err, "step", "step_executions", st.ID, st.Version)
 		}
 		out.Steps[i] = st
+	}
+
+	if len(c.Approvals) > 0 {
+		as := slices.Clone(c.Approvals)
+		sort.Slice(as, func(a, b int) bool { return as[a].ID < as[b].ID })
+		stored, err := s.updateApprovals(ctx, tx, execID, as)
+		if err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		byID := map[string]domain.Approval{}
+		for _, a := range stored {
+			byID[a.ID] = a
+		}
+		for _, a := range c.Approvals {
+			out.Approvals = append(out.Approvals, byID[a.ID])
+		}
 	}
 
 	first := lastSeq - int64(len(c.Events))

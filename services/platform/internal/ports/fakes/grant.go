@@ -15,7 +15,7 @@ import (
 type GrantStore struct {
 	mu   sync.Mutex
 	byID map[string]domain.Grant
-	log  []domain.AuditEvent
+	log  *AuditLog
 }
 
 var (
@@ -23,7 +23,9 @@ var (
 	_ ports.AuditLog   = (*GrantStore)(nil)
 )
 
-func NewGrantStore() *GrantStore { return &GrantStore{byID: map[string]domain.Grant{}} }
+func NewGrantStore() *GrantStore {
+	return &GrantStore{byID: map[string]domain.Grant{}, log: &AuditLog{}}
+}
 
 func (s *GrantStore) Create(_ context.Context, g domain.Grant) (domain.Grant, error) {
 	if err := g.Validate(); err != nil {
@@ -40,7 +42,7 @@ func (s *GrantStore) Create(_ context.Context, g domain.Grant) (domain.Grant, er
 	}
 	g.Version = 1
 	s.byID[g.ID] = cloneGrant(g)
-	s.appendAudit(ev)
+	s.log.append(ev)
 	return cloneGrant(g), nil
 }
 
@@ -81,7 +83,7 @@ func (s *GrantStore) Update(_ context.Context, g domain.Grant) (domain.Grant, er
 		if err != nil {
 			return domain.Grant{}, err
 		}
-		s.appendAudit(ev)
+		s.log.append(ev)
 	}
 	g.Version = old.Version + 1
 	s.byID[g.ID] = cloneGrant(g)
@@ -130,25 +132,7 @@ func sameGrant(a, b domain.Grant) bool {
 		(a.ExpiresAt == nil || a.ExpiresAt.Equal(*b.ExpiresAt))
 }
 
-// appendAudit stores ev with the next Seq. The caller holds s.mu and has already checked the
-// write it records, so the Grant and its event change together.
-func (s *GrantStore) appendAudit(ev domain.AuditEvent) {
-	ev.Seq = int64(len(s.log)) + 1
-	s.log = append(s.log, ev)
-}
-
 // Audit implements ports.AuditLog.
-func (s *GrantStore) Audit(_ context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
-	if limit <= 0 {
-		limit = 1000
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	out := []domain.AuditEvent{}
-	for _, ev := range s.log {
-		if ev.Seq > after && len(out) < limit {
-			out = append(out, ev)
-		}
-	}
-	return out, nil
+func (s *GrantStore) Audit(ctx context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
+	return s.log.Audit(ctx, after, limit)
 }

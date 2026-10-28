@@ -14,3 +14,7 @@ func TestProjectStoreConformance(t *testing.T) {
 func TestExecutionStoreConformance(t *testing.T) {
 	porttest.ExecutionStore(t, func(*testing.T) ports.ExecutionStore { return NewExecutionStore() }, nil)
 }
+
+func TestFakeApprovalStore(t *testing.T) {
+	porttest.ApprovalStore(t, func(*testing.T) ports.ExecutionStore { return NewExecutionStore() }, nil)
+}

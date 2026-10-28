@@ -81,6 +81,10 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 				if err := st.Cancel(now); err != nil {
 					return Cancelled{}, false, err
 				}
+			case domain.StepAwaitingApproval:
+				if err := st.CancelAwaiting(now); err != nil {
+					return Cancelled{}, false, err
+				}
 			case domain.StepInterrupted, domain.StepTimedOut:
 				if err := st.Abandon(now, req.By); err != nil {
 					return Cancelled{}, false, err
@@ -110,7 +114,11 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 		if err != nil {
 			return Cancelled{}, false, fmt.Errorf("encode outcome: %w", err)
 		}
-		ch := ports.ExecutionChange{Steps: changed, Events: events,
+		voided, err := c.voidWaiting(ctx, e.ID, out.Ended, now)
+		if err != nil {
+			return Cancelled{}, false, err
+		}
+		ch := ports.ExecutionChange{Steps: changed, Events: events, Approvals: voided,
 			Command: &domain.CommandRecord{Name: CmdCancel, Key: req.Key, Fingerprint: fp, Result: result, At: now}}
 		if out.ExecutionCancelled || len(changed) == 0 {
 			ch.Execution = &e // the change must name its Execution; unchanged, it only moves the version
@@ -158,6 +166,7 @@ func (c *Coordinator) settleCancel(ctx context.Context, executionID string) erro
 		}
 		now := c.now()
 		var changed []domain.StepExecution
+		var endedIDs []string
 		var evs []domain.ExecutionEvent
 		for i := range steps {
 			st := &steps[i]
@@ -165,6 +174,8 @@ func (c *Coordinator) settleCancel(ctx context.Context, executionID string) erro
 			switch st.State {
 			case domain.StepQueued:
 				err = st.Cancel(now)
+			case domain.StepAwaitingApproval:
+				err = st.CancelAwaiting(now)
 			case domain.StepInterrupted, domain.StepTimedOut:
 				err = st.Abandon(now, systemActor)
 			default:
@@ -174,9 +185,14 @@ func (c *Coordinator) settleCancel(ctx context.Context, executionID string) erro
 				return err
 			}
 			changed = append(changed, *st)
+			endedIDs = append(endedIDs, st.ID)
 			evs = append(evs, domain.ExecutionEvent{Kind: domain.EventStepCancelled, StepID: st.ID, Reason: "execution_cancelled", At: now})
 		}
-		ch := ports.ExecutionChange{Steps: changed, Events: evs}
+		voided, err := c.voidWaiting(ctx, executionID, endedIDs, now)
+		if err != nil {
+			return err
+		}
+		ch := ports.ExecutionChange{Steps: changed, Events: evs, Approvals: voided}
 		if allEnded(steps) {
 			if err := e.Finish(now, domain.ExecCancelled, nil); err != nil {
 				return err

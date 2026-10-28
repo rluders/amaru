@@ -36,7 +36,13 @@ func TestRemoteJobOverInProcessLink(t *testing.T) {
 }
 
 func newFakes(*testing.T) (ports.ExecutionStore, ports.GrantStore) {
-	return fakes.NewExecutionStore(), fakes.NewGrantStore()
+	e, g := fakes.NewExecutionStore(), fakes.NewGrantStore()
+	fakes.LinkAudit(e, g)
+	return e, g
+}
+
+func TestApprovalOverInProcessLink(t *testing.T) {
+	coordtest.ApprovalSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
 }
 
 func TestPolicyOverInProcessLink(t *testing.T) {
