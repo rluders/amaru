@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -62,7 +63,7 @@ func (w *Worker) Run(ctx context.Context, link ports.WorkerLink) error {
 	var (
 		mu      sync.Mutex
 		free    = slots
-		running = map[string]context.CancelFunc{}
+		running = map[string]*attempt{}
 		wg      sync.WaitGroup
 	)
 	runCtx, stop := context.WithCancel(ctx)
@@ -91,9 +92,10 @@ func (w *Worker) Run(ctx context.Context, link ports.WorkerLink) error {
 		switch m := m.(type) {
 		case ports.Assignment:
 			actx, cancel := context.WithCancel(runCtx)
+			at := &attempt{cancel: cancel}
 			mu.Lock()
 			free--
-			running[m.AttemptID] = cancel
+			running[m.AttemptID] = at
 			err := link.Send(runCtx, ports.AcceptAttempt{AttemptID: m.AttemptID, FencingToken: m.Lease.FencingToken})
 			mu.Unlock()
 			if err != nil {
@@ -104,7 +106,7 @@ func (w *Worker) Run(ctx context.Context, link ports.WorkerLink) error {
 			go func() {
 				defer wg.Done()
 				defer cancel()
-				revoked := w.execute(actx, link, m, beat)
+				revoked := w.execute(actx, runCtx, link, m, beat, at)
 				mu.Lock()
 				delete(running, m.AttemptID)
 				free++
@@ -115,10 +117,19 @@ func (w *Worker) Run(ctx context.Context, link ports.WorkerLink) error {
 			}()
 		case ports.LeaseRevoked:
 			mu.Lock()
-			cancel := running[m.AttemptID]
+			at := running[m.AttemptID]
 			mu.Unlock()
-			if cancel != nil {
-				cancel()
+			if at != nil {
+				at.cancel()
+			}
+		case ports.Cancel:
+			// Stop the attempt and, once the Runner has ended what it started, report it cancelled.
+			mu.Lock()
+			at := running[m.AttemptID]
+			mu.Unlock()
+			if at != nil {
+				at.asked.Store(true)
+				at.cancel()
 			}
 		case ports.ResultAck:
 			// The slot was freed when the attempt ended; the ack needs no action.
@@ -126,9 +137,19 @@ func (w *Worker) Run(ctx context.Context, link ports.WorkerLink) error {
 	}
 }
 
+// attempt is a running attempt: cancel ends its context; asked is set when the Platform sent a
+// Cancel, as opposed to revoking the Lease.
+type attempt struct {
+	cancel context.CancelFunc
+	asked  atomic.Bool
+}
+
 // execute runs one attempt: heartbeat while the Runner works, then report. It returns true when
-// the attempt was cancelled and so reported nothing.
-func (w *Worker) execute(ctx context.Context, link ports.WorkerLink, a ports.Assignment, beat time.Duration) (cancelled bool) {
+// the attempt was revoked or the Worker stopped, and so reported nothing. An attempt the Platform
+// asked to cancel reports OutcomeCancelled once the Runner has returned, whatever the Runner said:
+// the Runner returns after it has ended the process tree it started (osproc does so when its
+// context ends).
+func (w *Worker) execute(ctx, linkCtx context.Context, link ports.WorkerLink, a ports.Assignment, beat time.Duration, at *attempt) (cancelled bool) {
 	hbCtx, stopHeartbeat := context.WithCancel(ctx)
 	hbDone := make(chan struct{})
 	go func() {
@@ -151,7 +172,11 @@ func (w *Worker) execute(ctx context.Context, link ports.WorkerLink, a ports.Ass
 	stopHeartbeat()
 	<-hbDone
 	if ctx.Err() != nil {
-		return true
+		if !at.asked.Load() || linkCtx.Err() != nil {
+			return true
+		}
+		_ = link.Send(linkCtx, ports.Result{AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken, Outcome: ports.OutcomeCancelled})
+		return false
 	}
 	_ = link.Send(ctx, ports.Result{
 		AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken,

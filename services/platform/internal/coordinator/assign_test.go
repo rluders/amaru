@@ -26,3 +26,7 @@ func TestDefinitionPinned(t *testing.T) { coordtest.DefinitionSuite(t, newFake, 
 func TestTimeoutsOverInProcessLink(t *testing.T) {
 	coordtest.TimeoutSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
 }
+
+func TestCancelOverInProcessLink(t *testing.T) {
+	coordtest.CancelSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
+}

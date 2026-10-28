@@ -143,3 +143,12 @@ func TestTimeoutsWithPostgres(t *testing.T) {
 		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
 }
+
+// Cancellation against the real store.
+func TestCancelWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.CancelSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
