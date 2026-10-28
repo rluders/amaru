@@ -1,0 +1,13 @@
+# amaru-context/1
+--- intent name="intent" sha256=bba6541ec634e8078f4737d675700ea7414df4564599ef3c475611e031034df5 bytes=25 ---
+Fix the flaky login test.
+--- agent name="reviewer" version="3" sha256=267d62493526085d11bdad82ebf0915bb0de91270207304741ba551f8d26705a bytes=27 ---
+You review diffs.
+Be terse.
+--- skill name="go-style" version="2" sha256=799729cc16214268911c7da7d4dc22dc6ad433f008d0f8c049b649d3b06be69f bytes=38 ---
+Prefer small functions.
+Return errors.
+--- skill name="testing" version="1" sha256=3ce53cf79fe8d4efe8edc1114cf428bf589ecbe78e21ddb66b768601d696508d bytes=19 ---
+Table-driven tests.
+--- knowledge name="docs/login.md" sha256=3b90beb6ecfb914890ca95a7f21ac288505c5ec1ba9112cd8d8b5795a2489028 bytes=28 ---
+Login uses a session cookie.
