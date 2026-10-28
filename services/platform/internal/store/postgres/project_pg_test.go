@@ -498,3 +498,10 @@ func TestExecutionEvidenceWithPostgres(t *testing.T) {
 		return porttest.EvidenceStores{Executions: NewExecutionStore(db), Contexts: NewContextStore(db), Artifacts: NewArtifactIndex(db)}
 	})
 }
+
+func TestEvidenceBoundApprovalsWithPostgres(t *testing.T) {
+	coordtest.EvidenceBindingSuite(t, func(t *testing.T) coordtest.SkillStores {
+		db := migratedDB(t)
+		return coordtest.SkillStores{Executions: NewExecutionStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Skills: NewSkillStore(db), Contexts: NewContextStore(db)}
+	}, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}
