@@ -46,7 +46,7 @@ Storage ports stay in domain code so tests use fakes; production has one adapter
 - A state transition, its Event and the messages it causes are written in one PostgreSQL transaction; messages leave through the outbox relay to NATS, so clients never see an Event for a state that did not commit and consumers deduplicate by id.
 - Every persisted record carries a schema version. Loaders refuse unknown future versions and migrate older ones explicitly (FEAT-OPS-002).
   - *Implemented, unit-tested and PostgreSQL-tested on Linux (#177):* the migration runner in `services/platform/internal/store/migrations` runs goose-format files from an embedded directory (sha256 manifest `migrations.sum`), records versions in `amaru_schema_migrations`, refuses a database newer than the build and a file older than an applied one, and applies each file with its version row in one transaction under an advisory lock. No table exists yet; per-record schema versions for each persisted format come with each adapter.
-- Artifacts are written before the Step that produced them is marked succeeded. Their hashes are computed by the Platform.
+- Artifacts are written before the Step that produced them is marked succeeded. Their hashes are computed by the Platform. *Implementation status:* the filesystem blob store, the version index and the ingester that computes the hash exist and are integration-tested on Linux (FEAT-ART-001); nothing yet holds a Step until its Artifacts are recorded, because the Worker `Result` carries no outputs.
 - Definitions edited outside Amaru (files under `.amaru/` changed on disk or in Git) are detected and produce change Events (FEAT-WRK-003); every Execution records the definition revision (commit SHA + content hash).
 
 ## 5. Retention and redaction
@@ -65,6 +65,7 @@ Retention is an Organization Policy setting per data class ([ADR-0017](adr/0017-
 - Redaction:
   - known secret values delivered to a Lease are removed **on the Worker** before any Event, log or upload leaves it; configurable patterns are applied again on the Platform before storage
   - redaction failures are counted and surfaced
+- *Implementation status (#125, partly):* `domain.Redactor` and `domain.RetentionPolicy` exist and are unit-tested on Linux. The coordinator redacts the error text a Worker reports before storing it. Nothing deletes data, no setting is read from configuration, no log or transcript is stored, Approvals do not yet reference Artifacts, and the Worker-side removal of Lease secret values and the failure count are not implemented. The event replay window is not covered.
 - Export and deletion per Organization (PRIV-2).
 
 ## 6. Migration of existing data

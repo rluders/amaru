@@ -26,6 +26,14 @@ func TestFakeTrustStore(t *testing.T) {
 	})
 }
 
+func TestFakeBlobStore(t *testing.T) {
+	porttest.BlobStore(t, func(*testing.T) ports.BlobStore { return NewBlobStore() })
+}
+
+func TestFakeArtifactIndex(t *testing.T) {
+	porttest.ArtifactIndex(t, func(*testing.T) ports.ArtifactIndex { return NewArtifactIndex() })
+}
+
 func TestFakeSkillStore(t *testing.T) {
 	porttest.SkillStore(t, func(*testing.T) ports.SkillStore { return NewSkillStore() })
 }
@@ -33,5 +41,11 @@ func TestFakeSkillStore(t *testing.T) {
 func TestFakeContextStore(t *testing.T) {
 	porttest.ContextStore(t, func(*testing.T) (ports.ContextStore, func(string, string)) {
 		return NewContextStore(), func(string, string) {}
+	})
+}
+
+func TestFakeExecutionEvidence(t *testing.T) {
+	porttest.ExecutionEvidence(t, func(*testing.T) porttest.EvidenceStores {
+		return porttest.EvidenceStores{Executions: NewExecutionStore(), Contexts: NewContextStore(), Artifacts: NewArtifactIndex()}
 	})
 }

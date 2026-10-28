@@ -325,6 +325,57 @@ func TestApprovalStoreConformance(t *testing.T) {
 }
 
 // The approval workflow against the real store: a waiting Step and its Approval survive a restart.
+func TestArtifactIndexConformance(t *testing.T) {
+	porttest.ArtifactIndex(t, func(t *testing.T) ports.ArtifactIndex { return NewArtifactIndex(migratedDB(t)) })
+}
+
+func TestArtifactVersionsAreImmutableInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	ctx := context.Background()
+	idx := NewArtifactIndex(db)
+	v, err := idx.Record(ctx, domain.ArtifactVersion{ArtifactID: "report", Hash: domain.ContentHash([]byte("x")), Size: 1, Path: "r.json",
+		ExecutionID: "e1", StepID: "e1.s1", AttemptID: "a1", CreatedAt: time.Now().UTC()})
+	if err != nil || v.Version != 1 {
+		t.Fatalf("%+v %v", v, err)
+	}
+	if _, err := db.ExecContext(ctx, `UPDATE artifact_versions SET hash = 'sha256:' || repeat('0', 64)`); err == nil {
+		t.Error("an artifact version was edited")
+	}
+	if _, err := db.ExecContext(ctx, `DELETE FROM artifact_versions`); err == nil {
+		t.Error("an artifact version was deleted")
+	}
+	if _, err := db.ExecContext(ctx, `INSERT INTO artifact_versions VALUES ('x', 1, 'not-a-hash', 0, '', 'p', 'e', 's', 'a', now())`); err == nil {
+		t.Error("a version with a malformed hash was stored")
+	}
+}
+
+func TestArtifactVersionNumbersHaveNoGapsUnderConcurrentWriters(t *testing.T) {
+	idx := NewArtifactIndex(migratedDB(t))
+	const n = 20
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, err := idx.Record(context.Background(), domain.ArtifactVersion{ArtifactID: "report", Hash: domain.ContentHash([]byte{byte(i)}), Size: 1,
+				Path: "r.json", ExecutionID: "e1", StepID: "e1.s1", AttemptID: fmt.Sprintf("a%d", i), CreatedAt: time.Now().UTC()})
+			if err != nil {
+				t.Error(err)
+			}
+		}(i)
+	}
+	wg.Wait()
+	vs, err := idx.Versions(context.Background(), "report")
+	if err != nil || len(vs) != n {
+		t.Fatalf("%d versions, %v", len(vs), err)
+	}
+	for i, v := range vs {
+		if v.Version != int64(i+1) {
+			t.Fatalf("version %d at position %d", v.Version, i)
+		}
+	}
+}
+
 func TestSkillStoreConformance(t *testing.T) {
 	porttest.SkillStore(t, func(t *testing.T) ports.SkillStore { return NewSkillStore(migratedDB(t)) })
 }
@@ -439,4 +490,18 @@ func TestApprovalsAreFinalInTheDatabase(t *testing.T) {
 			t.Errorf("%s was allowed", name)
 		}
 	}
+}
+
+func TestExecutionEvidenceWithPostgres(t *testing.T) {
+	porttest.ExecutionEvidence(t, func(t *testing.T) porttest.EvidenceStores {
+		db := migratedDB(t)
+		return porttest.EvidenceStores{Executions: NewExecutionStore(db), Contexts: NewContextStore(db), Artifacts: NewArtifactIndex(db)}
+	})
+}
+
+func TestEvidenceBoundApprovalsWithPostgres(t *testing.T) {
+	coordtest.EvidenceBindingSuite(t, func(t *testing.T) coordtest.SkillStores {
+		db := migratedDB(t)
+		return coordtest.SkillStores{Executions: NewExecutionStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Skills: NewSkillStore(db), Contexts: NewContextStore(db)}
+	}, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }

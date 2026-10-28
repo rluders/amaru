@@ -62,6 +62,10 @@ func newSkillStores(*testing.T) coordtest.SkillStores {
 
 func TestContextAssembly(t *testing.T) { coordtest.ContextSuite(t, newSkillStores) }
 
+func TestEvidenceBoundApprovals(t *testing.T) {
+	coordtest.EvidenceBindingSuite(t, newSkillStores, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}
+
 func TestSkillOverInProcessLink(t *testing.T) {
 	coordtest.SkillSuite(t, newSkillStores, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
