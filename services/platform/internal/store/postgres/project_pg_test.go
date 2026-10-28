@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
+	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/porttest"
 	"github.com/rluders/amaru/services/platform/internal/store/migrations"
@@ -100,6 +102,31 @@ func TestCommandsWithPostgres(t *testing.T) {
 	coordtest.CommandSuite(t,
 		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}
+
+// The pinned definition survives a restart and cannot be updated, also by a direct write.
+func TestDefinitionWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.DefinitionSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+	t.Run("the database refuses to change a pin", func(t *testing.T) {
+		db = migratedDB(t)
+		s := NewExecutionStore(db)
+		pin, err := domain.Pin(domain.Workflow{ID: "ship-it", Name: "Ship it", Status: domain.WorkflowActive,
+			Steps: []domain.WorkflowStep{{ID: "build", Name: "Build", Type: domain.StepTypeTool, Capability: "code.build"}}}, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		e := domain.Execution{ID: "e1", State: domain.ExecQueued, CreatedAt: time.Now(), Definition: &pin}
+		if _, _, err := s.Create(context.Background(), e, nil); err != nil {
+			t.Fatal(err)
+		}
+		_, err = db.Exec(`UPDATE executions SET definition_hash = 'sha256:x' WHERE id = 'e1'`)
+		if err == nil || !strings.Contains(err.Error(), "pinned") {
+			t.Fatalf("got %v, want the pin refused", err)
+		}
+	})
 }
 
 // The concurrency limits against the real store, which counts the Steps that hold a slot.

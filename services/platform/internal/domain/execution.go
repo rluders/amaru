@@ -44,13 +44,16 @@ type Execution struct {
 	// ProjectID and EnvironmentID are the scopes the concurrency limits count in (FEAT-EXE-006).
 	// They are opaque ids set when the Execution is created and never change; empty means the
 	// Execution is not in that scope and its Steps do not count against it.
-	ProjectID     string     `json:"projectId,omitempty"`
-	EnvironmentID string     `json:"environmentId,omitempty"`
-	State         ExecState  `json:"state"`
-	CreatedAt     time.Time  `json:"createdAt"`
-	StartedAt     *time.Time `json:"startedAt,omitempty"`
-	EndedAt       *time.Time `json:"endedAt,omitempty"`
-	Error         *ExecError `json:"error,omitempty"`
+	ProjectID     string    `json:"projectId,omitempty"`
+	EnvironmentID string    `json:"environmentId,omitempty"`
+	State         ExecState `json:"state"`
+	// Definition is the Workflow definition the Execution runs, pinned when it is created and
+	// never changed (FEAT-WFL-002). Nil for an Execution submitted without a Workflow.
+	Definition *DefinitionPin `json:"definition,omitempty"`
+	CreatedAt  time.Time      `json:"createdAt"`
+	StartedAt  *time.Time     `json:"startedAt,omitempty"`
+	EndedAt    *time.Time     `json:"endedAt,omitempty"`
+	Error      *ExecError     `json:"error,omitempty"`
 }
 
 // move changes state only from the one state the calling method is defined for, and only along

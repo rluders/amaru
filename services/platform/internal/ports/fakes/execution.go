@@ -181,6 +181,7 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 	if c.Execution != nil {
 		e := clone(*c.Execution)
 		e.ProjectID, e.EnvironmentID = s.execs[e.ID].ProjectID, s.execs[e.ID].EnvironmentID // scopes never change
+		e.Definition = s.execs[e.ID].Definition                                             // the pinned definition never changes
 		e.Version++
 		s.execs[e.ID] = e
 		cp := clone(e)

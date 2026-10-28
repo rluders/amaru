@@ -20,3 +20,5 @@ func TestCommandsIdempotent(t *testing.T) { coordtest.CommandSuite(t, newFake, n
 func TestLimitsOverInProcessLink(t *testing.T) {
 	coordtest.LimitsSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+func TestDefinitionPinned(t *testing.T) { coordtest.DefinitionSuite(t, newFake, nil) }
