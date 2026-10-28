@@ -37,7 +37,7 @@ Status: **accepted planning baseline** (2026-10-25; every decision it relies on 
    - argv arrays, explicit cwd, environment allowlist, prompts over stdin, no shell **[Prototype]**;
    - only `git` and `gh` receive SSH agent and GitHub configuration **[Prototype]**.
 4. **Secrets** reach Providers only through a secrets port. They never appear in Events, logs, Artifacts, errors or UI notices **[Prototype]**, and are write-only from clients **[Prototype]**.
-5. **Project content is untrusted.** Nothing project-supplied executes implicitly. Skills and linked repositories require explicit, content-bound trust **[Prototype]**.
+5. **Project content is untrusted.** Nothing project-supplied executes implicitly. Skills and linked repositories require explicit, content-bound trust **[Prototype]**. *Status:* the Platform records a human's trust of a Project and of one Workflow definition by hash, and denies every Step of an untrusted Project or an untrusted definition before a Worker sees it (FEAT-PRJ-003; integration-tested on Linux; Skills and linked repositories are not yet covered).
 6. **Writes**: nothing the Platform writes at runtime lands in the Project tree; operational state is in PostgreSQL and outputs in the Artifact store ([ADR-0043](../architecture/adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md), [ADR-0017](../architecture/adr/0017-content-addressed-artifact-store-filesystem-or-s3.md)) [Proposed]. Agents write only inside their worktree **[Prototype]** (the prototype confined Platform writes to its project definition folder).
 7. **Egress:**
    - remote Providers and outbound webhooks are disabled until the user enables them;

@@ -60,6 +60,9 @@ type PolicyRequest struct {
 	// DefinitionHash is the hash of the definition the Subject runs under; a Grant bound to a
 	// different hash does not match.
 	DefinitionHash string `json:"definitionHash,omitempty"`
+	// ProjectTrust is the trust standing of the Project and the content the request runs. The
+	// zero value is untrusted.
+	ProjectTrust TrustStanding `json:"projectTrust,omitempty"`
 }
 
 // Validate checks the request is well formed. An invalid request is a caller bug, not a
@@ -189,6 +192,8 @@ func (r PolicyRule) matches(req PolicyRequest) bool {
 // Reason codes of a Policy result. Clients tell a refusal from an uncovered request by the code
 // (ADR-0048 items 5 and 6).
 const (
+	ReasonProjectUntrusted = "policy.project_untrusted"
+	ReasonTrustChanged     = "policy.trust_changed"
 	ReasonExplicitDeny     = "policy.explicit_deny"
 	ReasonUncovered        = "policy.uncovered"
 	ReasonGrantMatched     = "grant.matched"
@@ -248,6 +253,19 @@ func Evaluate(now time.Time, req PolicyRequest, grants []Grant, rules []PolicyRu
 		}
 	}
 	res := PolicyResult{EvaluatedAt: now}
+	// Trust comes first and nothing lifts it, not a Grant, an Approval or an allow rule: Amaru
+	// does nothing with a Project's content until a human trusts it (FEAT-PRJ-003). Every
+	// Capability in the catalog runs Project content or a configured tool, so an untrusted
+	// Project is closed to every principal, and an Agent has no read-only Capability to use.
+	if req.Scope.ProjectID != "" && req.ProjectTrust != TrustTrusted {
+		res.Decision = DecisionDeny
+		code, msg := ReasonProjectUntrusted, "project "+req.Scope.ProjectID+" is not trusted; a maintainer, admin or owner can trust it"
+		if req.ProjectTrust == TrustChanged {
+			code, msg = ReasonTrustChanged, "the content this request runs changed since it was trusted; a maintainer, admin or owner can trust the new content"
+		}
+		res.Reasons = []PolicyReason{{Code: code, Source: "request", Message: msg}}
+		return res, nil
+	}
 	var approve, allow []PolicyRule
 	for _, r := range rules {
 		if !r.matches(req) {

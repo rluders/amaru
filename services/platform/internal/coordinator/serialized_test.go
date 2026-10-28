@@ -107,6 +107,14 @@ func TestAssignmentOverSerializedLink(t *testing.T) {
 	})
 }
 
+func TestTrustOverSerializedLink(t *testing.T) {
+	coordtest.TrustSuite(t, newTrustStores, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) {
+		pl, wl := inproc.Pair()
+		return serialized[ports.PlatformMessage, ports.WorkerMessage]{Link: pl},
+			serialized[ports.WorkerMessage, ports.PlatformMessage]{Link: wl}
+	})
+}
+
 func TestPolicyOverSerializedLink(t *testing.T) {
 	coordtest.PolicySuite(t, newFakes, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) {
 		pl, wl := inproc.Pair()

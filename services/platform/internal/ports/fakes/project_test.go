@@ -18,3 +18,10 @@ func TestExecutionStoreConformance(t *testing.T) {
 func TestFakeApprovalStore(t *testing.T) {
 	porttest.ApprovalStore(t, func(*testing.T) ports.ExecutionStore { return NewExecutionStore() }, nil)
 }
+
+func TestFakeTrustStore(t *testing.T) {
+	porttest.TrustStore(t, func(*testing.T) (ports.TrustStore, ports.ProjectStore) {
+		p := NewProjectStore()
+		return NewTrustStore(p), p
+	})
+}

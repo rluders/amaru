@@ -17,6 +17,9 @@ const (
 	AuditApprovalApproved  = "approval.approved"
 	AuditApprovalRejected  = "approval.rejected"
 	AuditApprovalVoided    = "approval.voided"
+
+	AuditTrustGranted = "trust.granted"
+	AuditTrustRevoked = "trust.revoked"
 )
 
 // Who made a change. A person's change records the person's id; a change nobody asked for, such
@@ -110,6 +113,31 @@ func ApprovalAuditEvent(prev *Approval, next Approval) (AuditEvent, error) {
 		ev.Kind, ev.Actor, ev.ActorKind, ev.At, ev.Reason = AuditApprovalVoided, string(ActorPlatform), ActorPlatform, *next.VoidedAt, next.VoidReason
 	default:
 		return AuditEvent{}, invalid("approval %s: %s to %s is not recorded", next.ID, prev.State, next.State)
+	}
+	return ev, nil
+}
+
+// TrustAuditEvent returns the event that records the change from prev to next. A nil prev means
+// there was no record before; a prev that is not revoked and a next that is not revoked is a
+// renewal at a new hash. The store calls it inside the write. Seq is left for the store. The
+// target is "project_trust" and its id is "<kind>" or "<kind>:<ref>".
+func TrustAuditEvent(prev *Trust, next Trust) (AuditEvent, error) {
+	id := string(next.Kind)
+	if next.Ref != "" {
+		id += ":" + next.Ref
+	}
+	ev := AuditEvent{TargetType: "project_trust", TargetID: id, ProjectID: string(next.ProjectKey), ActorKind: ActorHuman}
+	switch {
+	case next.RevokedAt != nil:
+		if prev == nil || prev.RevokedAt != nil {
+			return AuditEvent{}, invalid("trust %s %s: only a trust in force can be revoked", next.ProjectKey, id)
+		}
+		ev.Kind, ev.Actor, ev.At, ev.Reason = AuditTrustRevoked, next.RevokedBy, *next.RevokedAt, next.RevokeReason
+	default:
+		ev.Kind, ev.Actor, ev.At = AuditTrustGranted, next.TrustedBy, next.TrustedAt
+		if next.Hash != "" {
+			ev.Reason = "trusted " + next.Hash
+		}
 	}
 	return ev, nil
 }

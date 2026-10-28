@@ -16,7 +16,7 @@ func req(c Capability) PolicyRequest {
 	return PolicyRequest{
 		Principal: Principal{Kind: PrincipalTrigger, ID: "t1", Sponsor: "u-owner"},
 		Subject:   Subject{Kind: SubjectWorkflow, ID: "wf"}, Capability: c,
-		Scope: PolicyScope{ProjectID: "p1"}, Trigger: TriggerManual, DefinitionHash: "sha256:a",
+		Scope: PolicyScope{ProjectID: "p1"}, Trigger: TriggerManual, DefinitionHash: "sha256:a", ProjectTrust: TrustTrusted,
 	}
 }
 
