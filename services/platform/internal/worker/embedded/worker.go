@@ -10,6 +10,7 @@ package embedded
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -168,7 +169,7 @@ func (w *Worker) execute(ctx, linkCtx context.Context, link ports.WorkerLink, a 
 		}
 	}()
 
-	out := w.runSafely(ctx, a)
+	out := w.runSafely(ctx, link, a)
 	stopHeartbeat()
 	<-hbDone
 	if ctx.Err() != nil {
@@ -185,11 +186,43 @@ func (w *Worker) execute(ctx, linkCtx context.Context, link ports.WorkerLink, a 
 	return false
 }
 
+type reporterKey struct{}
+
+// reporter sends the events of one attempt to the Platform.
+type reporter struct {
+	link ports.WorkerLink
+	a    ports.Assignment
+}
+
+// ReportRemoteJob records, with the Platform, the remote job the attempt just started
+// (FEAT-CAP-004). A Runner calls it with the context it was given, as soon as the remote service
+// has accepted the work and before it waits for the result: if the Platform restarts while the
+// job runs, a resumable job is re-attached through Assignment.RemoteJob instead of being
+// submitted again, and a job that is not resumable ends the Step interrupted. The id is the
+// service's own and must not be a secret or a signed URL. It may be called again for a
+// multi-phase job.
+func ReportRemoteJob(ctx context.Context, id string, resumable bool) error {
+	r, ok := ctx.Value(reporterKey{}).(reporter)
+	if !ok {
+		return errors.New("embedded worker: ReportRemoteJob needs the context a Runner was given")
+	}
+	data, err := json.Marshal(struct {
+		ID        string `json:"id"`
+		Resumable bool   `json:"resumable"`
+	}{id, resumable})
+	if err != nil {
+		return err
+	}
+	return r.link.Send(ctx, ports.StepEvents{AttemptID: r.a.AttemptID, FencingToken: r.a.Lease.FencingToken,
+		Events: []ports.StepEvent{{Type: ports.StepEventRemoteJob, DataJSON: data}}})
+}
+
 // timeoutCode is the error code of a Result for an attempt that ran past its Deadline. It equals
 // domain.CodeTimeout; the Worker does not import the domain.
 const timeoutCode = "timeout"
 
-func (w *Worker) runSafely(ctx context.Context, a ports.Assignment) (out Outcome) {
+func (w *Worker) runSafely(ctx context.Context, link ports.WorkerLink, a ports.Assignment) (out Outcome) {
+	ctx = context.WithValue(ctx, reporterKey{}, reporter{link: link, a: a})
 	if !a.Deadline.IsZero() {
 		// The Runner's context ends at the Deadline. It must stop what it started, the whole process
 		// tree, before it returns; this Worker reports the timeout once it has.

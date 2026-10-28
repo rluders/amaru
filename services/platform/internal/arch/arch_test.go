@@ -166,10 +166,11 @@ func TestStorageDoesNotTouchFiles(t *testing.T) {
 // ports (FEAT-ENV-001: the embedded Worker talks to the coordinator through the Worker interface,
 // like a remote one), and neither reaches a store or an adapter.
 var onlyModuleImports = map[string][]string{
-	"internal/worker/embedded": {"internal/ports"},
-	"internal/worker/inproc":   {"internal/ports"},
-	"internal/worker/osproc":   {"internal/ports"},
-	"internal/coordinator":     {"internal/domain", "internal/ports"},
+	"internal/worker/embedded":    {"internal/ports"},
+	"internal/worker/inproc":      {"internal/ports"},
+	"internal/worker/osproc":      {"internal/ports"},
+	"internal/provider/remotejob": {}, // HTTP helpers: the standard library only
+	"internal/coordinator":        {"internal/domain", "internal/ports"},
 }
 
 func TestWorkerAndCoordinatorMeetOnlyThroughPorts(t *testing.T) {
