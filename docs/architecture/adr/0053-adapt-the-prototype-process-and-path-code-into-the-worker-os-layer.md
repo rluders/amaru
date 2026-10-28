@@ -1,8 +1,8 @@
 ---
 title: Adapt the prototype process, executable-lookup and environment code into the Worker OS layer
-status: proposed
+status: accepted
 date: 2026-10-28
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0053. Adapt the prototype process, executable-lookup and environment code into the Worker OS layer
@@ -48,7 +48,7 @@ deciders:
    | `paths.go` | **Not moved** | Per-user daemon state directory. The Platform's own data and configuration locations follow ADR-0039 and are decided with the feature that needs them |
    | Source ADRs, dogfood records | Reference only | cited, not copied |
 
-5. **Windows termination mechanism (decision requested).** Options: **(a)** keep `taskkill /T /F` as in the source: no new dependency, but the weaknesses above; **(b)** a Windows Job Object created with `golang.org/x/sys/windows` and `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, the child assigned to the job, closing or terminating the job ends every process in it, including a descendant whose parent exited. This draft recommends **(b)**: it is the mechanism that can meet "terminates the whole process tree", and it needs one new dependency (BSD-3-Clause; pinned version and license recorded in the implementing PR, per the dependency rule in AGENTS.md). If the owner chooses (a), #152 states that Windows termination is best-effort and does not claim the tree. Either way Windows stays **not validated** until a run on Windows is recorded; validation is Linux-first ([validation](../../engineering/validation.md#cross-platform-validation-m3-and-m4)).
+5. **Windows termination mechanism: `taskkill /T /F` as in the source, best-effort.** Options considered: **(a)** keep `taskkill /T /F`: no new dependency, but it can miss a descendant whose parent has already exited; **(b)** a Windows Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` through `golang.org/x/sys/windows`: the mechanism that can contain a whole tree, at the cost of one new dependency (BSD-3-Clause). **Chosen: (a).** Windows and macOS are out of scope for M3 beyond best-effort compatibility (owner decision of 2026-10-28, [validation](../../engineering/validation.md#cross-platform-validation-m3-and-m4)), so a dependency whose only purpose is a Windows guarantee that cannot be validated now is not justified (AGENTS.md dependency rule). The Windows code keeps the source behavior and compiles on Windows; #152 states that Windows termination is best-effort, does not claim the tree there, and records Windows as not validated. Revisit with (b) when Windows enters scope or a Windows run shows a surviving descendant.
 6. **Placement.** The OS layer is a package outside the core, for example under `internal/worker/` (not named `platform`), importing only the standard library, `ports` and, for Windows, `golang.org/x/sys/windows`. `internal/arch` is extended so that `ports`, `domain`, `coordinator` and the embedded Worker still import none of it; the composition root wires it in. The package layout is fixed in the implementing PR under the [repository layout](../../engineering/repository-layout.md) rules.
 7. **Renames** follow the [glossary term map](../../product/GLOSSARY.md#2-term-mapping-from-predecessor-repositories); `weave`, `orkestra` and `WEAVE_*` identifiers are not carried. No such string remains in `services/platform` except in `PROVENANCE.md`.
 8. **Behavior-preserving tests that move.** The six prototype tests of the moved files: environment allow-list drops secrets, stdin delivered, terminate stops the process, context cancel terminates, resolver. They run in `make check` on Linux with fakes and a re-executed test binary as the helper process (no real agent or paid API), with macOS and Windows best-effort. Changed or added, listed in `PROVENANCE.md`: the allow-list test drops the vendor prefixes; **new** tests start a child that starts a grandchild and require both to end after `Terminate` and after context cancel, and require the grace period to be honored; a test shows that a descendant that leaves the group is **not** killed on Unix (the documented limit). None is edited merely to pass. `TestStateDirEnvOverride` and `TestStateDirDefaultIsAbsoluteAndNamed` do not move with `paths.go`.
@@ -64,14 +64,14 @@ deciders:
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 8; becomes evidence in #152 |
 | 6 | Verified execution | **Gap, listed** | Tree termination was never exercised by the source (one process, no grandchild) and Windows was never run. Accepting this ADR accepts that the first evidence is Amaru's own tests, Linux only |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). No license file is added by this work |
-| 8 | Explicit product-owner approval | **Not met** | Awaiting the owner. This draft is `proposed` |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-28 (see Approval) |
 
 ## Consequences
 - **Easier:** the 300 lines that matter (start, group, grace, kill, lookup) come with a tested shape, and the FEAT-EXE-003 acceptance is tested against a real grandchild instead of assumed.
-- **Harder:** the Windows mechanism is a dependency decision, and the Windows part cannot be validated on the Linux-first validation plan; it ships labelled not validated.
+- **Harder:** Windows termination stays the weaker `taskkill` mechanism and ships labelled best-effort and not validated; a descendant that outlives its parent can survive there until (b) is adopted.
 - **Security and compatibility:** the environment allow-list is a security control (secrets of other tools are dropped); narrowing it by removing vendor prefixes means a Provider must declare what it needs, which is the intent. No secrets or personal data are transferred (scanned in each PR). Amaru promises no compatibility with the prototype (no importer, owner decision of 2026-10-27).
 - **Maintenance:** the OS layer has a single owner (the Platform owner); the prototype copy is frozen.
-- **Follow-up:** after acceptance, update the migration inventory in the private notes and mark these files migrated (separate approval in the source repository). The port for processes is defined in #152. Revisit if a Provider needs a confinement the process group cannot give (cgroups, sandboxes: a new ADR, since no confinement ADR exists yet; see POL-006 in the feature catalog).
+- **Follow-up:** the Job Object option (b) is the recorded upgrade path. After acceptance, update the migration inventory in the private notes and mark these files migrated (separate approval in the source repository). The port for processes is defined in #152. Revisit if a Provider needs a confinement the process group cannot give (cgroups, sandboxes: a new ADR, since no confinement ADR exists yet; see POL-006 in the feature catalog).
 
 ## Alternatives considered
 - **Reuse unchanged (the planned disposition):** fastest, but moves vendor names into the shared layer, ships a tree-termination claim with no tree test, and keeps the weakest Windows mechanism without saying so.
@@ -80,4 +80,4 @@ deciders:
 - **Containers or cgroups for confinement and kill:** stronger on Linux, unavailable on the other two OSes in the compact install, and a separate infrastructure decision (AGENTS.md rule 6).
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #78, 2026-10-28). Not yet approved by the product owner; `deciders` stays empty until then.
+Proposed by: Claude (migration ADR draft for #78, 2026-10-28). Approved by: Ricardo Lüders (product owner) on 2026-10-28, in the WP-M3-03 session, after reviewing PR #286: "Windows and macOS are out of scope for now, we are only doing best effort to keep compatibility. Self-review, approve, merge. Do any rationale to take de decisions." The owner delegated the open decision (item 5) to the rationale recorded above and directed the acceptance; Claude recorded it. The criterion 6 gap is accepted with the ADR.

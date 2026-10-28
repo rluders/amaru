@@ -1,8 +1,8 @@
 ---
 title: Adapt the prototype remote-job HTTP helpers into the Worker providers, and write remote-job resume in Amaru
-status: proposed
+status: accepted
 date: 2026-10-28
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0054. Adapt the prototype remote-job HTTP helpers into the Worker providers, and write remote-job resume in Amaru
@@ -55,7 +55,7 @@ deciders:
 | 5 | Behavior covered by tests that run in Amaru | **Met by plan** | Item 6; becomes evidence in #130 |
 | 6 | Verified execution | **Gap, listed** | The helpers were exercised by two unit tests and by the prototype's paid vendor runs, which are not reproducible evidence here. No real remote service is called in `make check`. Accepting this ADR accepts that gap |
 | 7 | License resolved | **Met** | The source is MIT, © Ricardo Lüders, and the holder consents to relicensing ([ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md)). No license file is added by this work |
-| 8 | Explicit product-owner approval | **Not met** | Awaiting the owner. This draft is `proposed` |
+| 8 | Explicit product-owner approval | **Met** | Accepted by the product owner on 2026-10-28 (see Approval) |
 
 ## Consequences
 - **Easier:** HTTP Providers start from a small transport with typed errors and `Retry-After` handling, and the download path is hardened before the first vendor uses it.
@@ -71,4 +71,4 @@ deciders:
 - **Move the vendor adapters together with the helper:** pulls six vendor decisions and paid-service evidence into M3 and contradicts "Workflows reference Capabilities, never vendors".
 
 ## Approval
-Proposed by: Claude (migration ADR draft for #79, 2026-10-28). Not yet approved by the product owner; `deciders` stays empty until then.
+Proposed by: Claude (migration ADR draft for #79, 2026-10-28). Approved by: Ricardo Lüders (product owner) on 2026-10-28, in the WP-M3-03 session, after reviewing PR #286: "Self-review, approve, merge. Do any rationale to take de decisions." The Not-moved and Out-of-this-ADR rows of item 4 stay unmoved as drafted; the criterion 6 gap is accepted with the ADR. Windows and macOS remain best-effort (owner decision of 2026-10-28), so cross-OS runs of the new tests are not required.
