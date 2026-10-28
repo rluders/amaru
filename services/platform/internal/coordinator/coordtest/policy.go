@@ -314,6 +314,48 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
+	t.Run("every consequential action is refused for every trigger without a Grant, and runs with one", func(t *testing.T) {
+		// fs.delete is not here: a Step carries no resource yet, and the delete rules need one.
+		caps := []string{"git.push", "deploy.run", "tracker.write", "scm.pr.create", "net.egress", "plugin.install", "plugin.upgrade", "spend.paid"}
+		_, _, c := build(t)
+		by := domain.Principal{Kind: domain.PrincipalTrigger, ID: "hook-1", Sponsor: "owner-1"}
+		slug := func(cp string) string { return "wf-" + strings.ReplaceAll(cp, ".", "-") }
+		flowFor := func(cp string) domain.Workflow {
+			return domain.Workflow{ID: slug(cp), Name: cp, Status: domain.WorkflowActive,
+				Steps: []domain.WorkflowStep{{ID: "x", Name: "X", Type: domain.StepTypeTool, Capability: domain.Capability(cp)}}}
+		}
+		n := 0
+		run := func(cp, trig string) domain.StepExecution {
+			t.Helper()
+			n++
+			w := flowFor(cp)
+			got, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: by, Trigger: trig, Key: fmt.Sprintf("k%d", n), ProjectID: "p1", Workflow: &w})
+			if err != nil {
+				t.Fatal(err)
+			}
+			return got.Steps[0]
+		}
+		triggers := []string{domain.TriggerManual, domain.TriggerWebhook, domain.TriggerSchedule, domain.TriggerDeliveryLoop}
+		for _, cp := range caps {
+			for _, trig := range triggers {
+				st := run(cp, trig)
+				if st.State != domain.StepRefused || !strings.HasPrefix(st.Reason, domain.ReasonRuleRequiresAppr+" ("+cp+")") {
+					t.Errorf("%s via %s: %s %q", cp, trig, st.State, st.Reason)
+				}
+			}
+			g := domain.Grant{ID: "g-" + cp, Level: domain.GrantProject, ProjectID: "p1",
+				Subject: domain.Subject{Kind: domain.SubjectWorkflow, ID: slug(cp)}, Capabilities: []domain.Capability{domain.Capability(cp)}}
+			if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+				t.Fatal(err)
+			}
+			for _, trig := range triggers {
+				if st := run(cp, trig); st.State != domain.StepQueued {
+					t.Errorf("%s via %s with a grant: %s %q", cp, trig, st.State, st.Reason)
+				}
+			}
+		}
+	})
+
 	t.Run("a replayed Submit returns the stored outcome without asking Policy again", func(t *testing.T) {
 		_, _, c := build(t)
 		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {

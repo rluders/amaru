@@ -115,6 +115,22 @@ const (
 	SourceProject      RuleSource = "project"
 )
 
+// ActionClass names why an action is consequential (ADR-0006, security baseline rule 12). A rule
+// carries one, and a reason repeats it, so a person and the audit trail see the kind of action
+// and not only a Capability id.
+type ActionClass string
+
+const (
+	ClassPublish         ActionClass = "publish"          // pushing or publishing to a shared system
+	ClassDelete          ActionClass = "delete"           // deleting data outside the Step's own outputs
+	ClassSpend           ActionClass = "spend"            // spending money or quota on a paid service
+	ClassEgress          ActionClass = "egress"           // sending data to a new external destination
+	ClassPermission      ActionClass = "permission"       // granting new permissions to a plugin
+	ClassDeploy          ActionClass = "deploy"           // changing a running environment
+	ClassExternalWrite   ActionClass = "external_write"   // writing to an external tracker or forge
+	ClassIrreversibleSCM ActionClass = "irreversible_scm" // merging, which the Platform never does in the MVP
+)
+
 // PolicyRule is one rule from the built-in defaults or from configuration (ADR-0039).
 type PolicyRule struct {
 	ID     string     `json:"id"`
@@ -127,6 +143,8 @@ type PolicyRule struct {
 	ResourceType  string `json:"resourceType,omitempty"`
 	ResourceMatch string `json:"resourceMatch,omitempty"`
 	Message       string `json:"message,omitempty"`
+	// Class, when set, says what kind of consequential action the rule is about.
+	Class ActionClass `json:"class,omitempty"`
 }
 
 // Validate checks a rule loaded from configuration. A Project rule may not allow.
@@ -184,6 +202,8 @@ type PolicyReason struct {
 	RuleID  string `json:"ruleId,omitempty"`
 	Source  string `json:"source"` // default, organization, project, grant or request
 	Message string `json:"message"`
+	// Class is the action class of the rule behind the reason, when it has one.
+	Class ActionClass `json:"class,omitempty"`
 }
 
 // PolicyResult is the outcome of Evaluate: one decision and at least one reason.
@@ -278,7 +298,7 @@ func ruleReason(code string, r PolicyRule, fallback string) PolicyReason {
 	if msg == "" {
 		msg = fallback
 	}
-	return PolicyReason{Code: code, RuleID: r.ID, Source: string(r.Source), Message: msg}
+	return PolicyReason{Code: code, RuleID: r.ID, Source: string(r.Source), Message: msg, Class: r.Class}
 }
 
 func subjectLabel(s Subject) string {
@@ -304,17 +324,48 @@ func firstCoveringGrant(now time.Time, req PolicyRequest, grants []Grant) (Grant
 	return hits[0], true
 }
 
-// DefaultRules are the built-in rules every Platform starts from (POLICY_AND_APPROVAL_SHAPES §5).
-// They allow only what runs inside the Step's own worktree without reaching out, and deny the
-// reserved merge Capability. Anything else, such as `mcp.call` or `asset.upload`, is uncovered and
-// needs a Grant. The consequential actions of rule 12 are added by FEAT-POL-002.
+// Resource types the default rules tell apart. The caller that asks Policy classifies the path:
+// "worktree_path" is inside the Step's own worktree, "path" is anywhere else. A request that names
+// neither is uncovered, so a caller that forgets to say is refused, not allowed.
+const (
+	ResourceWorktreePath = "worktree_path"
+	ResourcePath         = "path"
+)
+
+// DefaultRules are the built-in rules every Platform starts from (POLICY_AND_APPROVAL_SHAPES §5,
+// security baseline rule 12). The consequential actions return require_approval without a Grant:
+// a Workflow, a plugin or a Project cannot lower them (a Project rule cannot allow, and rules come
+// from the Organization), and only an Owner or Admin can, by Grant. Local work that stays in the
+// Step's worktree is allowed. The reserved merge Capability is denied: the Platform never merges
+// in the MVP, and no Grant lifts a deny. Anything else, such as `mcp.call` and `asset.upload`, is
+// uncovered and needs a Grant.
+//
+// The Capability ids for the consequential actions are proposed names, not yet in the catalog
+// (POLICY_AND_APPROVAL_SHAPES §1): a Capability the catalog does not know can be asked for, and
+// is classified by these rules, before it is added. `spend.paid` is a name added here for the
+// ADR-0006 "spending money or quota" action, which §5 has no row for.
 func DefaultRules() []PolicyRule {
+	approve := func(id string, class ActionClass, msg string, resourceType string, caps ...string) PolicyRule {
+		return PolicyRule{ID: "default." + id, Source: SourceDefault, Effect: EffectRequireApproval, Class: class,
+			Capabilities: caps, ResourceType: resourceType, Message: msg}
+	}
 	return []PolicyRule{
 		{ID: "default.local.allow", Source: SourceDefault, Effect: EffectAllow,
 			Capabilities: []string{"agent.run", "check.run", "git.commit", "code.test", "doc.convert", "image.convert", "media.transcode"},
 			Message:      "runs in the Step's own worktree"},
-		{ID: "default.scm.pr.merge.deny", Source: SourceDefault, Effect: EffectDeny,
+		{ID: "default.fs.delete.worktree.allow", Source: SourceDefault, Effect: EffectAllow,
+			Capabilities: []string{"fs.delete"}, ResourceType: ResourceWorktreePath,
+			Message: "deleting inside the Step's own worktree"},
+		{ID: "default.scm.pr.merge.deny", Source: SourceDefault, Effect: EffectDeny, Class: ClassIrreversibleSCM,
 			Capabilities: []string{"scm.pr.merge"},
 			Message:      "the Platform never merges in the MVP"},
+		approve("git.push", ClassPublish, "pushing to a shared remote needs an approval or a grant", "", "git.push"),
+		approve("deploy.run", ClassDeploy, "a deploy needs an approval or a grant", "", "deploy.run"),
+		approve("tracker.write", ClassExternalWrite, "a write to an external tracker needs an approval or a grant", "", "tracker.write"),
+		approve("scm.pr.create", ClassExternalWrite, "opening a pull request needs an approval or a grant", "", "scm.pr.create"),
+		approve("net.egress", ClassEgress, "sending data outside the allowlist needs an approval or a grant", "", "net.egress"),
+		approve("fs.delete.outside", ClassDelete, "deleting outside the Step's worktree needs an approval or a grant", ResourcePath, "fs.delete"),
+		approve("plugin.install", ClassPermission, "installing or upgrading a plugin needs an approval or a grant", "", "plugin.install", "plugin.upgrade"),
+		approve("spend.paid", ClassSpend, "spending money or quota on a paid service needs an approval or a grant", "", "spend.paid"),
 	}
 }
