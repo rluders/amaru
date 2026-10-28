@@ -55,6 +55,7 @@ const (
 	ReasonWorkerLost        = "worker_lost"
 	ReasonStepTimeout       = "step_timeout"
 	ReasonResumed           = "resumed"
+	ReasonAttemptRejected   = "attempt_rejected"
 )
 
 // StepExecution is one Step of an Execution. Only its lifecycle is modelled here.
@@ -74,6 +75,15 @@ type StepExecution struct {
 	Idempotent bool `json:"idempotent,omitempty"`
 	// RemoteJob is the remote job a Worker recorded for this Step, if any (ADR-0042 rule 2).
 	RemoteJob *RemoteJob `json:"remoteJob,omitempty"`
+	// Capability is the vendor-neutral operation the Step runs (e.g. "code.test"). InputsJSON is
+	// its resolved inputs as canonical JSON. Both are set when the Step is planned.
+	Capability string `json:"capability,omitempty"`
+	InputsJSON []byte `json:"inputs,omitempty"`
+	// AttemptID names the latest attempt (one per Lease) and FenceToken is the fencing token
+	// issued with it, strictly increasing per Step. Both survive the Lease so that a late result
+	// can be told from a duplicate and from a stale one (ADR-0044 point 4).
+	AttemptID  string `json:"attemptId,omitempty"`
+	FenceToken uint64 `json:"fenceToken,omitempty"`
 	// CurrentLease is the Lease held while the Step is leased or running; nil otherwise.
 	CurrentLease *LeaseInfo `json:"lease,omitempty"`
 	// Agent is the snapshot of the Agent (and its Skills) an agent Step runs with. Nil for other
@@ -163,25 +173,50 @@ func (s *StepExecution) Reject(now time.Time, err *ExecError) error {
 	return s.fail(now, StepAwaitingApproval, err)
 }
 
-// Lease moves queued → leased when a Worker accepts the Step until expiresAt.
-func (s *StepExecution) Lease(owner string, expiresAt time.Time) error {
-	if owner == "" {
-		return fmt.Errorf("%w: a lease needs an owner", ErrInvalid)
+// Lease moves queued → leased when a Worker is offered the Step as attempt attemptID, until
+// expiresAt. It issues the next fencing token (the previous one plus one).
+func (s *StepExecution) Lease(owner, attemptID string, expiresAt time.Time) error {
+	if owner == "" || attemptID == "" {
+		return fmt.Errorf("%w: a lease needs an owner and an attempt id", ErrInvalid)
 	}
 	if err := s.move(StepQueued, StepLeased); err != nil {
 		return err
 	}
+	s.AttemptID, s.FenceToken = attemptID, s.FenceToken+1
 	s.CurrentLease = &LeaseInfo{Owner: owner, ExpiresAt: expiresAt}
+	return nil
+}
+
+// HoldsLease reports whether the Step is leased or running under exactly this attempt and token.
+// A holder with a lower token, or for an earlier attempt, is stale and must be refused.
+func (s *StepExecution) HoldsLease(attemptID string, token uint64) bool {
+	return (s.State == StepLeased || s.State == StepRunning) && s.CurrentLease != nil &&
+		s.AttemptID == attemptID && s.FenceToken == token
+}
+
+// RenewLease extends the Lease of the attempt that holds it. A stale holder gets ErrStaleLease.
+func (s *StepExecution) RenewLease(attemptID string, token uint64, expiresAt time.Time) error {
+	if !s.HoldsLease(attemptID, token) {
+		return fmt.Errorf("%w: attempt %s", ErrStaleLease, attemptID)
+	}
+	s.CurrentLease.ExpiresAt = expiresAt
 	return nil
 }
 
 // ExpireLease moves leased → queued: the Lease ended before the Step started, so nothing ran
 // and it is re-leased whatever its idempotency (ADR-0044).
-func (s *StepExecution) ExpireLease() error {
+func (s *StepExecution) ExpireLease() error { return s.ReleaseLease(ReasonLeaseExpired) }
+
+// ReleaseLease moves leased → queued with a reason: the Lease ended, or the Worker refused the
+// attempt, before the Step started. Nothing ran, so the Step is re-leased whatever its kind.
+func (s *StepExecution) ReleaseLease(reason string) error {
+	if reason == "" {
+		return ErrReasonRequired
+	}
 	if err := s.move(StepLeased, StepQueued); err != nil {
 		return err
 	}
-	s.CurrentLease, s.Reason = nil, ReasonLeaseExpired
+	s.CurrentLease, s.Reason = nil, reason
 	return nil
 }
 

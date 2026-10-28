@@ -35,6 +35,7 @@ type ExecutionStore interface {
 	Open(ctx context.Context) ([]string, error)
 	// Events returns the Execution's log in Seq order.
 	Events(ctx context.Context, id string) ([]domain.ExecutionEvent, error)
+	ExecutionQueue
 }
 
 // ExecutionID is the one Execution the change belongs to: the Execution's, or its Steps'.
@@ -57,4 +58,18 @@ func (c ExecutionChange) ExecutionID() (string, error) {
 		return "", fmt.Errorf("%w: change names no execution", domain.ErrInvalid)
 	}
 	return id, nil
+}
+
+// StepRef names a Step and its Execution.
+type StepRef struct{ ExecutionID, StepID string }
+
+// ExecutionQueue is the part of the store the coordinator uses to hand out work and to find the
+// Step a Worker message is about.
+type ExecutionQueue interface {
+	// Queued returns the Steps in state queued whose Execution is not finished, oldest Execution
+	// first, then in Step order, at most limit of them.
+	Queued(ctx context.Context, limit int) ([]StepRef, error)
+	// ByAttempt returns the Step that was leased as attemptID, even after its Lease ended, or
+	// domain.ErrNotFound.
+	ByAttempt(ctx context.Context, attemptID string) (StepRef, error)
 }

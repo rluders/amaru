@@ -62,7 +62,7 @@ func TestStepMethodsRejectEveryOtherState(t *testing.T) {
 		"RequireApproval": {StepPending, func(s *StepExecution) error { return s.RequireApproval() }},
 		"Approve":         {StepAwaitingApproval, func(s *StepExecution) error { return s.Approve() }},
 		"Reject":          {StepAwaitingApproval, func(s *StepExecution) error { return s.Reject(t0, boom) }},
-		"Lease":           {StepQueued, func(s *StepExecution) error { return s.Lease("w1", t0.Add(time.Minute)) }},
+		"Lease":           {StepQueued, func(s *StepExecution) error { return s.Lease("w1", "a1", t0.Add(time.Minute)) }},
 		"ExpireLease":     {StepLeased, func(s *StepExecution) error { return s.ExpireLease() }},
 		"Start":           {StepLeased, func(s *StepExecution) error { return s.Start(t0) }},
 		"Cancel":          {StepQueued, func(s *StepExecution) error { return s.Cancel(t0) }},
@@ -131,7 +131,7 @@ func TestStepRestartRule(t *testing.T) {
 		non.State != StepInterrupted || non.Reason != ReasonLeaseExpired || non.EndedAt == nil {
 		t.Fatalf("non-idempotent: %v %+v", err, non)
 	}
-	if err := non.Lease("w1", t0.Add(time.Minute)); !errors.Is(err, ErrInvalidTransition) {
+	if err := non.Lease("w1", "a1", t0.Add(time.Minute)); !errors.Is(err, ErrInvalidTransition) {
 		t.Fatal("an interrupted Step must not be re-run automatically")
 	}
 	if err := non.Resume(Actor{Kind: ActorHuman}); err != nil || non.State != StepQueued || non.EndedAt != nil {
@@ -142,7 +142,7 @@ func TestStepRestartRule(t *testing.T) {
 	if err := l.ExpireLease(); err != nil || l.State != StepQueued {
 		t.Fatalf("expire lease: %v", err)
 	}
-	if err := l.Lease("w1", t0.Add(time.Minute)); err != nil {
+	if err := l.Lease("w1", "a1", t0.Add(time.Minute)); err != nil {
 		t.Fatalf("re-lease: %v", err)
 	}
 }
@@ -150,7 +150,7 @@ func TestStepRestartRule(t *testing.T) {
 func TestStepHappyPathWithApproval(t *testing.T) {
 	s := StepExecution{State: StepPending}
 	for _, step := range []func() error{
-		s.RequireApproval, s.Approve, func() error { return s.Lease("w1", t0.Add(time.Minute)) }, func() error { return s.Start(t0) },
+		s.RequireApproval, s.Approve, func() error { return s.Lease("w1", "a1", t0.Add(time.Minute)) }, func() error { return s.Start(t0) },
 		func() error { return s.Finish(t0, StepSucceeded, nil) },
 	} {
 		if err := step(); err != nil {
@@ -211,7 +211,7 @@ func TestStepTimeOut(t *testing.T) {
 	if err := s.TimeOut(t0); err != nil || s.State != StepTimedOut || s.Reason != ReasonStepTimeout || s.EndedAt == nil {
 		t.Fatalf("timeout: %v %+v", err, s)
 	}
-	if err := s.Lease("w1", t0.Add(time.Minute)); !errors.Is(err, ErrInvalidTransition) {
+	if err := s.Lease("w1", "a1", t0.Add(time.Minute)); !errors.Is(err, ErrInvalidTransition) {
 		t.Fatal("a timed-out Step must not be re-run automatically")
 	}
 }
@@ -293,10 +293,10 @@ func TestReconcileTerminalRefused(t *testing.T) {
 
 func TestLeaseNeedsOwnerAndClearsOnFinish(t *testing.T) {
 	s := reconcileStep(t, StepQueued, nil)
-	if err := s.Lease("", t0); !errors.Is(err, ErrInvalid) {
+	if err := s.Lease("", "a1", t0); !errors.Is(err, ErrInvalid) {
 		t.Fatalf("empty owner: got %v", err)
 	}
-	if err := s.Lease("w1", t0.Add(time.Minute)); err != nil || s.CurrentLease == nil || s.CurrentLease.Owner != "w1" {
+	if err := s.Lease("w1", "a1", t0.Add(time.Minute)); err != nil || s.CurrentLease == nil || s.CurrentLease.Owner != "w1" {
 		t.Fatalf("lease not recorded: %v %+v", err, s.CurrentLease)
 	}
 	if err := s.Start(t0); err != nil {
@@ -304,5 +304,64 @@ func TestLeaseNeedsOwnerAndClearsOnFinish(t *testing.T) {
 	}
 	if err := s.Finish(t0, StepSucceeded, nil); err != nil || s.CurrentLease != nil {
 		t.Fatalf("lease kept after finish: %v %+v", err, s.CurrentLease)
+	}
+}
+
+func TestFencingTokenGrowsPerLeaseAndSurvivesIt(t *testing.T) {
+	s := reconcileStep(t, StepQueued, nil)
+	exp := t0.Add(time.Minute)
+	if err := s.Lease("w1", "a1", exp); err != nil || s.FenceToken != 1 || s.AttemptID != "a1" {
+		t.Fatalf("first lease: %v token=%d attempt=%q", err, s.FenceToken, s.AttemptID)
+	}
+	if err := s.ReleaseLease(ReasonAttemptRejected); err != nil || s.State != StepQueued || s.CurrentLease != nil || s.Reason != ReasonAttemptRejected {
+		t.Fatalf("release: %v %+v", err, s)
+	}
+	if s.FenceToken != 1 || s.AttemptID != "a1" {
+		t.Fatalf("token or attempt lost on release: %+v", s)
+	}
+	if err := s.Lease("w2", "a2", exp); err != nil || s.FenceToken != 2 || s.AttemptID != "a2" {
+		t.Fatalf("second lease: %v token=%d attempt=%q", err, s.FenceToken, s.AttemptID)
+	}
+	if s.HoldsLease("a1", 1) || s.HoldsLease("a2", 1) || !s.HoldsLease("a2", 2) {
+		t.Fatal("only the latest attempt with the latest token holds the lease")
+	}
+}
+
+func TestRenewLeaseOnlyForTheHolder(t *testing.T) {
+	s := reconcileStep(t, StepQueued, nil)
+	_ = s.Lease("w1", "a1", t0.Add(time.Minute))
+	later := t0.Add(2 * time.Minute)
+	if err := s.RenewLease("a1", 1, later); err != nil || !s.CurrentLease.ExpiresAt.Equal(later) {
+		t.Fatalf("renew: %v %+v", err, s.CurrentLease)
+	}
+	for _, c := range []struct {
+		attempt string
+		token   uint64
+	}{{"a0", 1}, {"a1", 0}, {"a1", 2}} {
+		if err := s.RenewLease(c.attempt, c.token, later); !errors.Is(err, ErrStaleLease) {
+			t.Errorf("%s/%d: got %v, want ErrStaleLease", c.attempt, c.token, err)
+		}
+	}
+	_ = s.Start(t0)
+	_ = s.Finish(t0, StepSucceeded, nil)
+	if err := s.RenewLease("a1", 1, later); !errors.Is(err, ErrStaleLease) {
+		t.Fatalf("finished step renewed: %v", err)
+	}
+	if s.AttemptID != "a1" {
+		t.Fatal("attempt id must survive the end of the step so a late duplicate can be recognised")
+	}
+}
+
+func TestReleaseLeaseNeedsReasonAndLeasedStep(t *testing.T) {
+	s := reconcileStep(t, StepQueued, nil)
+	if err := s.ReleaseLease("why"); !errors.Is(err, ErrInvalidTransition) {
+		t.Fatalf("queued: got %v", err)
+	}
+	_ = s.Lease("w1", "a1", t0)
+	if err := s.ReleaseLease(""); !errors.Is(err, ErrReasonRequired) {
+		t.Fatalf("no reason: got %v", err)
+	}
+	if err := s.Lease("w1", "", t0); !errors.Is(err, ErrInvalidTransition) && !errors.Is(err, ErrInvalid) {
+		t.Fatalf("empty attempt: got %v", err)
 	}
 }

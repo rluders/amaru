@@ -2,23 +2,52 @@ package coordinator
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 )
 
-// Coordinator reconciles and (later) drives Executions over an ExecutionStore.
+// Coordinator reconciles Executions at start and hands their Steps to Workers.
 type Coordinator struct {
-	store ports.ExecutionStore
-	now   func() time.Time
+	store        ports.ExecutionStore
+	now          func() time.Time
+	leasePeriod  time.Duration
+	newAttemptID func() string
+
+	mu     sync.Mutex
+	wakeCh chan struct{}
 }
 
+// Option configures a Coordinator.
+type Option func(*Coordinator)
+
+// WithLeasePeriod sets how long a Lease lasts without a renewal. The default is 30 seconds.
+func WithLeasePeriod(d time.Duration) Option { return func(c *Coordinator) { c.leasePeriod = d } }
+
+// WithAttemptIDs replaces the attempt id generator (random by default); tests use a counter.
+func WithAttemptIDs(f func() string) Option { return func(c *Coordinator) { c.newAttemptID = f } }
+
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
-func New(store ports.ExecutionStore, now func() time.Time) *Coordinator {
-	return &Coordinator{store: store, now: now}
+func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, wakeCh: make(chan struct{})}
+	for _, o := range opts {
+		o(c)
+	}
+	return c
+}
+
+func randomID() string {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		panic(err) // the system random source failing is not recoverable
+	}
+	return hex.EncodeToString(b[:])
 }
 
 // ReconcileReport counts what Reconcile did, per Step.

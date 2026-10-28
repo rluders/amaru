@@ -91,10 +91,11 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 		if err := steps[0].Plan(); err != nil {
 			t.Fatal(err)
 		}
-		if err := steps[0].Lease("w1", t0.Add(time.Minute)); err != nil {
+		if err := steps[0].Lease("w1", "att-1", t0.Add(time.Minute)); err != nil {
 			t.Fatal(err)
 		}
 		steps[0].Idempotent = true
+		steps[0].Capability, steps[0].InputsJSON = "code.test", []byte(`{"a":1}`)
 		steps[0].RemoteJob = &domain.RemoteJob{ID: "job-1", Resumable: true}
 		if err := e.Start(t0); err != nil {
 			t.Fatal(err)
@@ -117,7 +118,8 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 		}
 		if g.State != domain.StepLeased || g.Version != 2 || !g.Idempotent ||
 			g.CurrentLease == nil || g.CurrentLease.Owner != "w1" || !g.CurrentLease.ExpiresAt.Equal(t0.Add(time.Minute)) ||
-			g.RemoteJob == nil || g.RemoteJob.ID != "job-1" || !g.RemoteJob.Resumable {
+			g.RemoteJob == nil || g.RemoteJob.ID != "job-1" || !g.RemoteJob.Resumable ||
+			g.Capability != "code.test" || string(g.InputsJSON) != `{"a":1}` || g.AttemptID != "att-1" || g.FenceToken != 1 {
 			t.Fatalf("step: %+v", g)
 		}
 	})
@@ -294,6 +296,98 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 		}
 		if len(evs) != len(steps) {
 			t.Fatalf("got %d events, want %d", len(evs), len(steps))
+		}
+	})
+
+	t.Run("queued lists queued steps of open executions, oldest first, up to the limit", func(t *testing.T) {
+		s := newStore(t)
+		older, newer := t0, t0.Add(time.Minute)
+		mk := func(id string, created time.Time, ids ...string) {
+			e, steps := newExec(id, ids...)
+			e.CreatedAt = created
+			_, steps = mustCreate(t, s, e, steps)
+			for i := range steps {
+				if err := steps[i].Plan(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		mk("b-new", newer, "n1", "n2")
+		mk("a-old", older, "o1", "o2")
+		mk("c-done", older, "d1")
+		d, _, _ := s.Get(ctx, "c-done")
+		_ = d.Finish(t0, domain.ExecCancelled, nil)
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &d}); err != nil {
+			t.Fatal(err)
+		}
+		_, ns, _ := s.Get(ctx, "b-new")
+		if err := ns[0].Lease("w1", "att-n1", t0.Add(time.Minute)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: ns[:1]}); err != nil {
+			t.Fatal(err)
+		}
+		got, err := reopen(t, s).Queued(ctx, 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"o1", "o2", "n2"}
+		if len(got) != len(want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+		for i := range want {
+			if got[i].StepID != want[i] {
+				t.Fatalf("got %v, want %v", got, want)
+			}
+		}
+		if lim, _ := s.Queued(ctx, 2); len(lim) != 2 {
+			t.Fatalf("limit ignored: %v", lim)
+		}
+	})
+
+	t.Run("by attempt finds the step after its lease ended", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1")
+		_, steps = mustCreate(t, s, e, steps)
+		_ = steps[0].Plan()
+		_ = steps[0].Lease("w1", "att-1", t0.Add(time.Minute))
+		out, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps})
+		if err != nil {
+			t.Fatal(err)
+		}
+		st := out.Steps[0]
+		_ = st.ReleaseLease(domain.ReasonAttemptRejected)
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: []domain.StepExecution{st}}); err != nil {
+			t.Fatal(err)
+		}
+		ref, err := reopen(t, s).ByAttempt(ctx, "att-1")
+		if err != nil || ref.ExecutionID != "e1" || ref.StepID != "s1" {
+			t.Fatalf("got %+v, %v", ref, err)
+		}
+		for _, bad := range []string{"", "nope"} {
+			if _, err := s.ByAttempt(ctx, bad); !errors.Is(err, domain.ErrNotFound) {
+				t.Fatalf("%q: got %v, want ErrNotFound", bad, err)
+			}
+		}
+	})
+
+	t.Run("an attempt id is unique", func(t *testing.T) {
+		s := newStore(t)
+		e, steps := newExec("e1", "s1", "s2")
+		_, steps = mustCreate(t, s, e, steps)
+		for i := range steps {
+			_ = steps[i].Plan()
+			_ = steps[i].Lease("w1", "same", t0.Add(time.Minute))
+		}
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Steps: steps}); err == nil {
+			t.Fatal("two steps committed with one attempt id")
+		}
+		_, got, _ := s.Get(ctx, "e1")
+		if got[0].State != domain.StepPending {
+			t.Fatalf("a refused commit wrote rows: %+v", got[0])
 		}
 	})
 

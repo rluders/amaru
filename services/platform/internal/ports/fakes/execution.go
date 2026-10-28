@@ -115,6 +115,29 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		}
 		idx[i] = n
 	}
+	// An attempt id names one Step.
+	changing := map[string]bool{}
+	for _, st := range c.Steps {
+		changing[st.ID] = true
+	}
+	claimed := map[string]string{}
+	for _, st := range c.Steps {
+		if st.AttemptID == "" {
+			continue
+		}
+		if other, dup := claimed[st.AttemptID]; dup && other != st.ID {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: attempt %s", domain.ErrExists, st.AttemptID)
+		}
+		claimed[st.AttemptID] = st.ID
+	}
+	for _, steps := range s.steps {
+		for _, cur := range steps {
+			if owner, ok := claimed[cur.AttemptID]; ok && cur.AttemptID != "" && owner != cur.ID && !changing[cur.ID] {
+				return ports.ExecutionChange{}, fmt.Errorf("%w: attempt %s", domain.ErrExists, cur.AttemptID)
+			}
+		}
+	}
+
 	out := ports.ExecutionChange{}
 	if c.Execution != nil {
 		e := clone(*c.Execution)
@@ -169,4 +192,46 @@ func (s *ExecutionStore) Events(_ context.Context, id string) ([]domain.Executio
 		return nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	}
 	return clone(append([]domain.ExecutionEvent{}, s.events[id]...)), nil
+}
+
+func (s *ExecutionStore) Queued(_ context.Context, limit int) ([]ports.StepRef, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ids := make([]string, 0, len(s.execs))
+	for id, e := range s.execs {
+		if !e.State.Terminal() {
+			ids = append(ids, id)
+		}
+	}
+	sort.Slice(ids, func(a, b int) bool {
+		ea, eb := s.execs[ids[a]], s.execs[ids[b]]
+		if !ea.CreatedAt.Equal(eb.CreatedAt) {
+			return ea.CreatedAt.Before(eb.CreatedAt)
+		}
+		return ids[a] < ids[b]
+	})
+	out := []ports.StepRef{}
+	for _, id := range ids {
+		for _, st := range s.steps[id] {
+			if st.State == domain.StepQueued && len(out) < limit {
+				out = append(out, ports.StepRef{ExecutionID: id, StepID: st.ID})
+			}
+		}
+	}
+	return out, nil
+}
+
+func (s *ExecutionStore) ByAttempt(_ context.Context, attemptID string) (ports.StepRef, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if attemptID != "" {
+		for id, steps := range s.steps {
+			for _, st := range steps {
+				if st.AttemptID == attemptID {
+					return ports.StepRef{ExecutionID: id, StepID: st.ID}, nil
+				}
+			}
+		}
+	}
+	return ports.StepRef{}, fmt.Errorf("%w: attempt %q", domain.ErrNotFound, attemptID)
 }

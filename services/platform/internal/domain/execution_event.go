@@ -9,6 +9,13 @@ const (
 	EventStepResumed     = "step.resumed"
 	EventStepInterrupted = "step.interrupted"
 	EventExecWaiting     = "execution.waiting"
+	EventStepLeased      = "step.leased"
+	EventStepStarted     = "step.started"
+	EventStepRejected    = "step.attempt_rejected"
+	EventStepSucceeded   = "step.succeeded"
+	EventStepFailed      = "step.failed"
+	EventStepCancelled   = "step.cancelled"
+	EventResultStale     = "result.rejected_stale"
 )
 
 // ExecutionEvent is one entry of an Execution's ordered, append-only log. Seq starts at 1 and has
