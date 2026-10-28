@@ -65,6 +65,7 @@ Retention is an Organization Policy setting per data class ([ADR-0017](adr/0017-
 - Redaction:
   - known secret values delivered to a Lease are removed **on the Worker** before any Event, log or upload leaves it; configurable patterns are applied again on the Platform before storage
   - redaction failures are counted and surfaced
+- *Implementation status (#125, partly):* `domain.Redactor` and `domain.RetentionPolicy` exist and are unit-tested on Linux. The coordinator redacts the error text a Worker reports before storing it. Nothing deletes data, no setting is read from configuration, no log or transcript is stored, Approvals do not yet reference Artifacts, and the Worker-side removal of Lease secret values and the failure count are not implemented. The event replay window is not covered.
 - Export and deletion per Organization (PRIV-2).
 
 ## 6. Migration of existing data

@@ -28,7 +28,8 @@ type Coordinator struct {
 	skills         ports.SkillStore   // nil: no Skill exists, so a Step that pins one is refused
 	trust          ports.TrustStore   // nil: no Project is trusted, so no Step starts
 	rules          []domain.PolicyRule
-	assignMu       sync.Mutex // one lease decision at a time: count, check and lease are one step
+	redactor       domain.Redactor // applied to Worker text before it is stored
+	assignMu       sync.Mutex      // one lease decision at a time: count, check and lease are one step
 
 	mu     sync.Mutex
 	wakeCh chan struct{}
@@ -53,6 +54,11 @@ func WithTimeouts(t domain.Timeouts) Option {
 	return func(c *Coordinator) { c.timeouts = t }
 }
 
+// WithRedactor replaces the Redactor applied to the error text a Worker reports before the
+// Platform stores it. The default removes the built-in secret patterns (FEAT-ART-003); use this
+// to add the Organization's own patterns.
+func WithRedactor(r domain.Redactor) Option { return func(c *Coordinator) { c.redactor = r } }
+
 func WithAttemptIDs(f func() string) Option { return func(c *Coordinator) { c.newAttemptID = f } }
 
 // WithExecutionIDs replaces the Execution id generator (random by default); tests use a counter.
@@ -63,7 +69,7 @@ func WithApprovalIDs(f func() string) Option { return func(c *Coordinator) { c.n
 
 // New returns a Coordinator. now is the clock; the Platform passes time.Now, tests a fixed one.
 func New(store ports.ExecutionStore, now func() time.Time, opts ...Option) *Coordinator {
-	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, newApprovalID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, rules: domain.DefaultRules(), wakeCh: make(chan struct{}), cancels: map[string]chan<- ports.Cancel{}}
+	c := &Coordinator{store: store, now: now, leasePeriod: 30 * time.Second, newAttemptID: randomID, newExecutionID: randomID, newApprovalID: randomID, limits: DefaultLimits, timeouts: domain.DefaultTimeouts, rules: domain.DefaultRules(), redactor: domain.DefaultRedactor(), wakeCh: make(chan struct{}), cancels: map[string]chan<- ports.Cancel{}}
 	for _, o := range opts {
 		o(c)
 	}
