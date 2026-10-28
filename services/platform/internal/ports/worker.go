@@ -18,8 +18,8 @@ var ErrLinkClosed = errors.New("worker link closed")
 // adapter, when it exists, maps between the two.
 //
 // Implemented messages: Offer, Assignment, AcceptAttempt, RejectAttempt, LeaseRenew, LeaseRevoked,
-// Result, ResultAck, Cancel. Not implemented yet: handshake and enrollment, LeaseRelease, StepEvents,
-// SecretDelivery, Drain, ProtocolError, outputs and usage in Result, the envelope's
+// Result, ResultAck, Cancel, StepEvents (only the remote_job event is acted on). Not implemented yet:
+// handshake and enrollment, LeaseRelease, SecretDelivery, Drain, ProtocolError, outputs and usage in Result, the envelope's
 // message and ack ids (an in-process link does not lose messages).
 
 // Link is one end of a bidirectional, ordered message channel. Send and Receive may be called from
@@ -66,6 +66,39 @@ type Assignment struct {
 	// IdempotencyKey is stable across attempts of the same Step, so a re-run side effect is deduplicated.
 	IdempotencyKey       string `proto:"idempotency_key"`
 	CapabilityIdempotent bool   `proto:"capability_idempotent"`
+	// RemoteJob is set when the Step already has a remote job recorded: the Worker re-attaches
+	// to it and does not submit the work again (FEAT-CAP-004, ADR-0042 rule 2).
+	RemoteJob *RemoteJob `proto:"remote_job"`
+}
+
+// RemoteJob identifies a job that runs outside the Platform and the Worker. The id is the remote
+// service's own, opaque, and never a secret or a signed URL. Resumable is the Provider's
+// declaration that a new Lease can re-attach to the job.
+type RemoteJob struct {
+	ID        string `proto:"id"`
+	Resumable bool   `proto:"resumable"`
+}
+
+// StepEventRemoteJob is the StepEvent type with which a Worker records the Step's remote job. Its
+// DataJSON is {"id": "...", "resumable": true|false}.
+const StepEventRemoteJob = "remote_job"
+
+// StepEvent is one thing that happened while an attempt ran. Only StepEventRemoteJob has a meaning
+// to the Platform today; other types are accepted and dropped until the event stream exists
+// (FEAT-EXE-004).
+type StepEvent struct {
+	WorkerOrdinal uint64 `proto:"worker_ordinal"`
+	Type          string `proto:"type"`
+	Message       string `proto:"message"`
+	DataJSON      []byte `proto:"data_json"`
+}
+
+// StepEvents carries events of one attempt to the Platform. It is fenced like a Result: the
+// attempt and token must be the Step's current ones.
+type StepEvents struct {
+	AttemptID    string      `proto:"attempt_id"`
+	FencingToken uint64      `proto:"fencing_token"`
+	Events       []StepEvent `proto:"events"`
 }
 
 // Lease is the Platform's grant of a Step to a Worker. LeaseID equals the AttemptID: one Lease
@@ -154,6 +187,7 @@ func (AcceptAttempt) workerMessage() {}
 func (RejectAttempt) workerMessage() {}
 func (LeaseRenew) workerMessage()    {}
 func (Result) workerMessage()        {}
+func (StepEvents) workerMessage()    {}
 
 func (Assignment) platformMessage()   {}
 func (LeaseRevoked) platformMessage() {}

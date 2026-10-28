@@ -152,3 +152,12 @@ func TestCancelWithPostgres(t *testing.T) {
 		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
 		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
 }
+
+// Remote-job recording and re-attachment against the real store.
+func TestRemoteJobWithPostgres(t *testing.T) {
+	var db *sql.DB
+	coordtest.RemoteJobSuite(t,
+		func(t *testing.T) ports.ExecutionStore { db = migratedDB(t); return NewExecutionStore(db) },
+		func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() },
+		func(_ *testing.T, _ ports.ExecutionStore) ports.ExecutionStore { return NewExecutionStore(db) })
+}

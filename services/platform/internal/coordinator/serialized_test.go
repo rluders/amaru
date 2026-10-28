@@ -66,6 +66,8 @@ func rebuild(f []byte) (any, error) {
 		v = new(ports.ResultAck)
 	case name(ports.Cancel{}):
 		v = new(ports.Cancel)
+	case name(ports.StepEvents{}):
+		v = new(ports.StepEvents)
 	default:
 		return nil, fmt.Errorf("unknown message type %s", fr.Type)
 	}
@@ -90,6 +92,8 @@ func rebuild(f []byte) (any, error) {
 	case *ports.ResultAck:
 		return *p, nil
 	case *ports.Cancel:
+		return *p, nil
+	case *ports.StepEvents:
 		return *p, nil
 	}
 	return nil, fmt.Errorf("unreachable")

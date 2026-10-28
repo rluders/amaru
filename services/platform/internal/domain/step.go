@@ -3,7 +3,9 @@ package domain
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"time"
+	"unicode"
 )
 
 // StepState is the lifecycle state of a Step Execution (DOMAIN_MODEL §5.2).
@@ -366,6 +368,27 @@ func (s *StepExecution) TimeOut(now time.Time) error {
 	s.Reason, s.EndedAt, s.CurrentLease = ReasonStepTimeout, &now, nil
 	return nil
 }
+
+// RecordRemoteJob records the remote job a running Step started (ADR-0042 rule 2). It may be
+// called again with a new id for a multi-phase job; recording the same job again is a no-op and
+// reports false. The id must be non-empty, at most MaxRemoteJobID characters and free of control
+// characters: it is stored and sent back to a Worker, so it is data and never a secret.
+func (s *StepExecution) RecordRemoteJob(id string, resumable bool) (changed bool, err error) {
+	if s.State != StepRunning {
+		return false, fmt.Errorf("%w: step %s is %s; a remote job is recorded while it runs", ErrInvalidTransition, s.ID, s.State)
+	}
+	if id == "" || len(id) > MaxRemoteJobID || strings.ContainsFunc(id, unicode.IsControl) {
+		return false, invalid("remote job id must be 1 to %d characters without control characters", MaxRemoteJobID)
+	}
+	if s.RemoteJob != nil && s.RemoteJob.ID == id && s.RemoteJob.Resumable == resumable {
+		return false, nil
+	}
+	s.RemoteJob = &RemoteJob{ID: id, Resumable: resumable}
+	return true, nil
+}
+
+// MaxRemoteJobID bounds a remote job id.
+const MaxRemoteJobID = 256
 
 // Resume moves interrupted or timed_out → queued so the Step is leased again (ADR-0042, ADR-0044).
 // Only a human, or a Policy rule that names the Step (ActorPolicy with its Authority), may do

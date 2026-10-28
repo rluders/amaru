@@ -110,6 +110,20 @@ message Assignment {
   bool capability_idempotent = 10;
   // Grants the Worker may rely on; names only, never secret values.
   repeated string grant_ids = 11;
+  // Set when the Step already has a remote job recorded (FEAT-CAP-004): the Worker
+  // re-attaches to it and must not submit the work again.
+  RemoteJob remote_job = 12;
+}
+
+// RemoteJob identifies a job that runs outside the Platform and the Worker, for
+// example at a remote service. A Worker records it with a StepEvent of type
+// "remote_job" (data_json: {"id": "...", "resumable": true|false}) as soon as the
+// service accepts the work (ADR-0042 rule 2).
+message RemoteJob {
+  // The service's job id. Opaque; never a secret or a signed URL.
+  string id = 1;
+  // The Provider declares that a new Lease can re-attach to this job.
+  bool resumable = 2;
 }
 
 message Revision {
@@ -178,6 +192,8 @@ message StepEvents {
 
 message StepEvent {
   uint64 worker_ordinal = 1;
+  // "remote_job" records the Step's RemoteJob (see RemoteJob); a Provider may send it
+  // again when a multi-phase job gets a new id. Other types are free-form.
   string type = 2;
   // Already redacted on the Worker before leaving it.
   string message = 3;

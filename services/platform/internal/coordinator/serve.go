@@ -1,7 +1,9 @@
 package coordinator
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -119,6 +121,10 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 				if err := c.onRenew(ctx, link, m); err != nil {
 					return err
 				}
+			case ports.StepEvents:
+				if err := c.onStepEvents(ctx, link, m); err != nil {
+					return err
+				}
 			case ports.Result:
 				if err := c.onResult(ctx, link, m); err != nil {
 					return err
@@ -187,6 +193,10 @@ func (c *Coordinator) leaseOne(ctx context.Context, workerID string) (ports.Assi
 				// Stable across attempts, so a re-run side effect is deduplicated.
 				IdempotencyKey:       ref.ExecutionID + "/" + st.ID,
 				CapabilityIdempotent: st.Idempotent,
+			}
+			if st.RemoteJob != nil {
+				// The Step ran before and left a remote job: the Worker re-attaches to it.
+				asg.RemoteJob = &ports.RemoteJob{ID: st.RemoteJob.ID, Resumable: st.RemoteJob.Resumable}
 			}
 			return &change{events: []domain.ExecutionEvent{{Kind: domain.EventStepLeased, StepID: st.ID, Reason: workerID, At: now}}}, nil
 		})
@@ -392,4 +402,68 @@ func (c *Coordinator) edit(ctx context.Context, ref ports.StepRef, fn func(*doma
 		}
 	}
 	return fmt.Errorf("%w: step %s kept changing under the coordinator", domain.ErrConflict, ref.StepID)
+}
+
+// remoteJobData is the DataJSON of a StepEventRemoteJob event.
+type remoteJobData struct {
+	ID        string `json:"id"`
+	Resumable bool   `json:"resumable"`
+}
+
+// onStepEvents applies the events of an attempt. Only the remote_job event is acted on: it records
+// the Step's remote job, so that a restart can re-attach to it instead of running the work again
+// (FEAT-CAP-004). The message is fenced like a Result: it must name the Step's current attempt and
+// token, and the Step must be running. Anything else gets the Worker told it no longer holds the
+// attempt. A malformed remote_job event is dropped, because a Worker's message must not stop the
+// coordinator, and it is not recorded; other event types are dropped until the event stream exists.
+func (c *Coordinator) onStepEvents(ctx context.Context, link ports.PlatformLink, m ports.StepEvents) error {
+	ref, err := c.store.ByAttempt(ctx, m.AttemptID)
+	if errors.Is(err, domain.ErrNotFound) {
+		return revoke(ctx, link, m.AttemptID, "unknown_attempt")
+	}
+	if err != nil {
+		return err
+	}
+	var jobs []remoteJobData
+	for _, ev := range m.Events {
+		if ev.Type != ports.StepEventRemoteJob {
+			continue
+		}
+		var d remoteJobData
+		dec := json.NewDecoder(bytes.NewReader(ev.DataJSON))
+		dec.DisallowUnknownFields()
+		if dec.Decode(&d) != nil {
+			continue
+		}
+		jobs = append(jobs, d)
+	}
+	if len(jobs) == 0 {
+		return nil
+	}
+	err = c.edit(ctx, ref, func(_ *domain.Execution, st *domain.StepExecution) (*change, error) {
+		if st.State != domain.StepRunning || !st.HoldsLease(m.AttemptID, m.FencingToken) {
+			return nil, fmt.Errorf("%w: attempt %s", domain.ErrStaleLease, m.AttemptID)
+		}
+		var evs []domain.ExecutionEvent
+		for _, j := range jobs {
+			changed, err := st.RecordRemoteJob(j.ID, j.Resumable)
+			if errors.Is(err, domain.ErrInvalid) {
+				continue // an id the domain refuses is dropped, not recorded
+			}
+			if err != nil {
+				return nil, err
+			}
+			if changed {
+				evs = append(evs, domain.ExecutionEvent{Kind: domain.EventStepRemoteJob, StepID: st.ID, At: c.now()})
+			}
+		}
+		if len(evs) == 0 {
+			return nil, nil
+		}
+		return &change{events: evs}, nil
+	})
+	if errors.Is(err, domain.ErrStaleLease) {
+		return revoke(ctx, link, m.AttemptID, "stale_lease")
+	}
+	return err
 }

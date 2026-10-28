@@ -13,7 +13,7 @@ Applies [ADR-0029](adr/0029-worker-protocol-over-websocket-and-protobuf.md) (Web
 | Assignment | `Assignment`, `AcceptAttempt`, `RejectAttempt` | P→W, W→P | Lease starts on accept. Carries `attempt_id`, `Revision`, `idempotency_key`, `capability_idempotent`. |
 | Lease | `LeaseRenew`, `LeaseRelease`, `LeaseRevoked` | W→P, W→P, P→W | Heartbeat 10 s, Lease 30 s by default (periods are set in `Authenticated`). Expiry is decided in PostgreSQL, not by the Worker. |
 | Events and result | `StepEvents`, `Result`, `ResultAck` | W→P, W→P, P→W | Platform assigns `seq`; Worker ordinals deduplicate only. Duplicate completions are ignored by `attempt_id`. |
-| Cancel and drain | `Cancel`, `Drain` | P→W, W→P | Cancel also ends the Lease. |
+| Cancel and drain | `Cancel`, `Drain` | P→W, W→P | `Cancel` asks the Worker to end the attempt's whole process tree within a grace period; the attempt and its Lease end with the Worker's `cancelled` Result (implemented, FEAT-EXE-003). |
 | Secrets | `SecretDelivery` | P→W | Scoped to the Step, memory only, wiped at Lease end, redacted from Events. |
 | Errors | `ProtocolError` | both | Unsupported version, authentication failure, revocation, malformed frame. |
 
@@ -161,6 +161,20 @@ message Assignment {
   bool capability_idempotent = 10;
   // Grants the Worker may rely on; names only, never secret values.
   repeated string grant_ids = 11;
+  // Set when the Step already has a remote job recorded (FEAT-CAP-004): the Worker
+  // re-attaches to it and must not submit the work again.
+  RemoteJob remote_job = 12;
+}
+
+// RemoteJob identifies a job that runs outside the Platform and the Worker, for
+// example at a remote service. A Worker records it with a StepEvent of type
+// "remote_job" (data_json: {"id": "...", "resumable": true|false}) as soon as the
+// service accepts the work (ADR-0042 rule 2).
+message RemoteJob {
+  // The service's job id. Opaque; never a secret or a signed URL.
+  string id = 1;
+  // The Provider declares that a new Lease can re-attach to this job.
+  bool resumable = 2;
 }
 
 message Revision {
@@ -229,6 +243,8 @@ message StepEvents {
 
 message StepEvent {
   uint64 worker_ordinal = 1;
+  // "remote_job" records the Step's RemoteJob (see RemoteJob); a Provider may send it
+  // again when a multi-phase job gets a new id. Other types are free-form.
   string type = 2;
   // Already redacted on the Worker before leaving it.
   string message = 3;

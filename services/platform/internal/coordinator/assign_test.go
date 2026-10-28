@@ -30,3 +30,7 @@ func TestTimeoutsOverInProcessLink(t *testing.T) {
 func TestCancelOverInProcessLink(t *testing.T) {
 	coordtest.CancelSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
 }
+
+func TestRemoteJobOverInProcessLink(t *testing.T) {
+	coordtest.RemoteJobSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() }, nil)
+}

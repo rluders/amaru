@@ -16,6 +16,7 @@ const (
 	EventStepRejected        = "step.attempt_rejected"
 	EventStepSucceeded       = "step.succeeded"
 	EventStepFailed          = "step.failed"
+	EventStepRemoteJob       = "step.remote_job_recorded"
 	EventStepTimedOut        = "step.timed_out"
 	EventStepCancelled       = "step.cancelled"
 	EventResultStale         = "result.rejected_stale"
