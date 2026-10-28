@@ -325,6 +325,69 @@ func TestApprovalStoreConformance(t *testing.T) {
 }
 
 // The approval workflow against the real store: a waiting Step and its Approval survive a restart.
+func TestSkillStoreConformance(t *testing.T) {
+	porttest.SkillStore(t, func(t *testing.T) ports.SkillStore { return NewSkillStore(migratedDB(t)) })
+}
+
+func TestSkillsAreImmutableAndHashCheckedInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	ctx := context.Background()
+	s, _ := domain.NewSkill(time.Now().UTC(), domain.Principal{Kind: domain.PrincipalHuman, ID: "m", Role: domain.RoleMaintainer}, domain.SkillOrganization, "", "review", "1", "body")
+	if err := NewSkillStore(db).Add(ctx, s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, `UPDATE skills SET body = 'other'`); err == nil {
+		t.Error("a skill was edited")
+	}
+	if _, err := db.ExecContext(ctx, `DELETE FROM skills`); err == nil {
+		t.Error("a skill was deleted")
+	}
+	// A row whose hash is not the hash of its body is refused by the database itself.
+	if _, err := db.ExecContext(ctx, `INSERT INTO skills VALUES ('organization', '', 'x', '1', 'body', repeat('0', 64), 'm', now())`); err == nil {
+		t.Error("a skill with a wrong hash was stored")
+	}
+}
+
+func TestSkillWithPostgres(t *testing.T) {
+	coordtest.SkillSuite(t, func(t *testing.T) coordtest.SkillStores {
+		db := migratedDB(t)
+		return coordtest.SkillStores{Executions: NewExecutionStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Skills: NewSkillStore(db), Contexts: NewContextStore(db)}
+	}, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}
+
+func TestContextWithPostgres(t *testing.T) {
+	coordtest.ContextSuite(t, func(t *testing.T) coordtest.SkillStores {
+		db := migratedDB(t)
+		return coordtest.SkillStores{Executions: NewExecutionStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Skills: NewSkillStore(db), Contexts: NewContextStore(db)}
+	})
+}
+
+func TestContextStoreConformance(t *testing.T) {
+	porttest.ContextStore(t, func(t *testing.T) (ports.ContextStore, func(string, string)) {
+		db := migratedDB(t)
+		// A context refers to a Step, so the suite creates one in the Execution store first.
+		step := func(execID, stepID string) {
+			st := domain.StepExecution{ID: stepID, ExecutionID: execID, Version: 1, State: domain.StepPending}
+			if err := st.Plan(); err != nil {
+				t.Fatal(err)
+			}
+			e := domain.Execution{ID: execID, Version: 1, ProjectID: "p1", State: domain.ExecQueued, RequestedBy: domain.Principal{Kind: domain.PrincipalHuman, ID: "u"}, Trigger: domain.TriggerManual, CreatedAt: time.Now().UTC()}
+			if _, _, err := NewExecutionStore(db).Create(context.Background(), e, []domain.StepExecution{st}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return NewContextStore(db), step
+	})
+}
+
+func TestContextIsImmutableInTheDatabase(t *testing.T) {
+	db := migratedDB(t)
+	ctx := context.Background()
+	if _, err := db.ExecContext(ctx, `INSERT INTO step_contexts VALUES ('e', 's', 'amaru-context/1', 'sha256:' || repeat('0', 64), 'doc', '[]', now())`); err == nil {
+		t.Error("a context whose hash is not its document's was stored")
+	}
+}
+
 func TestTrustWithPostgres(t *testing.T) {
 	coordtest.TrustSuite(t, func(t *testing.T) (ports.ExecutionStore, ports.TrustStore, ports.ProjectStore) {
 		db := migratedDB(t)
