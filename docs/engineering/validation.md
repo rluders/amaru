@@ -66,6 +66,9 @@ Checks that only read text (`docs-check`, gofmt, pure contract fixtures) give th
 - A Work Package whose *Done when* names three OSes, the M3 exit issue and the M4 exit Work Package (WP-M4-07) stay open until each OS has a current record. A missing or failing OS is a blocker, recorded as a comment naming the OS and the cause.
 - Only the product owner may change an exit criterion, by changing the roadmap in a reviewed PR; a missing environment is never a reason to tick a box.
 
+### Scope decision (product owner, 2026-10-28)
+While the Platform is built on Linux, **Windows and macOS runs are deferred**: only best-effort compatibility is kept (code compiles and vets for both; no OS-specific claim is made). Work Packages whose *Done when* names three OSes may be integrated with Linux evidence only, and every Windows or macOS item is then recorded as **not validated** in the WP's validation record and its integration PR; nothing is described as working on those OSes. The deferred items stay owed: they are picked up before the M3 exit and are a blocker for the M3 exit issue unless the product owner changes the roadmap in a reviewed PR. First used by WP-M3-03 ([record](../validation/m3/2026-10-28-linux-wp-m3-03.md)): the Windows process-tree cancel is not validated.
+
 ### Coordination
 - Before the first M3 integration PR, the product owner names in the M3 exit issue who provides each OS (person and machine or VM); likewise for M4 in WP-M4-07. Default owner for all three OSes is the product owner until they delegate an OS in a comment on the exit issue (decided 2026-10-25). The machine or VM used for each OS is listed in the issue before its first run.
 - The contributor who opens an integration PR runs `make check` on their own OS and requests the other two runs by commenting on the issue; the PR is not merged before all three records exist when the Work Package requires them.
