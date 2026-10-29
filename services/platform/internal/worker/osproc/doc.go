@@ -6,6 +6,11 @@
 // Adapted from the earlier internal implementation's platform package at commit c8a2f6e
 // (ADR-0032); see PROVENANCE.md.
 //
+// Write confinement (ADR-0057): a ProcSpec with Confine set is started through a launch helper,
+// the Worker's own binary, whose main must call ConfineExecMain first. On Linux the helper applies
+// a Landlock ruleset and then execs the program; elsewhere, or when Landlock is missing or too
+// old, the start is refused rather than run unconfined.
+//
 // Platform support: Linux is tested. macOS shares the Unix code and is best-effort. Windows uses
 // taskkill and is best-effort and not validated (ADR-0053 item 5): it may leave a descendant that
 // outlived its parent.

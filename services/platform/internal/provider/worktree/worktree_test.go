@@ -3,6 +3,7 @@ package worktree_test
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -707,5 +708,67 @@ func TestDirStaysUnderTheRoot(t *testing.T) {
 	d, err := e.r.Dir(domain.Workspace{Key: "WI-1"})
 	if err != nil || filepath.Dir(d) != e.root {
 		t.Fatalf("Dir = %q, %v", d, err)
+	}
+}
+
+// TestMain lets the test binary act as the launch helper of a confined process (ADR-0057).
+func TestMain(m *testing.M) {
+	osproc.ConfineExecMain()
+	os.Exit(m.Run())
+}
+
+func TestAgentInItsWorktreeCannotWriteTheCheckout(t *testing.T) {
+	e := newEnv(t)
+	ws := domain.Workspace{Key: "WI-1", Branch: branch, Base: "main"}
+	if _, err := e.r.Prepare(context.Background(), ws.Key, ws.Branch); err != nil {
+		t.Fatal(err)
+	}
+	c, err := e.r.Confinement(ws)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, _ := e.r.Dir(ws)
+	if len(c.WritableRoots) != 1 || c.WritableRoots[0] != dir {
+		t.Fatalf("the worktree must be the only root: %v", c.WritableRoots)
+	}
+	self, _ := os.Executable()
+	runner := osproc.Runner{Self: self, Forbidden: []string{e.r.Checkout()}}
+	sh, err := (osproc.Resolver{}).Find("sh")
+	if err != nil {
+		t.Skip("no sh")
+	}
+	run := func(script string) (string, error) {
+		p, err := runner.Start(context.Background(), ports.ProcSpec{Path: sh, Args: []string{"-c", script}, Dir: dir, Confine: &c})
+		if err != nil {
+			return "", err
+		}
+		out, _ := io.ReadAll(p.Stdout())
+		p.Wait()
+		return string(out), nil
+	}
+	out, err := run("echo hi > in-worktree && echo wrote-inside; echo x > " + filepath.Join(e.repo, "in-checkout") + " 2>/dev/null || echo blocked-checkout")
+	if errors.Is(err, ports.ErrConfinementUnavailable) {
+		t.Skipf("write confinement is not available on this host: %v", err)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "wrote-inside") || !strings.Contains(out, "blocked-checkout") {
+		t.Fatalf("agent output %q", out)
+	}
+	if _, err := os.Stat(filepath.Join(e.repo, "in-checkout")); err == nil {
+		t.Fatal("the agent wrote into the Project checkout")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "in-worktree")); err != nil {
+		t.Fatalf("the agent could not write in its worktree: %v", err)
+	}
+	// the checkout can never be given as a writable root
+	bad := ports.Confinement{WritableRoots: []string{e.repo}}
+	_, err = runner.Start(context.Background(), ports.ProcSpec{Path: sh, Args: []string{"-c", "true"}, Dir: dir, Confine: &bad})
+	if errors.Is(err, ports.ErrConfinementUnavailable) {
+		return
+	}
+	if !errors.Is(err, ports.ErrInvalidConfinement) {
+		t.Fatalf("the Project checkout as a writable root must be refused: %v", err)
 	}
 }

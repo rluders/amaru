@@ -20,6 +20,7 @@ const helperEnv = "AMARU_TEST_HELPER"
 // The test binary re-executes itself as the child (the helper-process pattern), so the tests need
 // no shell, no real tool and no network.
 func TestMain(m *testing.M) {
+	ConfineExecMain() // a confined test process comes through the launch helper first
 	switch os.Getenv(helperEnv) {
 	case "env":
 		for _, kv := range os.Environ() {
@@ -37,6 +38,8 @@ func TestMain(m *testing.M) {
 		ignoreTerm()
 		time.Sleep(time.Minute)
 		os.Exit(0)
+	case "confine-ops":
+		runOps(os.Args[1:])
 	case "tree", "stubborn-tree", "escape-tree":
 		runTree(os.Getenv(helperEnv))
 	}
