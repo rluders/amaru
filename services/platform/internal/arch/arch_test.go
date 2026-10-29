@@ -170,6 +170,7 @@ var onlyModuleImports = map[string][]string{
 	"internal/worker/inproc":      {"internal/ports"},
 	"internal/worker/osproc":      {"internal/ports"},
 	"internal/provider/remotejob": {}, // HTTP helpers: the standard library only
+	"internal/egress":             {"internal/domain"},
 	"internal/coordinator":        {"internal/domain", "internal/ports"},
 }
 
