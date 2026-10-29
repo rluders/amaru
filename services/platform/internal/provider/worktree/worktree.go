@@ -137,6 +137,22 @@ func (r *Repo) Dir(ws domain.Workspace) (string, error) {
 	return filepath.Join(r.root, ws.Key), nil
 }
 
+// Checkout is the Project checkout. A process runner is told to keep it out of every writable
+// root (osproc.Runner.Forbidden), so no agent can be given write access to it.
+func (r *Repo) Checkout() string { return r.dir }
+
+// Confinement is the write restriction for an agent working in ws: its worktree is the only
+// writable root (ADR-0056 item 7, ADR-0057). It does not let the agent commit: git writes to the
+// shared repository under the Project checkout, which stays outside the root, so the Worker
+// commits and pushes on the agent's behalf.
+func (r *Repo) Confinement(ws domain.Workspace) (ports.Confinement, error) {
+	dir, err := r.Dir(ws)
+	if err != nil {
+		return ports.Confinement{}, err
+	}
+	return ports.Confinement{WritableRoots: []string{dir}}, nil
+}
+
 // ExitError is a git command that exited non-zero.
 type ExitError struct {
 	Code   int

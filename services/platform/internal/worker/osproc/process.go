@@ -65,6 +65,14 @@ type Runner struct {
 	// Grace is the time between the polite signal and the kill when the context ends; zero means
 	// DefaultGrace.
 	Grace time.Duration
+	// Self is the path of the Worker's own binary, which must call ConfineExecMain first thing in
+	// main. It is the launch helper of a confined process (ADR-0057). Empty means "not
+	// configured", and a confined Start is refused rather than guessing the binary.
+	Self string
+	// Forbidden lists paths no writable root may overlap, such as the Project checkout.
+	Forbidden []string
+	// Probe returns the Landlock ABI of the host; nil means ask the kernel. Tests inject it.
+	Probe func() (int, error)
 }
 
 // Start starts the process. When ctx ends, the whole process tree is terminated.
@@ -80,9 +88,22 @@ func (r Runner) Start(ctx context.Context, spec ports.ProcSpec) (ports.Proc, err
 	if grace <= 0 {
 		grace = DefaultGrace
 	}
-	cmd := exec.Command(spec.Path, spec.Args...) // not CommandContext: the tree is ended by Terminate
+	path, args := spec.Path, spec.Args
+	var conf *ports.Confinement
+	if spec.Confine != nil {
+		c, err := r.prepareConfinement(*spec.Confine)
+		if err != nil {
+			return nil, err
+		}
+		conf = &c
+		path, args = r.Self, confineArgs(c.WritableRoots, spec.Path, spec.Args)
+	}
+	cmd := exec.Command(path, args...) // not CommandContext: the tree is ended by Terminate
 	cmd.Dir = spec.Dir
-	cmd.Env = append(allowedEnv(environ()), spec.Env...)
+	cmd.Env = append(allowedEnv(environ()), withoutKey(spec.Env, confineEnv)...)
+	if conf != nil {
+		cmd.Env = append(cmd.Env, confineEnv+"=1")
+	}
 	var stdin io.WriteCloser
 	if spec.Interactive {
 		w, err := cmd.StdinPipe()
@@ -106,6 +127,10 @@ func (r Runner) Start(ctx context.Context, spec ports.ProcSpec) (ports.Proc, err
 		return nil, fmt.Errorf("start %s: %w", spec.Path, err)
 	}
 	p := &proc{cmd: cmd, stdout: stdout, stderr: stderr, stdin: stdin, done: make(chan struct{})}
+	var started ports.Proc = p
+	if conf != nil {
+		started = confined{p, *conf}
+	}
 	go func() { // the context ends the tree too
 		select {
 		case <-ctx.Done():
@@ -114,9 +139,9 @@ func (r Runner) Start(ctx context.Context, spec ports.ProcSpec) (ports.Proc, err
 		}
 	}()
 	if spec.Interactive {
-		return interactive{p}, nil
+		return interactive{started}, nil
 	}
-	return p, nil
+	return started, nil
 }
 
 type proc struct {
@@ -160,13 +185,29 @@ func (p *proc) Terminate(grace time.Duration) {
 	})
 }
 
-// interactive adds the stdin pipe to a proc.
-type interactive struct{ *proc }
+// confined reports what was enforced.
+type confined struct {
+	*proc
+	c ports.Confinement
+}
 
-func (i interactive) Stdin() io.WriteCloser { return i.proc.stdin }
+func (c confined) Confinement() ports.Confinement { return c.c }
+
+// interactive adds the stdin pipe to a proc.
+type interactive struct{ ports.Proc }
+
+func (i interactive) Stdin() io.WriteCloser { return procOf(i.Proc).stdin }
+
+func procOf(p ports.Proc) *proc {
+	if c, ok := p.(confined); ok {
+		return c.proc
+	}
+	return p.(*proc)
+}
 
 var (
 	_ ports.ProcessRunner   = Runner{}
 	_ ports.Proc            = (*proc)(nil)
 	_ ports.InteractiveProc = interactive{}
+	_ ports.ConfinedProc    = confined{}
 )

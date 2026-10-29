@@ -15,6 +15,26 @@ import (
 // ErrExecutableNotFound is returned by an ExecutableResolver when no executable matches.
 var ErrExecutableNotFound = errors.New("executable not found")
 
+// ErrConfinementUnavailable is returned by a ProcessRunner that was asked to confine a process and
+// cannot enforce it on this host (no mechanism, a kernel that is too old, or the helper is not
+// configured). The process is not started: a Step never runs unconfined when confinement was
+// requested (ADR-0057, FEAT-POL-006).
+var ErrConfinementUnavailable = errors.New("write confinement cannot be enforced")
+
+// ErrInvalidConfinement is returned when the requested writable roots are not acceptable.
+var ErrInvalidConfinement = errors.New("invalid write confinement")
+
+// Confinement restricts where a process and everything it starts may write (ADR-0057). Reads,
+// the network and signals are not restricted by it.
+type Confinement struct {
+	// WritableRoots are the directories the process may write under: absolute, existing, no ".."
+	// element. At least one is required. The Work Item's worktree is the one a Step always has.
+	WritableRoots []string
+	// ABI is set by the OS layer on the value a ConfinedProc reports: the enforcement level the
+	// host gave. It is ignored on a request.
+	ABI int
+}
+
 // ProcSpec describes one process to start. Path is the executable and Args its arguments: the
 // process is started directly, never through a shell. Dir is the working directory.
 type ProcSpec struct {
@@ -28,6 +48,11 @@ type ProcSpec struct {
 	Stdin string
 	// Interactive keeps stdin open for the caller to write (see InteractiveProc).
 	Interactive bool
+	// Confine, when non-nil, confines writes of the process and its descendants to the roots. A
+	// nil Confine is an explicit "not confined", for a program the Worker runs itself; an agent
+	// is started with a non-nil value or not at all (ADR-0057 item 5). If the runner cannot
+	// enforce it, Start fails with ErrConfinementUnavailable.
+	Confine *Confinement
 }
 
 // Proc is a started process. Stdout and Stderr must be read until EOF before Wait returns the
@@ -41,6 +66,13 @@ type Proc interface {
 	// Terminate asks the whole process tree to stop, then forces it to after grace. It returns
 	// at once and is safe to call more than once; Wait returns when the root process has ended.
 	Terminate(grace time.Duration)
+}
+
+// ConfinedProc is a Proc that was started with a Confinement. It reports what was enforced, so a
+// Step can record a fact rather than a claim (ADR-0057 item 6).
+type ConfinedProc interface {
+	Proc
+	Confinement() Confinement
 }
 
 // InteractiveProc is a Proc started with Interactive set.
