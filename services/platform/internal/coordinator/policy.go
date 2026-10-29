@@ -18,7 +18,7 @@ import (
 // A require_approval result makes the Step wait for a person (see approval.go). Not implemented
 // yet: rules come only from DefaultRules and WithRules, not from configuration scopes (ADR-0039);
 // the evaluation itself is not written to the audit log (the Grant and Approval changes are,
-// FEAT-POL-003). A refusal is the Step's own Reason and, at the lease path, a step.deferred event.
+// FEAT-POL-003; a Grant's expiry or lapse is recorded when Policy first meets it). A refusal is the Step's own Reason and, at the lease path, a step.deferred event.
 
 // WithGrants sets where Grants are read and written. Without it no Grant exists, so only the
 // rules can allow a Step: the Coordinator fails closed.
@@ -58,7 +58,42 @@ func (c *Coordinator) decide(ctx context.Context, req domain.PolicyRequest) (dom
 		return domain.PolicyResult{}, err
 	}
 	req.ProjectTrust = standing
+	if err := c.recordStanding(ctx, req, grants); err != nil {
+		return domain.PolicyResult{}, err
+	}
 	return domain.Evaluate(c.now(), req, grants, c.rules)
+}
+
+// recordStanding records a Grant that has expired, or that lapsed because its definition changed,
+// the first time Policy meets it, so the audit log holds the change and its time (FEAT-POL-003).
+// Evaluate already treats such a Grant as not covering, so the decision is the same with or
+// without this. A lapse is recorded only for a request of the Grant's own Subject: another
+// Workflow's definition says nothing about it. A Grant that someone else recorded first is
+// skipped (domain.ErrConflict); any other failure fails the evaluation, because an audit event
+// that cannot be written must not be silently lost.
+func (c *Coordinator) recordStanding(ctx context.Context, req domain.PolicyRequest, grants []domain.Grant) error {
+	now := c.now()
+	for _, g := range grants {
+		var err error
+		switch g.Standing(now, req.DefinitionHash) {
+		case domain.GrantExpired:
+			err = g.Expire()
+		case domain.GrantLapsed:
+			if g.Subject != req.Subject {
+				continue
+			}
+			err = g.Lapse()
+		default:
+			continue
+		}
+		if err == nil {
+			_, err = c.grants.Update(ctx, g)
+		}
+		if err != nil && !errors.Is(err, domain.ErrConflict) {
+			return fmt.Errorf("record grant %s: %w", g.ID, err)
+		}
+	}
+	return nil
 }
 
 // refusal is the Step Reason for a request that was not allowed.
