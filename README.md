@@ -16,7 +16,7 @@ Amaru coordinates humans, AI agents, tools, knowledge, workflows and execution e
 
 Amaru does not replace Git, GitHub, issue trackers, IDEs, CI or specialized engineering tools. It integrates with them and orchestrates work across them.
 
-> **Status: product foundation.** This repository contains product scope, a feature catalog, an accepted (not yet implemented) architecture, a decision log, a master roadmap, engineering governance and a documentation checker. **No part of the Amaru Platform, Desktop, Web client, Cloud or Self-hosted offering is implemented here yet.** Nothing here is ready to install or use.
+> **Status: M3 Platform core in progress; no release yet.** M2 contracts and the generated SDK are merged, and parts of the Platform core have recorded local evidence. The Platform remains incomplete; Web, Desktop, Cloud and Self-hosted delivery are planned. Follow the [GitHub Project](https://github.com/users/rluders/projects/2), [roadmap](docs/architecture/ROADMAP.md) and issue evidence for completion and validation limits. There is no ready-to-install product release.
 
 ## The problem
 
@@ -36,19 +36,19 @@ Intended users: individual engineers working with AI agents first; team leads, s
 
 | Surface | What it is | Status |
 |---|---|---|
-| **Amaru Platform** | The deployable system: domain model, API contracts, policies, execution coordination. | Proposed (M3) |
-| **Workers** | Run Steps in local or remote Execution Environments (Linux, Windows workstations, sandboxes). | Proposed (embedded M3, remote M5) |
+| **Amaru Platform** | The deployable system: domain model, API contracts, policies, execution coordination. | Partially implemented; M3 incomplete, with local evidence and outstanding integration/validation |
+| **Workers** | Run Steps in local or remote Execution Environments (Linux, Windows workstations, sandboxes). | Embedded interface partially implemented (M3); remote execution planned (M5) |
 | **Amaru Web** | Browser client served by the Platform; the Local MVP client. | Proposed (M4) |
 | **Plugins** | TypeScript UI and logic, services, Worker and local adapters, with declared permissions. | Proposed (M6) |
 | **Amaru Self-hosted** | The Platform, operated by you. | Proposed (M7) |
 | **Amaru Desktop** | Native client wrapping the same UI (Tauri v2 thin Rust host, [ADR-0018](docs/architecture/adr/0018-desktop-shell-is-tauri-v2.md)). | Proposed (M8) |
 | **Amaru Cloud** | The Platform, operated as a managed service. | Proposed (M9) |
 
-Milestones (no dates) are in the [master roadmap](docs/architecture/ROADMAP.md); features in the [feature catalog](docs/product/FEATURE_CATALOG.md).
+Manage execution in the [GitHub Project](https://github.com/users/rluders/projects/2) using the [delivery workflow](docs/engineering/delivery.md#9-project-and-operating-model). Milestones (no dates) are in the [master roadmap](docs/architecture/ROADMAP.md); features in the [feature catalog](docs/product/FEATURE_CATALOG.md).
 
 Cloud and Self-hosted are deployments of the same Platform, not separate products ([ADR-0002](docs/architecture/adr/0002-one-platform-multiple-deployment-models.md)). Clients never own execution state ([ADR-0003](docs/architecture/adr/0003-desktop-is-a-client.md)).
 
-## Architecture at a glance (accepted, not implemented)
+## Architecture at a glance (accepted, partially implemented)
 
 ```mermaid
 flowchart LR
@@ -72,6 +72,7 @@ docs/security/      security model
 tools/doccheck/     offline documentation checker (Go, standard library only)
 packages/contracts/ versioned API, event, Provider and Worker contracts (OpenAPI, JSON Schema, Protobuf) shared fixtures and the route-drift guard
 packages/sdk/       TypeScript SDK generated from the OpenAPI contract, with an event-stream client (cursor resume)
+services/platform/  partial Platform core; M3 acceptance and validation remain in progress
 ```
 
 Application, service and package directories are added only when they have real content ([repository layout](docs/engineering/repository-layout.md)).
@@ -85,7 +86,7 @@ make check        # gofmt, go vet, unit tests and documentation checks
 make docs-check   # documentation checks only
 ```
 
-That is everything that runs today. Start reading at the [PRD](docs/product/PRD.md), then the [architecture](docs/architecture/ARCHITECTURE.md) and the [roadmap](docs/architecture/ROADMAP.md).
+See [validation](docs/engineering/validation.md) for the full tool requirements and checks, including contract/SDK and Platform tests. Start reading at the [PRD](docs/product/PRD.md), then the [architecture](docs/architecture/ARCHITECTURE.md) and the [roadmap](docs/architecture/ROADMAP.md).
 
 ## Documentation
 

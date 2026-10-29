@@ -10,8 +10,9 @@ Features are referenced by catalog ID without the `FEAT-` prefix ([feature catal
 - **M0 complete** (2026-10-25): the product owner reviewed the planning package and accepted ADRs 0002–0005 and 0008–0039; a second pass the same day closed the residual questions Q23–Q54 with ADRs 0040–0043 (superseding 0014, 0019, 0020 and 0027). No open questions remained at M0; Q55–Q58 were raised during M1 (Q55 closed by ADR-0046).
 - **Tracking:** every Work Package, epic and scheduled feature has a GitHub issue ([backlog map](../engineering/backlog-map.md), [delivery workflow](../engineering/delivery.md)).
 - **Epic features (M5–M9):** each epic lists the features it owns; every feature of a milestone belongs to exactly one epic. The grouping was confirmed in the backlog refinement of 2026-10-25 (E5.7 added; ART-004 and ENV-007 moved to E5.1; PRJ-006 moved to E7.1; ART-004's S3-compatible adapter delivered by E7.2). It is refined into Work Packages when M4 is near.
-- **M1 complete** (2026-10-26, [#60](https://github.com/rluders/amaru/issues/60)): the storage and execution spike is *conditionally validated* on Linux, macOS and Windows hosted runners (remaining conditions carried to M3/M4); the contract, Policy and Approval, Worker protocol, `.amaru/` layout design are drafted (**Proposed, not validated**); the root `LICENSE` is in effect; ADR-0044 to ADR-0046 are accepted. Q56–Q58 are open for the product owner. Details under [M1](#m1-decisions-and-spikes).
-- **Next: M2** contracts and generated SDK, starting from the M1 drafts. The prototype is used as-is from its baseline commit (ADR-0032). The Apache-2.0 `LICENSE` of each contract or SDK package is added when the package is created.
+- **M1 complete** (2026-10-26, [#60](https://github.com/rluders/amaru/issues/60)): the storage and execution spike is *conditionally validated* on Linux, macOS and Windows hosted runners (remaining conditions carried to M3/M4); the contract, Policy and Approval, Worker protocol, `.amaru/` layout design are drafted (**Proposed, not validated**); the root `LICENSE` is in effect; ADR-0044 to ADR-0046 are accepted. Q56–Q58 were open at M1 exit and were subsequently resolved by accepted ADR-0048. Details under [M1](#m1-decisions-and-spikes).
+- **M2 complete with recorded resolutions** (2026-10-27, [#12](https://github.com/rluders/amaru/issues/12)): contracts, generated SDK and fixture evidence are merged. The [exit record](investigations/2026-10-27-m2-contracts-v0-exit.md) records the owner-delegated route coverage decision and real-route drift wiring carried to WP-M3-06; these are not unconditional passes of the original criteria.
+- **Current: M3 Platform core.** Merged partial work does not complete the milestone. WP-M3-03 [#15](https://github.com/rluders/amaru/issues/15) is reopened because required children remain open; Work Package OS deferrals remain in force, while native cross-platform exit evidence is still owed at [#20](https://github.com/rluders/amaru/issues/20). The [GitHub Project](https://github.com/users/rluders/projects/2) tracks execution; the roadmap remains an ordered plan without dates.
 
 ## Overview
 
@@ -37,7 +38,7 @@ flowchart LR
 |---|---|---|
 | M0 (complete) | Consistent product, architecture and delivery plan | M1 |
 | M1 (complete) | Validate the accepted decisions with spikes; license texts in effect | M2, M3 |
-| M2 | Contracts and generated SDK | M3, M4, M6 |
+| M2 (complete with resolutions) | Contracts and generated SDK | M3, M4, M6 |
 | M3 | Amaru Platform core running headless with Policy and Approval | M4 |
 | **M4** | **Local MVP: the supervised delivery flow in Amaru Web on three OSes** | M5, M6, M8 |
 | M5 | Separate and remote Workers; execution hardening | M7 |
@@ -88,6 +89,7 @@ flowchart LR
 - **Deferred:** nothing undecided; implementation of later decisions follows their milestones.
 
 ## M2 Contracts v0
+- **Exit record (2026-10-27):** accepted with owner-delegated resolutions, not every original criterion met as written. Skill/secret route coverage is carried to WP-M3-05/POL-007; real-route drift wiring is carried to WP-M3-06. See [#12](https://github.com/rluders/amaru/issues/12) and the [evidence and decision record](investigations/2026-10-27-m2-contracts-v0-exit.md). Original scope and criteria below are preserved for traceability.
 - **Objective:** the stable surface every later component builds on.
 - **Outcome (engineering):**
   - `packages/contracts`: public API, events, provider protocol, Worker protocol draft, Approval/Policy shapes, with valid/invalid fixtures validated in Go and TypeScript.

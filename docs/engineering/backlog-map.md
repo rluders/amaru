@@ -28,6 +28,7 @@ Planning IDs mapped to their GitHub issues in [rluders/amaru](https://github.com
 | M2 | `WP-M2-03` | [#11](https://github.com/rluders/amaru/issues/11) | — | WP-M2-03 Contract drift guard |
 | M2 | `MADR-protocol` | [#67](https://github.com/rluders/amaru/issues/67) | [#9](https://github.com/rluders/amaru/issues/9) | Migration ADR: protocol/ → packages/contracts |
 | M2 | `EXIT-M2` | [#12](https://github.com/rluders/amaru/issues/12) | — | M2 Contracts v0: exit validation |
+| M2 | `OWN-adr-0048` | [#250](https://github.com/rluders/amaru/issues/250) | — | Recorded owner decision: Q56–Q58, ADR-0048 |
 | M3 | `WP-M3-01` | [#13](https://github.com/rluders/amaru/issues/13) | — | WP-M3-01 Domain and ports migration |
 | M3 | `WP-M3-02` | [#14](https://github.com/rluders/amaru/issues/14) | — | WP-M3-02 Storage adapter |
 | M3 | `WP-M3-03` | [#15](https://github.com/rluders/amaru/issues/15) | — | WP-M3-03 Execution coordinator with embedded Worker |
@@ -291,10 +292,17 @@ Confirmed in the backlog refinement of 2026-10-25 against the roadmap exit crite
   - FEAT-WRK-001 → FEAT-PRJ-001: soft, recorded in [#166](https://github.com/rluders/amaru/issues/166).
   - FEAT-WRK-004 → FEAT-VAL-001, FEAT-REV-004, FEAT-REV-005, FEAT-INT-001: soft, recorded in [#220](https://github.com/rluders/amaru/issues/220); the real run is in WP-M4-07 [#27](https://github.com/rluders/amaru/issues/27).
 - **Human approval gates** ([delivery §8](delivery.md#8-human-approval-gates)): all `MADR-*` issues and [#65](https://github.com/rluders/amaru/issues/65), [#66](https://github.com/rluders/amaru/issues/66), [#69](https://github.com/rluders/amaru/issues/69) carry `awaiting-owner-approval`. Every migration ADR issue is blocked by [#8](https://github.com/rluders/amaru/issues/8) (inventory refresh).
-- **Decided 2026-10-26 (product owner):** the license state is the one decided in ADR-0026 and stated in the README. No separate legal review: [#65](https://github.com/rluders/amaru/issues/65) closed. The root `LICENSE` [#66](https://github.com/rluders/amaru/issues/66) no longer blocks migration ADR issues and is no longer a sub-issue of WP-M1-01 [#2](https://github.com/rluders/amaru/issues/2) or an M1 exit criterion; it stays open, owned by the product owner, before the first public release or external contribution.
+- **Decided 2026-10-26 (product owner):** the license state is the one decided in ADR-0026 and stated in the README. No separate legal review: [#65](https://github.com/rluders/amaru/issues/65) closed. The root `LICENSE` [#66](https://github.com/rluders/amaru/issues/66) no longer blocks migration ADR issues and is no longer a sub-issue of WP-M1-01 [#2](https://github.com/rluders/amaru/issues/2) or an M1 exit criterion; the owner's instruction was implemented in [#245](https://github.com/rluders/amaru/pull/245), and #66 is closed.
 
 - **Decided 2026-10-25 (delegated by the product owner):** the epic changes of §3, ART-003's move and its REV-003 dependency, and the WP-M1-01 *Done when* correction are confirmed. Default OS owner for M3/M4 is the product owner. The Go Worker SDK is created in E6.6 [#30](https://github.com/rluders/amaru/issues/30). The egress check that POL-004 [#168](https://github.com/rluders/amaru/issues/168) reuses from `transport/webhook/sender.go` is covered by the M3 migration ADR MADR-httpapi [#83](https://github.com/rluders/amaru/issues/83), which blocks #168; the rest of `transport/webhook` stays with MADR-webhook [#95](https://github.com/rluders/amaru/issues/95) in M7. License decisions are deferred by the product owner; their gates stay open.
 
 ## 5. Not tracked as issues
 
 - P2 features in the catalog *Backlog* and all P3 features: not scheduled, so no issue (catalog priority rules).
+- Historical exception: [#270](https://github.com/rluders/amaru/issues/270), the prototype importer, was explicitly canceled by the owner as not planned. It has no catalog ID and is not delivered feature scope; preserve the issue and decision rather than recreating it to fill a mapping gap.
+
+## 6. Operational reconciliation
+
+The [Project](https://github.com/users/rluders/projects/2) holds live execution status; this file holds identity and relationships, not a second status ledger. On 2026-10-29, WP-M3-03 [#15](https://github.com/rluders/amaru/issues/15) was reopened to reflect its remaining children #129, #145, #157 and #158. The owner's Work Package OS deferral stays in force; M3 exit evidence stays owed. M1/M2 qualified exits are recorded in #60/#12. Details and limitations: [management validation](../validation/management/2026-10-29-github-management.md).
+
+The 2026-10-25/26 dependency notes above are historical decisions. Later owner corrections in issue discussions and native relationships take precedence for execution: #168 is fresh Amaru work and no longer blocked by #83; #66 is closed. Do not restore stale gates from this snapshot.
