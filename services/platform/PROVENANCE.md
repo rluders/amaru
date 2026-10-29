@@ -72,3 +72,6 @@ Fresh import with provenance ([ADR-0049](../../docs/architecture/adr/0049-adapt-
 
 ## New in #154 write confinement
 - `internal/worker/osproc/confine*.go` and `ports.Confinement` (ADR-0057): written fresh in Amaru, no prototype source. The Landlock constants, struct layouts and syscall numbers are from the kernel headers (`linux/landlock.h`, `asm-generic/unistd.h`) on the development host and the kernel user guide, checked 2026-10-28. No third-party dependency was added (ADR-0057 item 8 allowed raw syscalls instead of go-landlock).
+
+## New in #168 egress consent
+- `domain/egress.go` and `internal/egress/` (FEAT-POL-004): written fresh in Amaru, no prototype source and no migration ADR (the #83 blocker link was dropped by the owner on 2026-10-28). The prototype `transport/webhook/sender.go` was read as a behavioral reference only (no redirects, resolve then dial the vetted IP, one bad answer blocks, link-local always blocked). The special-purpose address ranges were written from memory of the IANA registries and not checked against the registry text; the list errs toward refusing. No dependency added.
