@@ -1,13 +1,11 @@
 ---
 title: Confine agent writes to the worktree with Landlock, applied by a launch helper, and refuse the Step when it cannot be enforced
-status: proposed
+status: accepted
 date: 2026-10-28
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0057. Confine agent writes to the worktree with Landlock, applied by a launch helper, and refuse the Step when it cannot be enforced
-
-<!-- Proposed. Not accepted: the product owner decides (AGENTS.md rule 3). -->
 
 ## Context
 - **The gap.** FEAT-ENV-010 (#154) requires that "agents write only inside" the Work Item's worktree. [ADR-0056](0056-adapt-the-prototype-git-worktree-provider-into-the-worker-providers.md) item 7 assigns that to "the Worker's path and process confinement ([ADR-0053](0053-adapt-the-prototype-process-and-path-code-into-the-worker-os-layer.md))". **That confinement does not exist.** ADR-0053 moved argv-only start, an allow-listed environment, an explicit directory and process-tree termination; it moved no write restriction, and its Follow-up says a confinement beyond the process group needs a new ADR because none exists. `internal/worker/osproc` today starts any program with any permissions of the Worker's user. The worktree package only decides the directory.
@@ -48,4 +46,4 @@ deciders:
 - **Do not confine in M3 and record the criterion as unmet:** honest and cheap, but leaves a P0 feature without its acceptance criterion and leaves POL-006 with nothing to refuse on.
 
 ## Approval
-Proposed by: Claude (draft for #154, 2026-10-28). Approved by: — (pending the product owner). Requested decisions: accept the mechanism (item 1) and the launch helper (item 2); the fail-closed rule (item 3); the Windows/macOS refusal; go-landlock versus raw `x/sys` syscalls (item 8).
+Proposed by: Claude (draft for #154, 2026-10-28). Approved by: Ricardo Lüders (product owner) on 2026-10-28, on PR #310: "accept ADR-0057, merge #310". The ADR is accepted as drafted, so item 8 stands as written (go-landlock v0.11.0 pinned; raw `x/sys/unix` syscalls remain an implementer's option). The owner did not answer the three questions separately.
