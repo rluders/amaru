@@ -1,0 +1,62 @@
+name: Bug report
+description: Report reproducible behavior that contradicts the expected contract.
+projects:
+- rluders/2
+labels:
+- bug
+body:
+- type: markdown
+  attributes:
+    value: Search existing issues before submitting. Follow [delivery rules](https://github.com/rluders/amaru/blob/main/docs/engineering/delivery.md).
+      Maintainers add the hidden planning-ID marker during triage; do not invent a catalog ID or bypass owner approvals.
+- type: input
+  id: planning-id
+  attributes:
+    label: Planning ID
+    description: Existing source-backed ID, if scheduled; leave blank for an incoming report.
+- type: textarea
+  id: problem
+  attributes:
+    label: Problem and reproduction
+    description: State expected and actual behavior, exact reproduction steps, commit/version, OS and relevant sanitized
+      logs.
+  validations:
+    required: true
+- type: textarea
+  id: scope
+  attributes:
+    label: Scope and constraints
+    description: List included work, explicit exclusions, constraints and relevant roadmap/catalog/ADR links.
+  validations:
+    required: true
+- type: textarea
+  id: acceptance
+  attributes:
+    label: Acceptance criteria
+    description: Use a checklist of observable outcomes. For a spike, name the evidence and follow-up decision;
+      do not promise production implementation.
+  validations:
+    required: true
+- type: textarea
+  id: dependencies
+  attributes:
+    label: Dependencies and relationships
+    description: Name milestone, parent/Work Package and direct blockers, or state none/needs triage. Maintainers
+      also set native relationships; children inherit parent blockers.
+  validations:
+    required: true
+- type: textarea
+  id: verification
+  attributes:
+    label: Verification
+    description: State exact intended checks, evidence level, OS/real-tool requirements and what would remain unvalidated.
+  validations:
+    required: true
+- type: textarea
+  id: delivery
+  attributes:
+    label: Definition of done and delivery
+    description: Name the required integration base and approval gates. Completion requires acceptance evidence,
+      applicable checks and docs, review and designated-base merge; owner decisions remain human-only.
+  validations:
+    required: true
