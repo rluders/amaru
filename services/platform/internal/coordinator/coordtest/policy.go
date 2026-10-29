@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
 	"github.com/rluders/amaru/services/platform/internal/domain"
@@ -243,6 +244,97 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
+	t.Run("an expired or lapsed Grant is recorded once, when Policy first meets it", func(t *testing.T) {
+		saved := now
+		defer func() { now = saved }()
+		_, grants, c := build(t)
+		log := grants.(ports.AuditLog)
+		pin, err := domain.Pin(toolsFlow, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		expiring := mcpGrant("g-exp", "p1")
+		expiring.Subject = domain.Subject{Kind: domain.SubjectWorkflow, ID: "other-flow"}
+		exp := now.Add(time.Hour)
+		expiring.ExpiresAt = &exp
+		bound := mcpGrant("g-bound", "p1")
+		bound.DefinitionHash = pin.Hash
+		unrelated := mcpGrant("g-unrelated", "p1")
+		unrelated.Subject = domain.Subject{Kind: domain.SubjectWorkflow, ID: "someone-else"}
+		unrelated.DefinitionHash = "sha256:old"
+		for _, g := range []domain.Grant{expiring, bound, unrelated} {
+			if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+				t.Fatal(err)
+			}
+		}
+		kinds := func() map[string]string {
+			evs, err := log.Audit(ctx, 0, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			out := map[string]string{}
+			for _, e := range evs {
+				if e.Kind != domain.AuditGrantCreated {
+					if _, dup := out[e.TargetID]; dup {
+						t.Fatalf("grant %s recorded twice: %+v", e.TargetID, evs)
+					}
+					out[e.TargetID] = e.Kind + "/" + e.Actor + "/" + e.Reason
+				}
+			}
+			return out
+		}
+
+		submitFlow(t, c, "k1", "p1", toolsFlow) // everything is in force: nothing to record
+		if got := kinds(); len(got) != 0 {
+			t.Fatalf("nothing changed yet, recorded %v", got)
+		}
+
+		now = exp.Add(time.Minute) // the expiring Grant passes its time
+		submitFlow(t, c, "k2", "p1", toolsFlow)
+		submitFlow(t, c, "k3", "p1", toolsFlow) // meeting it again records nothing more
+		if got := kinds(); len(got) != 1 || got["g-exp"] != "grant.expired/platform/expired" {
+			t.Fatalf("after the expiry: %v", got)
+		}
+
+		edited := toolsFlow
+		edited.Name = "Tools, edited"
+		submitFlow(t, c, "k4", "p1", edited)
+		submitFlow(t, c, "k5", "p1", edited)
+		got := kinds()
+		if len(got) != 2 || got["g-bound"] != "grant.lapsed/platform/definition_changed" {
+			t.Fatalf("after the edit: %v", got)
+		}
+		if _, ok := got["g-unrelated"]; ok {
+			t.Fatalf("a Grant of another Workflow lapsed because this Workflow changed: %v", got)
+		}
+		if g, err := grants.Get(ctx, "g-bound"); err != nil || g.Status != domain.GrantLapsed {
+			t.Fatalf("the stored Grant: %+v %v", g, err)
+		}
+	})
+
+	t.Run("recording a Grant's expiry never changes the decision, and a lost race is not an error", func(t *testing.T) {
+		saved := now
+		defer func() { now = saved }()
+		_, grants, _ := build(t)
+		racer := &racingGrants{GrantStore: grants}
+		_, _, c := build(t, coordinator.WithGrants(racer))
+		g := mcpGrant("g-exp", "p1")
+		exp := now.Add(time.Hour)
+		g.ExpiresAt = &exp
+		if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+			t.Fatal(err)
+		}
+		now = exp.Add(time.Minute)
+		racer.err = domain.ErrConflict // someone else recorded it first
+		if st := submitFlow(t, c, "k1", "p1", toolsFlow).Steps[0]; st.State != domain.StepRefused {
+			t.Fatalf("an expired Grant must not allow the Step: %s", st.State)
+		}
+		racer.err = errors.New("store down") // an event that cannot be written is not lost silently
+		if _, _, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "k2", ProjectID: "p1", Workflow: &toolsFlow}); err == nil {
+			t.Fatal("a failed audit write must fail the evaluation")
+		}
+	})
+
 	t.Run("only a human Owner or Admin makes or revokes a Grant", func(t *testing.T) {
 		_, grants, c := build(t)
 		for name, by := range map[string]domain.Principal{
@@ -451,4 +543,17 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 	})
 
+}
+
+// racingGrants fails every Update with err when it is set, as a store that lost a race or is down.
+type racingGrants struct {
+	ports.GrantStore
+	err error
+}
+
+func (r *racingGrants) Update(ctx context.Context, g domain.Grant) (domain.Grant, error) {
+	if r.err != nil {
+		return domain.Grant{}, r.err
+	}
+	return r.GrantStore.Update(ctx, g)
 }
