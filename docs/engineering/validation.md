@@ -79,3 +79,9 @@ While the Platform is built on Linux, **Windows and macOS runs are deferred**: o
 
 ### Scope decision (product owner, 2026-11-12)
 The owner stated "Cross-platform is best effort only for now, our main target is Linux" and selected **All remaining M3** when asked whether this includes milestone exit. Linux checks remain required. Native macOS/Windows runs and recorded provider runs on those OSes are best effort and do not block remaining M3 work or M3 exit. Keep compatibility checks and record each unrun platform as **not validated**; do not mark it passed. This changes the earlier obligation to complete those runs before M3 exit, not the M4 criteria or the security baseline. See the amended [M3 roadmap](../architecture/ROADMAP.md#m3-platform-core).
+
+## Embedded Worker boundary (ENV-001)
+
+`make check` runs the coordinator assignment and cancellation suites over both the in-process link and a shared JSON serialization stand-in, plus `TestWorkerInterfaceParity` with the actual embedded Worker and a fake Runner. The latter checks success/failure, requested cancellation before result acknowledgement, duplicate-result deduplication, and restart recovery while the old Lease is still live (idempotent re-lease or non-idempotent interruption). Repeated reconciliation preserves settled state and Events. The Worker production package imports only the ports package within the module; the architecture test enforces that boundary.
+
+These are fake-backed integration tests, not remote-worker or real-provider validation. The serialized link is not WebSocket/Protobuf and does not establish separate-process enrollment, reconnect or network behavior. Restart cases replace coordinator/Worker instances over a retained fake store; process-kill/PostgreSQL evidence belongs to the [EXE-002 record](../validation/m3/2026-11-12-linux-exe-002.md). See the [Linux ENV-001 record](../validation/m3/2026-11-12-linux-env-001.md) for commands and remaining limitations.
