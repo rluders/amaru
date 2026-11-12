@@ -46,6 +46,8 @@ Status: **accepted** requirements (2026-10-25), not fully implemented. Coordinat
 
 ## 3. Failure catalogue
 
+Command-key conflicts and retention remain **requires-decision** for EXE-005. [Proposed ADR-0058](adr/0058-command-idempotency-conflicts-and-retention.md) recommends conflict rejection and no automatic expiry in M3; it is not an accepted public contract or evidence that every mutating command is covered.
+
 | Failure | Detection | Expected behavior | Test |
 |---|---|---|---|
 | Platform crash mid-Step | Startup scan of non-terminal Steps | Keep waiting, resume, retry if idempotent, or `interrupted` with reason | Kill in every Step state (crash-injection suite) |
