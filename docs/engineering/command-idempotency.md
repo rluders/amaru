@@ -33,4 +33,6 @@ The proposed v1 HTTP bodies `CreateExecution`, `RunWorkflow`, `CancelExecution` 
 - `make check`: fake-backed integration and unit tests, shared Go/TypeScript contract fixtures, generated SDK checks and fake-fetch SDK tests.
 - `make platform-test-pg`: the same command suites against PostgreSQL, alongside the existing recovery and process-kill suites. PostgreSQL is separately required; it is not run by `make check`.
 
+The [Linux EXE-005 record](../validation/m3/2026-11-12-linux-exe-005.md) identifies the implementation commit, commands and observed results.
+
 These checks do not establish a serving HTTP API, multi-Organization authorization, real Provider side effects, PostgreSQL/power-loss recovery, or native macOS/Windows behavior.
