@@ -48,16 +48,9 @@ Manage execution in the [GitHub Project](https://github.com/users/rluders/projec
 
 Cloud and Self-hosted are deployments of the same Platform, not separate products ([ADR-0002](docs/architecture/adr/0002-one-platform-multiple-deployment-models.md)). Clients never own execution state ([ADR-0003](docs/architecture/adr/0003-desktop-is-a-client.md)).
 
-## Architecture at a glance (accepted, partially implemented)
+## Architecture
 
-```mermaid
-flowchart LR
-    eng([Engineer]) --> clients[Clients<br/>Web · Desktop · CLI]
-    clients -->|versioned public API| platform[Amaru Platform<br/>state · policy · approvals · events]
-    platform --> workers[Workers<br/>local or remote environments]
-    workers --> providers[Providers<br/>agent CLIs · tools · remote APIs]
-    providers --> project[(Your repositories<br/>and tools)]
-```
+![Amaru architecture diagram](docs/architecture/architecture.png)
 
 Full proposal and what is not built: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md).
 
