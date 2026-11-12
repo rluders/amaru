@@ -4,11 +4,18 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**No blocking questions.** Q60 was closed by owner approval of ADR-0058 on 2026-11-12; EXE-005 implementation and contract verification remain pending. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
+**No blocking questions.** Q61 was closed by owner approval of ADR-0062 on 2026-11-12; #191 implementation and verification remain pending. Q60 was closed by owner approval of ADR-0058 on 2026-11-12; EXE-005 implementation and contract verification remain pending. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
   - Q13's metadata split now keeps Teams out of Git (Q27).
+
+### Q61. Public Project scope and ambiguous secret names
+
+- **Question:** where must public resource ownership be enforced before reads, mutations and command replay, and does a missing Project secret implicitly select an Organization secret with the same name?
+- **Evidence:** internal Execution/Approval access is by ID; configuration layers have precedence but no Project ownership; no secrets port exists on the #18 integration base `007f694`. Existing Event filtering is scoped but does not authorize its caller. Source links and the full implementation/verification sequence are in [accepted ADR-0062](adr/0062-project-bound-public-operations-and-secret-resolution.md).
+- **Decision:** explicit authorized Project operations around trusted internal stores, Project-selected configuration and exact secret visibility without fallback. Preserve ADR-0058 command namespaces. This adds no encrypted backend or multi-Organization support.
+- **Owner:** Ricardo Lüders. **Status:** closed; explicitly approved in the repository task conversation on 2026-11-12 (see ADR-0062 Approval and [PR #330](https://github.com/rluders/amaru/pull/330)). [#191](https://github.com/rluders/amaru/issues/191) implementation and acceptance remain pending.
 
 ### Q60. Command idempotency conflicts and retention
 
