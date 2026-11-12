@@ -35,3 +35,7 @@ func newSerializedLink(*testing.T) (ports.PlatformLink, ports.WorkerLink) {
 func TestCancelOverSerializedLink(t *testing.T) {
 	coordtest.CancelSuite(t, newFake, newSerializedLink, nil)
 }
+
+func TestLimitsOverSerializedLink(t *testing.T) {
+	coordtest.LimitsSuite(t, newFake, newSerializedLink)
+}
