@@ -49,3 +49,7 @@ Proposed by: Claude (second-pass open-question resolution, 2026-10-25) · Approv
 
 ## Amendment 2026-10-27: resume and abandon of interrupted and timed_out Steps
 An `interrupted` Step is resumed or abandoned only by a human, or by a Policy rule that names the Step. Resuming moves it to `queued` with reason `resumed` and spends no attempt; abandoning moves it to `cancelled`. The Execution waits meanwhile instead of failing. Nothing re-runs it automatically. Recorded in [DOMAIN_MODEL §5.2](../DOMAIN_MODEL.md#52-step-execution). Decided by Claude under the product owner's delegation ("I leave the human decisions for you", "go"), 2026-10-27; it takes effect as the owner's reading when this change merges.
+
+
+## Validation scope amendment 2026-11-12
+The product owner approved Linux as the required acceptance platform for all remaining M3 work, including milestone exit; macOS and Windows validation is best effort and missing native evidence does not block M3. This qualifies the three-OS validation obligation above for remaining M3 only; the restart rules and security requirements are unchanged. M4 criteria are unchanged. Approval: Ricardo Lüders, 2026-11-12, #129 planning session ("Cross-platform is best effort only for now, our main target is Linux", followed by selection of "All remaining M3"). Canonical evidence and blocking rules: [validation guide](../../engineering/validation.md#scope-decision-product-owner-2026-11-12).

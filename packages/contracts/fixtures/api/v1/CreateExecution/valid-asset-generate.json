@@ -3,5 +3,6 @@
   "input": {
     "artifactId": "Assets/Player.md"
   },
-  "workItemId": "01K10000000000000000000009"
+  "workItemId": "01K10000000000000000000009",
+  "idempotencyKey": "command-1"
 }

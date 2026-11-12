@@ -39,7 +39,7 @@ func ContextSuite(t *testing.T, newStores func(t *testing.T) SkillStores) {
 			opts = append(opts, coordinator.WithContexts(st.Contexts))
 		}
 		c := coordinator.New(st.Executions, clock, opts...)
-		if _, err := c.TrustContent(ctx, maintainer, project, domain.TrustProject, "", ""); err != nil {
+		if _, err := c.TrustContent(ctx, "context-1", maintainer, project, domain.TrustProject, "", ""); err != nil {
 			t.Fatal(err)
 		}
 		return env{st, c}
@@ -132,14 +132,14 @@ func ContextSuite(t *testing.T, newStores func(t *testing.T) SkillStores) {
 		e := build(t, true)
 		proj := addSkill(t, e, domain.SkillProject, "lint", "1", "Run the linter.")
 		s, _ := e.Skills.Get(ctx, project, "lint", "1")
-		if _, err := e.c.TrustContent(ctx, maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(s)); err != nil {
+		if _, err := e.c.TrustContent(ctx, "context-2", maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(s)); err != nil {
 			t.Fatal(err)
 		}
 		got := submit(t, e, proj)
 		if got.Steps[0].State != domain.StepQueued {
 			t.Fatalf("%s %q", got.Steps[0].State, got.Steps[0].Reason)
 		}
-		if _, err := e.c.RevokeTrust(ctx, maintainer, project, domain.TrustSkill, "lint", "rewritten"); err != nil {
+		if _, err := e.c.RevokeTrust(ctx, "context-3", maintainer, project, domain.TrustSkill, "lint", "rewritten"); err != nil {
 			t.Fatal(err)
 		}
 		_, err := e.c.AssembleContext(ctx, coordinator.ContextRequest{ExecutionID: got.Execution.ID, StepID: got.Steps[0].ID, Intent: "x"})

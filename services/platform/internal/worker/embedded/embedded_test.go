@@ -31,14 +31,24 @@ type rig struct {
 // newRig serves a coordinator and an embedded Worker over an in-process link, with the real clock.
 func newRig(t *testing.T, w *embedded.Worker, lease time.Duration) *rig {
 	t.Helper()
+	return newRigWithLink(t, w, lease, inproc.Pair)
+}
+
+func newRigWithLink(t *testing.T, w *embedded.Worker, lease time.Duration, pair func() (ports.PlatformLink, ports.WorkerLink)) *rig {
+	t.Helper()
 	store := fakes.NewExecutionStore()
 	c := coordinator.New(store, time.Now, coordtest.Permissive, coordinator.WithLeasePeriod(lease))
-	pl, wl := inproc.Pair()
+	pl, wl := pair()
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &rig{t: t, store: store, c: c, pl: pl, wl: wl, ctx: ctx, done: make(chan error, 1)}
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { defer wg.Done(); _ = c.Serve(ctx, pl, "embedded") }()
+	go func() {
+		defer wg.Done()
+		if err := c.Serve(ctx, pl, "embedded"); err != nil {
+			t.Errorf("Serve: %v", err)
+		}
+	}()
 	go func() { defer wg.Done(); r.done <- w.Run(ctx, wl) }()
 	t.Cleanup(func() { cancel(); pl.Close(); wg.Wait() })
 	return r

@@ -1,5 +1,5 @@
 {
   "providerId": "claude",
   "workItemId": "01K10000000000000000000001",
-  "idempotencyKey": "k1"
+  "idempotencyKey": "command-1"
 }

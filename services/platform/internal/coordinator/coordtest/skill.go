@@ -52,7 +52,7 @@ func SkillSuite(t *testing.T, newStores func(t *testing.T) SkillStores, nl NewLi
 			opts = append(opts, coordinator.WithSkills(st.Skills))
 		}
 		c := coordinator.New(st.Executions, clock, opts...)
-		if _, err := c.TrustContent(ctx, maintainer, project, domain.TrustProject, "", ""); err != nil {
+		if _, err := c.TrustContent(ctx, "skill-1", maintainer, project, domain.TrustProject, "", ""); err != nil {
 			t.Fatal(err)
 		}
 		return env{st, c}
@@ -143,11 +143,11 @@ func SkillSuite(t *testing.T, newStores func(t *testing.T) SkillStores, nl NewLi
 		proj := skill(t, e, domain.SkillProject, "lint", "1", "Run the linter.")
 		refused(t, submit(t, e, ref(proj)), domain.ReasonSkillUntrusted)
 		stale := "sha256:" + strings.Repeat("a", 64)
-		if _, err := e.c.TrustContent(ctx, maintainer, project, domain.TrustSkill, "lint", stale); err != nil {
+		if _, err := e.c.TrustContent(ctx, "skill-2", maintainer, project, domain.TrustSkill, "lint", stale); err != nil {
 			t.Fatal(err)
 		}
 		refused(t, submit(t, e, ref(proj)), domain.ReasonSkillUntrusted)
-		if _, err := e.c.TrustContent(ctx, maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
+		if _, err := e.c.TrustContent(ctx, "skill-3", maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
 			t.Fatal(err)
 		}
 		if st := submit(t, e, ref(proj)).Steps[0]; st.State != domain.StepQueued {
@@ -161,14 +161,14 @@ func SkillSuite(t *testing.T, newStores func(t *testing.T) SkillStores, nl NewLi
 	t.Run("a trust revoked after Submit keeps a queued Step from starting until it is trusted again", func(t *testing.T) {
 		e := build(t, true)
 		proj := skill(t, e, domain.SkillProject, "lint", "1", "Run the linter.")
-		if _, err := e.c.TrustContent(ctx, maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
+		if _, err := e.c.TrustContent(ctx, "skill-4", maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
 			t.Fatal(err)
 		}
 		got := submit(t, e, ref(proj))
 		if got.Steps[0].State != domain.StepQueued {
 			t.Fatalf("%s %q", got.Steps[0].State, got.Steps[0].Reason)
 		}
-		if _, err := e.c.RevokeTrust(ctx, maintainer, project, domain.TrustSkill, "lint", "skill rewritten upstream"); err != nil {
+		if _, err := e.c.RevokeTrust(ctx, "skill-5", maintainer, project, domain.TrustSkill, "lint", "skill rewritten upstream"); err != nil {
 			t.Fatal(err)
 		}
 		s := startSession(t, e.Executions, e.c, nl, "w1")
@@ -177,7 +177,7 @@ func SkillSuite(t *testing.T, newStores func(t *testing.T) SkillStores, nl NewLi
 		if _, st := s.step(got.Execution.ID, got.Steps[0].ID); st.State != domain.StepQueued || !strings.HasPrefix(st.Reason, domain.ReasonSkillUntrusted+":") {
 			t.Fatalf("step %s reason %q, want queued with the skill reason", st.State, st.Reason)
 		}
-		if _, err := e.c.TrustContent(ctx, maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
+		if _, err := e.c.TrustContent(ctx, "skill-6", maintainer, project, domain.TrustSkill, "lint", domain.SkillTrustHash(proj)); err != nil {
 			t.Fatal(err)
 		}
 		if a := s.assignment(); a.StepID != got.Steps[0].ID {

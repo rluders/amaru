@@ -2,6 +2,7 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -48,40 +49,99 @@ func (c *Coordinator) trustStanding(ctx context.Context, req domain.PolicyReques
 	return domain.Standing(project, content, req.DefinitionHash), nil
 }
 
-// TrustContent records that a human trusts the Project (kind project, no ref, no hash) or one
-// exact content of it. Trusting content again at a new hash replaces the old trust. It wakes
-// Serve, so a Step that waited for the trust can start. Only a human Maintainer, Admin or Owner
-// may; domain.ErrNotPermitted otherwise.
-func (c *Coordinator) TrustContent(ctx context.Context, by domain.Principal, key domain.ProjectKey, kind domain.TrustKind, ref, hash string) (domain.Trust, error) {
+// TrustContent records a human's trust once for the key, waking Steps waiting for it.
+func (c *Coordinator) TrustContent(ctx context.Context, key string, by domain.Principal, project domain.ProjectKey, kind domain.TrustKind, ref, hash string) (domain.Trust, error) {
 	if c.trust == nil {
 		return domain.Trust{}, fmt.Errorf("%w: trust is not configured", domain.ErrInvalid)
 	}
-	t, err := domain.NewTrust(c.now(), by, key, kind, ref, hash)
+	if !validCommandKey(key) {
+		return domain.Trust{}, fmt.Errorf("%w: trust needs an idempotency key", domain.ErrInvalid)
+	}
+	t, err := domain.NewTrust(c.now(), by, project, kind, ref, hash)
 	if err != nil {
 		return domain.Trust{}, err
 	}
-	if err := c.trust.Save(ctx, t); err != nil {
+	fp, err := fingerprint(struct {
+		By        domain.Principal
+		Project   domain.ProjectKey
+		Kind      domain.TrustKind
+		Ref, Hash string
+	}{by, project, kind, ref, hash})
+	if err != nil {
 		return domain.Trust{}, err
 	}
-	c.Wake()
-	return t, nil
+	for range 2 {
+		if out, found, err := replay[domain.Trust](ctx, c.trust, CmdTrustContent, key, fp); err != nil || found {
+			return out, err
+		}
+		result, err := json.Marshal(t)
+		if err != nil {
+			return domain.Trust{}, err
+		}
+		err = c.trust.SaveOnce(ctx, domain.CommandRecord{Name: CmdTrustContent, Key: key, Fingerprint: fp, Result: result, At: c.now()}, t)
+		if errors.Is(err, domain.ErrDuplicateCommand) {
+			continue
+		}
+		if err != nil {
+			return domain.Trust{}, err
+		}
+		c.Wake()
+		return t, nil
+	}
+	return domain.Trust{}, fmt.Errorf("%w: trust key changed", domain.ErrConflict)
 }
 
-// RevokeTrust withdraws a trust. A queued Step of the Project then waits at the lease path with
-// the reason, as for a revoked Grant.
-func (c *Coordinator) RevokeTrust(ctx context.Context, by domain.Principal, key domain.ProjectKey, kind domain.TrustKind, ref, reason string) (domain.Trust, error) {
+// RevokeTrust withdraws trust once for the key; it retries if trust changes between the read and the write.
+func (c *Coordinator) RevokeTrust(ctx context.Context, key string, by domain.Principal, project domain.ProjectKey, kind domain.TrustKind, ref, reason string) (domain.Trust, error) {
 	if c.trust == nil {
 		return domain.Trust{}, fmt.Errorf("%w: trust is not configured", domain.ErrInvalid)
 	}
-	t, err := c.trust.Get(ctx, key, kind, ref)
+	if !validCommandKey(key) {
+		return domain.Trust{}, fmt.Errorf("%w: revoke trust needs an idempotency key", domain.ErrInvalid)
+	}
+	if by.Kind != domain.PrincipalHuman || by.ID == "" || !by.Role.MayTrustProjects() {
+		return domain.Trust{}, domain.ErrNotPermitted
+	}
+	fp, err := fingerprint(struct {
+		By          domain.Principal
+		Project     domain.ProjectKey
+		Kind        domain.TrustKind
+		Ref, Reason string
+	}{by, project, kind, ref, reason})
 	if err != nil {
 		return domain.Trust{}, err
 	}
-	if err := t.Revoke(c.now(), by, reason); err != nil {
-		return domain.Trust{}, err
+	for range maxEditAttempts {
+		if out, found, err := replay[domain.Trust](ctx, c.trust, CmdRevokeTrust, key, fp); err != nil || found {
+			return out, err
+		}
+		t, err := c.trust.Get(ctx, project, kind, ref)
+		if err != nil {
+			return domain.Trust{}, err
+		}
+		if out, found, err := replay[domain.Trust](ctx, c.trust, CmdRevokeTrust, key, fp); err != nil || found {
+			return out, err
+		}
+		if err := t.Revoke(c.now(), by, reason); err != nil {
+			return domain.Trust{}, err
+		}
+		result, err := json.Marshal(t)
+		if err != nil {
+			return domain.Trust{}, err
+		}
+		err = c.trust.SaveOnce(ctx, domain.CommandRecord{Name: CmdRevokeTrust, Key: key, Fingerprint: fp, Result: result, At: c.now()}, t)
+		if errors.Is(err, domain.ErrDuplicateCommand) || errors.Is(err, domain.ErrConflict) {
+			continue
+		}
+		if err != nil {
+			return domain.Trust{}, err
+		}
+		return t, nil
 	}
-	if err := c.trust.Save(ctx, t); err != nil {
-		return domain.Trust{}, err
-	}
-	return t, nil
+	return domain.Trust{}, fmt.Errorf("%w: trust kept changing", domain.ErrConflict)
 }
+
+const (
+	CmdTrustContent = "trust.content"
+	CmdRevokeTrust  = "trust.revoke"
+)

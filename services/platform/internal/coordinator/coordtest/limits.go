@@ -3,6 +3,7 @@ package coordtest
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync/atomic"
 	"testing"
 
@@ -88,6 +89,7 @@ func deferred(t *testing.T, store ports.ExecutionStore, exec string) int {
 // LimitsSuite checks the concurrency limits (FEAT-EXE-006) through the Worker link: the Platform
 // leases no Step that would exceed a limit, and a Step that waits is queued with the reason.
 func LimitsSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore, nl NewLink) {
+	limitLifecycle(t, newStore, nl)
 	t.Run("two slots per Project by default; the rest wait with the reason", func(t *testing.T) {
 		store := newStore(t)
 		c := limited(store)
@@ -271,4 +273,161 @@ func LimitsSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 			t.Fatalf("waiting %v, want exactly one Step", w)
 		}
 	})
+}
+
+// Check the same slot lifecycle in each scope, including competing Serve loops.
+func limitLifecycle(t *testing.T, newStore func(*testing.T) ports.ExecutionStore, nl NewLink) {
+	for _, scope := range []struct {
+		name   string
+		limits coordinator.Limits
+		reason string
+	}{
+		{"global", coordinator.Limits{Global: 1, PerProject: 2, PerEnvironment: 3}, domain.ReasonLimitGlobal},
+		{"project", coordinator.Limits{Global: 2, PerProject: 1, PerEnvironment: 3}, domain.ReasonLimitProject},
+		{"environment", coordinator.Limits{Global: 3, PerProject: 2, PerEnvironment: 1}, domain.ReasonLimitEnvironment},
+	} {
+		t.Run(scope.name, func(t *testing.T) {
+			t.Run("simultaneous offers cannot take the same slot", func(t *testing.T) {
+				store := newStore(t)
+				c := limited(store, coordinator.WithLimits(scope.limits))
+				got := submit(t, c, "work", "p1", "dev", 4)
+				sessions := []*session{startSession(t, store, c, nl, "w1"), startSession(t, store, c, nl, "w2")}
+				for _, s := range sessions {
+					s.send(ports.Offer{FreeSlots: 0})
+					s.expectNothing()
+				}
+				start := make(chan struct{})
+				errs := make(chan error, len(sessions))
+				for _, s := range sessions {
+					go func() {
+						<-start
+						errs <- s.w.Send(s.ctx, ports.Offer{FreeSlots: 4})
+					}()
+				}
+				close(start)
+				for range sessions {
+					if err := <-errs; err != nil {
+						t.Fatal(err)
+					}
+				}
+				if n := len(sessions[0].drain()) + len(sessions[1].drain()); n != 1 {
+					t.Fatalf("published %d assignments, want 1", n)
+				}
+				assertLimitWaiting(t, store, got.Execution.ID, 3, scope.reason)
+				assertActiveSlots(t, store, 1)
+			})
+
+			for _, outcome := range []ports.ResultOutcome{ports.OutcomeSucceeded, ports.OutcomeFailed, ports.OutcomeCancelled} {
+				t.Run(fmt.Sprintf("result %d releases once", outcome), func(t *testing.T) {
+					store := newStore(t)
+					c := limited(store, coordinator.WithLimits(scope.limits))
+					first := submit(t, c, "first", "p1", "dev", 1)
+					s := startSession(t, store, c, nl, "w1")
+					s.send(ports.Offer{FreeSlots: 10})
+					a := s.assignment()
+					s.send(ports.AcceptAttempt{AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken})
+					waitFor(t, "running Step", func() bool { _, st := s.step(a.ExecutionID, a.StepID); return st.State == domain.StepRunning })
+					next := submit(t, c, "next", "p1", "dev", 2)
+					s.expectNothing()
+					assertLimitWaiting(t, store, next.Execution.ID, 2, scope.reason)
+					if outcome == ports.OutcomeCancelled {
+						if _, _, err := c.Cancel(s.ctx, coordinator.CancelRequest{ActorID: "tester", Key: "cancel", ExecutionID: first.Execution.ID, By: human}); err != nil {
+							t.Fatal(err)
+						}
+						if m, ok := s.recv().(ports.Cancel); !ok || m.AttemptID != a.AttemptID {
+							t.Fatalf("cancel message: %#v", m)
+						}
+						s.expectNothing() // a request alone must not release a held slot
+						assertActiveSlots(t, store, 1)
+					}
+					result := ports.Result{AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken, Outcome: outcome}
+					s.send(result)
+					assertLimitAck(t, s, ports.ResultAccepted)
+					if replacement := s.assignment(); replacement.ExecutionID != next.Execution.ID {
+						t.Fatalf("replacement: %+v", replacement)
+					}
+					before := s.events(first.Execution.ID)
+					s.send(result)
+					assertLimitAck(t, s, ports.ResultDuplicate)
+					s.expectNothing()
+					assertActiveSlots(t, store, 1)
+					assertLimitWaiting(t, store, next.Execution.ID, 1, scope.reason)
+					if !reflect.DeepEqual(before, s.events(first.Execution.ID)) {
+						t.Fatal("duplicate result changed Events")
+					}
+				})
+			}
+
+			t.Run("startup reconciliation frees a lost Lease once", func(t *testing.T) {
+				store := newStore(t)
+				var lost ports.Assignment
+				var next coordinator.Submitted
+				t.Run("before restart", func(t *testing.T) {
+					c := limited(store, coordinator.WithLimits(scope.limits))
+					submit(t, c, "first", "p1", "dev", 1)
+					s := startSession(t, store, c, nl, "old-worker")
+					s.send(ports.Offer{FreeSlots: 10})
+					lost = s.assignment()
+					s.send(ports.AcceptAttempt{AttemptID: lost.AttemptID, FencingToken: lost.Lease.FencingToken})
+					waitFor(t, "running Step", func() bool { _, st := s.step(lost.ExecutionID, lost.StepID); return st.State == domain.StepRunning })
+					next = submit(t, c, "next", "p1", "dev", 2)
+					s.expectNothing()
+					assertLimitWaiting(t, store, next.Execution.ID, 2, scope.reason)
+				}) // old Serve has stopped before reconciliation
+				c := coordinator.New(store, clock, Permissive, coordinator.WithLimits(scope.limits))
+				report, err := c.Reconcile(context.Background())
+				if err != nil || report.Interrupted != 1 {
+					t.Fatalf("reconcile %+v: %v", report, err)
+				}
+				assertActiveSlots(t, store, 0)
+				s := startSession(t, store, c, nl, "new-worker")
+				before := s.events(lost.ExecutionID)
+				if _, err := c.Reconcile(context.Background()); err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(before, s.events(lost.ExecutionID)) {
+					t.Fatal("repeated reconciliation changed Events")
+				}
+				s.send(ports.Offer{FreeSlots: 10})
+				if a := s.assignment(); a.ExecutionID != next.Execution.ID {
+					t.Fatalf("replacement: %+v", a)
+				}
+				s.expectNothing()
+				assertActiveSlots(t, store, 1)
+				assertLimitWaiting(t, store, next.Execution.ID, 1, scope.reason)
+				_, st := s.step(lost.ExecutionID, lost.StepID)
+				if st.State != domain.StepInterrupted || st.CurrentLease != nil {
+					t.Fatalf("lost Step: %+v", st)
+				}
+			})
+		})
+	}
+}
+
+func assertActiveSlots(t *testing.T, store ports.ExecutionStore, want int) {
+	t.Helper()
+	active, err := store.Active(context.Background())
+	if err != nil || len(active) != want {
+		t.Fatalf("active slots %d, want %d: %v", len(active), want, err)
+	}
+}
+
+func assertLimitWaiting(t *testing.T, store ports.ExecutionStore, exec string, want int, reason string) {
+	t.Helper()
+	waiting := queuedWithReason(t, store, exec)
+	if len(waiting) != want {
+		t.Fatalf("queued Steps %v, want %d", waiting, want)
+	}
+	for id, got := range waiting {
+		if got != reason {
+			t.Fatalf("%s waits for %q, want %q", id, got, reason)
+		}
+	}
+}
+
+func assertLimitAck(t *testing.T, s *session, want ports.ResultDisposition) {
+	t.Helper()
+	if ack, ok := s.recv().(ports.ResultAck); !ok || ack.Disposition != want {
+		t.Fatalf("ack %+v, want %v", ack, want)
+	}
 }

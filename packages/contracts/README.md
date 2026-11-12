@@ -120,3 +120,5 @@ Rules for changes: a fixture file is not edited to make it pass; fix the schema 
 ## Generated files
 
 None. Everything here is hand-maintained; `baseline/worker-v1.binpb` is a release artifact built by the command above, not hand-edited.
+
+Execution submission, Workflow runs, cancellation and Approval decisions require `idempotencyKey` in their v1 bodies under [ADR-0058](../../docs/architecture/adr/0058-command-idempotency-conflicts-and-retention.md). Matching retries return original outcomes; changed request identity conflicts, with no automatic key expiry in M3. A new cancellation of a terminal Execution conflicts. These are contract requirements; serving HTTP handlers remain unimplemented. See [normalization and implementation boundaries](../../docs/engineering/command-idempotency.md).

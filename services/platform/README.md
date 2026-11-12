@@ -71,3 +71,5 @@ Aliases that normalize differently (a renamed or transferred remote, a mirror on
 | `github.com/mfridman/interpolate`, `github.com/sethvargo/go-retry`, `go.uber.org/multierr`, `golang.org/x/sync` and the pgx helpers (see `go.mod`) | as pinned | MIT, Apache-2.0, BSD-3-Clause (from each module's LICENSE file) | transitive | `internal/store/migrations` |
 
 Atlas (`ariga.io/atlas`) was tried first and dropped: its PostgreSQL driver links `hashicorp/hcl/v2` (MPL-2.0), a licence the owner had not accepted for the Platform (ADR-0026). Whether the Atlas CLI can still author these files is unverified without `atlas.sum`.
+
+Command idempotency (EXE-005): all seven caller-facing mutations use durable outcomes and reject conflicting reuse under ADR-0058. See the [inventory, normalization and validation boundary](../../docs/engineering/command-idempotency.md). Cancellation requires the authenticated human `ActorID` as well as its Actor; Policy actors identify their authority. This does not implement HTTP handlers.

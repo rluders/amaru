@@ -3,5 +3,6 @@
   "input": {
     "prompt": "Do it."
   },
-  "workItemId": "01K10000000000000000000001"
+  "workItemId": "01K10000000000000000000001",
+  "idempotencyKey": "command-1"
 }

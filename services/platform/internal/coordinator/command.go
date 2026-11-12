@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
+	"github.com/rluders/amaru/services/platform/internal/ports"
 )
 
 // Every mutating command takes an idempotency key (FEAT-EXE-005). The Platform stores the
@@ -17,9 +19,8 @@ import (
 // the first request produced, not the state the Execution has reached since. A key presented with
 // a different request is refused (domain.ErrKeyReused), because the key names one request.
 //
-// Commands that exist: execution.submit. Worker messages are not commands in this sense; the
-// fencing token already makes a repeated Result a duplicate (ADR-0044). The commands that come
-// later (cancel, approve) use the same record and say so in their own change.
+// The inventory and normalization rules are in docs/engineering/command-idempotency.md.
+// Worker messages use attempt/fencing semantics, separately from caller command keys.
 
 // CmdSubmit is the name of Submit in command records.
 const CmdSubmit = "execution.submit"
@@ -96,6 +97,10 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	if req.Trigger == "" {
 		req.Trigger = domain.TriggerManual
 	}
+	// Validate attribution on replay too, before any stored result is read.
+	if err := policyRequest(req.By, req.Trigger, req.ProjectID, pin, specs[0].Capability).Validate(); err != nil {
+		return Submitted{}, false, err
+	}
 	fp, err := fingerprint(struct {
 		Project, Environment string
 		By                   domain.Principal
@@ -110,7 +115,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	// Two passes: the second only runs when another request with the same key committed between
 	// our lookup and our write, and then the lookup finds it.
 	for range 2 {
-		if out, found, err := replay[Submitted](ctx, c, CmdSubmit, req.Key, fp); err != nil || found {
+		if out, found, err := replay[Submitted](ctx, c.store, CmdSubmit, req.Key, fp); err != nil || found {
 			return out, found, err
 		}
 		now := c.now()
@@ -174,8 +179,8 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 
 // replay returns the stored outcome of the command and true when (name, key) was recorded, or
 // domain.ErrKeyReused when it was recorded for a different request.
-func replay[T any](ctx context.Context, c *Coordinator, name, key, fp string) (out T, found bool, err error) {
-	rec, err := c.store.Command(ctx, name, key)
+func replay[T any](ctx context.Context, store ports.CommandReader, name, key, fp string) (out T, found bool, err error) {
+	rec, err := store.Command(ctx, name, key)
 	if errors.Is(err, domain.ErrNotFound) {
 		return out, false, nil
 	}
@@ -194,7 +199,7 @@ func replay[T any](ctx context.Context, c *Coordinator, name, key, fp string) (o
 // plan returns the pin and the Steps a request creates: the Workflow's, in its order, or the
 // caller's.
 func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
-	if req.Key == "" {
+	if !validCommandKey(req.Key) {
 		return nil, nil, fmt.Errorf("%w: submit needs an idempotency key", domain.ErrInvalid)
 	}
 	if req.ProjectID == "" {
@@ -288,4 +293,8 @@ func fingerprint(v any) (string, error) {
 	}
 	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:]), nil
+}
+
+func validCommandKey(key string) bool {
+	return key != "" && utf8.ValidString(key) && utf8.RuneCountInString(key) <= 128
 }

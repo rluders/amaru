@@ -4,5 +4,5 @@
     "prompt": "Summarize the design docs"
   },
   "providerId": "claude",
-  "idempotencyKey": "k1"
+  "idempotencyKey": "command-1"
 }

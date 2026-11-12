@@ -1,3 +1,4 @@
 {
-  "workItemId": "nope"
+  "workItemId": "nope",
+  "idempotencyKey": "command-1"
 }

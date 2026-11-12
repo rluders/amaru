@@ -356,7 +356,7 @@ The last one is **valid on the wire but must be answered** with `RESULT_DISPOSIT
 | Criterion (issue #7) | Level |
 |---|---|
 | Messages cover handshake, enrollment challenge, offer, assignment, lease, events, result, cancel, secret delivery | Documented; **not validated** against a running Worker. |
-| In-process transport for the embedded Worker | Documented (§3); **not validated**. The WP-M1-02 spike used its own in-process dispatch, not this schema. |
+| In-process transport for the embedded Worker | **Integration-tested on Linux** for the implemented Go message subset: actual embedded Worker with a fake Runner over the in-process link and a JSON serialization stand-in. Assignment/result/cancel, duplicate results and immediate restart reconciliation are covered; see the [ENV-001 record](../validation/m3/2026-11-12-linux-env-001.md). WebSocket/Protobuf transport, enrollment and complete protocol behavior remain **not validated**. |
 | Idempotency and lease fields | Documented (§2); **not validated**. The spike exercised leases and fencing semantics (86/86 crash cases) but not these messages. |
 | `buf lint` | **Run, clean** on a scratch copy (command above). Not run in CI; no committed `buf` configuration. |
 | Schemas and fixtures reviewed | **Requires human review**. Fixtures are examples, not machine-validated. |

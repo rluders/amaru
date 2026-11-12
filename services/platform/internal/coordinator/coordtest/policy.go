@@ -104,7 +104,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 
 	t.Run("a Grant lets the same Step run, and the reason is on the Step", func(t *testing.T) {
 		store, _, c := build(t)
-		g, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1"))
+		g, err := c.CreateGrant(ctx, "policy-1", owner, mcpGrant("g1", "p1"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -124,7 +124,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 
 	t.Run("a Grant is scoped: another Project, another workflow and an unbound request are refused", func(t *testing.T) {
 		_, _, c := build(t)
-		if _, err := c.CreateGrant(ctx, admin, mcpGrant("g1", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-2", admin, mcpGrant("g1", "p1")); err != nil {
 			t.Fatal(err)
 		}
 		if st := submitFlow(t, c, "k1", "p2", toolsFlow).Steps[0]; st.State != domain.StepRefused {
@@ -142,7 +142,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 
 	t.Run("an Organization Grant covers every Project", func(t *testing.T) {
 		_, _, c := build(t)
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-3", owner, mcpGrant("g1", "")); err != nil {
 			t.Fatal(err)
 		}
 		for i, p := range []string{"p1", "p2"} {
@@ -160,7 +160,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		}
 		g := mcpGrant("g1", "p1")
 		g.DefinitionHash = pin.Hash
-		if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-4", owner, g); err != nil {
 			t.Fatal(err)
 		}
 		if st := submitFlow(t, c, "k1", "p1", toolsFlow).Steps[0]; st.State != domain.StepQueued {
@@ -175,12 +175,12 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 
 	t.Run("revoking a Grant stops a queued Step from starting, and a new Grant lets it start", func(t *testing.T) {
 		store, _, c := build(t)
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-5", owner, mcpGrant("g1", "p1")); err != nil {
 			t.Fatal(err)
 		}
 		got := submitFlow(t, c, "k1", "p1", toolsFlow)
 		id := got.Execution.ID
-		g, err := c.RevokeGrant(ctx, admin, "g1", "contract ended")
+		g, err := c.RevokeGrant(ctx, "policy-6", admin, "g1", "contract ended")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -197,7 +197,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		if n := deferred(t, store, id); n != 1 {
 			t.Fatalf("%d step.deferred events, want 1", n)
 		}
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g2", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-7", owner, mcpGrant("g2", "p1")); err != nil {
 			t.Fatal(err)
 		}
 		if a := s.assignment(); a.StepID != got.Steps[0].ID {
@@ -214,19 +214,19 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		if !ok {
 			t.Fatal("the Grant store has no audit log")
 		}
-		if _, err := c.CreateGrant(ctx, maintainer, mcpGrant("g0", "p1")); !errors.Is(err, domain.ErrNotPermitted) {
+		if _, err := c.CreateGrant(ctx, "policy-8", maintainer, mcpGrant("g0", "p1")); !errors.Is(err, domain.ErrNotPermitted) {
 			t.Fatalf("maintainer created a grant: %v", err)
 		}
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-9", owner, mcpGrant("g1", "p1")); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", ""); !errors.Is(err, domain.ErrReasonRequired) {
+		if _, err := c.RevokeGrant(ctx, "policy-10", admin, "g1", ""); !errors.Is(err, domain.ErrReasonRequired) {
 			t.Fatalf("revoke without a reason: %v", err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", "contract ended"); err != nil {
+		if _, err := c.RevokeGrant(ctx, "policy-11", admin, "g1", "contract ended"); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", "again"); !errors.Is(err, domain.ErrInvalidTransition) {
+		if _, err := c.RevokeGrant(ctx, "policy-12", admin, "g1", "again"); !errors.Is(err, domain.ErrInvalidTransition) {
 			t.Fatalf("second revoke: %v", err)
 		}
 		evs, err := log.Audit(ctx, 0, 0)
@@ -263,7 +263,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		unrelated.Subject = domain.Subject{Kind: domain.SubjectWorkflow, ID: "someone-else"}
 		unrelated.DefinitionHash = "sha256:old"
 		for _, g := range []domain.Grant{expiring, bound, unrelated} {
-			if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+			if _, err := c.CreateGrant(ctx, "policy-13-"+g.ID, owner, g); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -321,7 +321,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		g := mcpGrant("g-exp", "p1")
 		exp := now.Add(time.Hour)
 		g.ExpiresAt = &exp
-		if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-14", owner, g); err != nil {
 			t.Fatal(err)
 		}
 		now = exp.Add(time.Minute)
@@ -343,35 +343,35 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 			"agent":       {Kind: domain.PrincipalAgent, ID: "a", Sponsor: "owner-1", Role: domain.RoleOwner},
 			"trigger":     {Kind: domain.PrincipalTrigger, ID: "t", Sponsor: "owner-1", Role: domain.RoleOwner},
 		} {
-			if _, err := c.CreateGrant(ctx, by, mcpGrant("g-"+name, "p1")); !errors.Is(err, domain.ErrNotPermitted) {
+			if _, err := c.CreateGrant(ctx, "policy-15", by, mcpGrant("g-"+name, "p1")); !errors.Is(err, domain.ErrNotPermitted) {
 				t.Errorf("%s created a grant: %v", name, err)
 			}
 			if _, err := grants.Get(ctx, "g-"+name); !errors.Is(err, domain.ErrNotFound) {
 				t.Errorf("%s: a refused grant was stored: %v", name, err)
 			}
 		}
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-16", owner, mcpGrant("g1", "p1")); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.RevokeGrant(ctx, maintainer, "g1", "no"); !errors.Is(err, domain.ErrNotPermitted) {
+		if _, err := c.RevokeGrant(ctx, "policy-17", maintainer, "g1", "no"); !errors.Is(err, domain.ErrNotPermitted) {
 			t.Fatalf("maintainer revoked: %v", err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", ""); !errors.Is(err, domain.ErrReasonRequired) {
+		if _, err := c.RevokeGrant(ctx, "policy-18", admin, "g1", ""); !errors.Is(err, domain.ErrReasonRequired) {
 			t.Fatalf("revoke without a reason: %v", err)
 		}
 		if g, _ := grants.Get(ctx, "g1"); g.Status != domain.GrantActive {
 			t.Fatalf("a refused revoke changed the grant: %s", g.Status)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", "done"); err != nil {
+		if _, err := c.RevokeGrant(ctx, "policy-19", admin, "g1", "done"); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "g1", "again"); !errors.Is(err, domain.ErrInvalidTransition) {
+		if _, err := c.RevokeGrant(ctx, "policy-20", admin, "g1", "again"); !errors.Is(err, domain.ErrInvalidTransition) {
 			t.Fatalf("second revoke: %v", err)
 		}
-		if _, err := c.RevokeGrant(ctx, admin, "nope", "x"); !errors.Is(err, domain.ErrNotFound) {
+		if _, err := c.RevokeGrant(ctx, "policy-21", admin, "nope", "x"); !errors.Is(err, domain.ErrNotFound) {
 			t.Fatalf("unknown grant: %v", err)
 		}
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); !errors.Is(err, domain.ErrExists) {
+		if _, err := c.CreateGrant(ctx, "policy-22", owner, mcpGrant("g1", "p1")); !errors.Is(err, domain.ErrExists) {
 			t.Fatalf("same id twice: %v", err)
 		}
 	})
@@ -382,7 +382,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		if st := submitFlow(t, c, "k1", "p1", toolsFlow).Steps[0]; st.State != domain.StepRefused {
 			t.Fatalf("got %s", st.State)
 		}
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); !errors.Is(err, domain.ErrInvalid) {
+		if _, err := c.CreateGrant(ctx, "policy-23", owner, mcpGrant("g1", "p1")); !errors.Is(err, domain.ErrInvalid) {
 			t.Fatalf("grant without a store: %v", err)
 		}
 	})
@@ -391,7 +391,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 		_, _, c := build(t)
 		g := mcpGrant("g1", "")
 		g.Capabilities = []domain.Capability{"scm.pr.merge", "mcp.call"}
-		if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-24", owner, g); err != nil {
 			t.Fatal(err)
 		}
 		got := submit(t, c, "k1", "p1", "code.test", "scm.pr.merge", "git.push")
@@ -484,7 +484,7 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 			}
 			g := domain.Grant{ID: "g-" + cp, Level: domain.GrantProject, ProjectID: "p1",
 				Subject: domain.Subject{Kind: domain.SubjectWorkflow, ID: slug(cp)}, Capabilities: []domain.Capability{domain.Capability(cp)}}
-			if _, err := c.CreateGrant(ctx, owner, g); err != nil {
+			if _, err := c.CreateGrant(ctx, "policy-25-"+g.ID, owner, g); err != nil {
 				t.Fatal(err)
 			}
 			for _, trig := range triggers {
@@ -497,11 +497,11 @@ func PolicySuite(t *testing.T, newStores func(t *testing.T) (ports.ExecutionStor
 
 	t.Run("a replayed Submit returns the stored outcome without asking Policy again", func(t *testing.T) {
 		_, _, c := build(t)
-		if _, err := c.CreateGrant(ctx, owner, mcpGrant("g1", "p1")); err != nil {
+		if _, err := c.CreateGrant(ctx, "policy-26", owner, mcpGrant("g1", "p1")); err != nil {
 			t.Fatal(err)
 		}
 		first := submitFlow(t, c, "k1", "p1", toolsFlow)
-		if _, err := c.RevokeGrant(ctx, owner, "g1", "r"); err != nil {
+		if _, err := c.RevokeGrant(ctx, "policy-27", owner, "g1", "r"); err != nil {
 			t.Fatal(err)
 		}
 		again, replayed, err := c.Submit(ctx, coordinator.SubmitRequest{By: Requester, Key: "k1", ProjectID: "p1", Workflow: &toolsFlow})

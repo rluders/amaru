@@ -2,8 +2,10 @@ package coordinator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -153,45 +155,110 @@ func (c *Coordinator) policyBlock(ctx context.Context, ref ports.StepRef) (strin
 	return "", fmt.Errorf("%w: step %s", domain.ErrNotFound, ref.StepID)
 }
 
-// CreateGrant stores a Grant made by a human Owner or Admin and wakes Serve, so a Step that waited
-// for it can start. The Grant id is the caller's; the same id twice is domain.ErrExists. Making a
-// Grant is not an idempotent command with a key: the id is the key.
-func (c *Coordinator) CreateGrant(ctx context.Context, by domain.Principal, g domain.Grant) (domain.Grant, error) {
+// CreateGrant creates a Grant once for this command key and normalized human request.
+func (c *Coordinator) CreateGrant(ctx context.Context, key string, by domain.Principal, g domain.Grant) (domain.Grant, error) {
 	if c.grants == nil {
 		return domain.Grant{}, fmt.Errorf("%w: grants are not configured", domain.ErrInvalid)
 	}
-	g, err := domain.NewGrant(c.now(), by, g)
+	if !validCommandKey(key) {
+		return domain.Grant{}, fmt.Errorf("%w: create grant needs an idempotency key", domain.ErrInvalid)
+	}
+	if by.Kind != domain.PrincipalHuman || by.ID == "" || !by.Role.MayManageGrants() {
+		return domain.Grant{}, domain.ErrNotPermitted
+	}
+	// Fingerprint only caller-owned fields; expiry is checked against time only for a new command.
+	fp, err := fingerprint(struct {
+		By             domain.Principal
+		ID             string
+		Level          domain.GrantLevel
+		Project        string
+		Subject        domain.Subject
+		Capabilities   []domain.Capability
+		Resource       domain.Resource
+		DefinitionHash string
+		ExpiresAt      *time.Time
+	}{by, g.ID, g.Level, g.ProjectID, g.Subject, g.Capabilities, g.Resource, g.DefinitionHash, g.ExpiresAt})
 	if err != nil {
 		return domain.Grant{}, err
 	}
-	out, err := c.grants.Create(ctx, g)
-	if err != nil {
-		return domain.Grant{}, err
+	for range 2 {
+		if out, found, err := replay[domain.Grant](ctx, c.grants, CmdCreateGrant, key, fp); err != nil || found {
+			return out, err
+		}
+		g, err = domain.NewGrant(c.now(), by, g)
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		g.Version = 1
+		result, err := json.Marshal(g)
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		_, err = c.grants.CreateOnce(ctx, domain.CommandRecord{Name: CmdCreateGrant, Key: key, Fingerprint: fp, Result: result, At: c.now()}, g)
+		if errors.Is(err, domain.ErrDuplicateCommand) {
+			continue
+		}
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		c.Wake()
+		return g, nil
 	}
-	c.Wake()
-	return out, nil
+	return domain.Grant{}, fmt.Errorf("%w: create grant key changed", domain.ErrConflict)
 }
 
-// RevokeGrant revokes an active Grant, recording who and why. A queued Step that relied on it
-// stops being leased on the next pass. Revoking a Grant that is not active is
-// domain.ErrInvalidTransition.
-func (c *Coordinator) RevokeGrant(ctx context.Context, by domain.Principal, id, reason string) (domain.Grant, error) {
+// RevokeGrant records one revocation; a duplicate returns its original Grant, even after expiry.
+func (c *Coordinator) RevokeGrant(ctx context.Context, key string, by domain.Principal, id, reason string) (domain.Grant, error) {
 	if c.grants == nil {
 		return domain.Grant{}, fmt.Errorf("%w: grants are not configured", domain.ErrInvalid)
 	}
+	if !validCommandKey(key) {
+		return domain.Grant{}, fmt.Errorf("%w: revoke grant needs an idempotency key", domain.ErrInvalid)
+	}
+	if by.Kind != domain.PrincipalHuman || by.ID == "" || !by.Role.MayManageGrants() {
+		return domain.Grant{}, domain.ErrNotPermitted
+	}
+	fp, err := fingerprint(struct {
+		By         domain.Principal
+		ID, Reason string
+	}{by, id, reason})
+	if err != nil {
+		return domain.Grant{}, err
+	}
 	for range maxEditAttempts {
+		if out, found, err := replay[domain.Grant](ctx, c.grants, CmdRevokeGrant, key, fp); err != nil || found {
+			return out, err
+		}
 		g, err := c.grants.Get(ctx, id)
 		if err != nil {
 			return domain.Grant{}, err
 		}
+		if out, found, err := replay[domain.Grant](ctx, c.grants, CmdRevokeGrant, key, fp); err != nil || found {
+			return out, err
+		}
 		if err := g.Revoke(c.now(), by, reason); err != nil {
 			return domain.Grant{}, err
 		}
-		out, err := c.grants.Update(ctx, g)
-		if errors.Is(err, domain.ErrConflict) {
-			continue // it changed between the read and the write; read it again
+		g.Version++
+		result, err := json.Marshal(g)
+		g.Version--
+		if err != nil {
+			return domain.Grant{}, err
 		}
-		return out, err
+		_, err = c.grants.UpdateOnce(ctx, domain.CommandRecord{Name: CmdRevokeGrant, Key: key, Fingerprint: fp, Result: result, At: c.now()}, g)
+		if errors.Is(err, domain.ErrConflict) || errors.Is(err, domain.ErrDuplicateCommand) {
+			continue
+		}
+		if err != nil {
+			return domain.Grant{}, err
+		}
+		g.Version++
+		return g, nil
 	}
 	return domain.Grant{}, fmt.Errorf("%w: grant %s kept changing", domain.ErrConflict, id)
 }
+
+const (
+	CmdCreateGrant = "grant.create"
+	CmdRevokeGrant = "grant.revoke"
+)

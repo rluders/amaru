@@ -9,6 +9,12 @@ import (
 // GrantStore keeps Grants in the Platform store. A Grant is never deleted: revoking, lapsing and
 // expiring change its status and keep the row.
 type GrantStore interface {
+	CommandReader
+	// CreateOnce and UpdateOnce atomically store the mutation, audit event and command outcome.
+	// A taken (name, key) returns ErrDuplicateCommand and writes nothing.
+	CreateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error)
+	UpdateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error)
+
 	// Create stores a new Grant at version 1. It returns domain.ErrInvalid for an invalid Grant
 	// and domain.ErrExists when the id is stored.
 	Create(ctx context.Context, g domain.Grant) (domain.Grant, error)

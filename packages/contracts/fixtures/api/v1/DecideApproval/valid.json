@@ -1,5 +1,6 @@
 {
   "outcome": "approved",
   "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "rationale": "ok"
+  "rationale": "ok",
+  "idempotencyKey": "command-1"
 }

@@ -1,3 +1,4 @@
 {
-  "outcome": "approved"
+  "outcome": "approved",
+  "idempotencyKey": "command-1"
 }

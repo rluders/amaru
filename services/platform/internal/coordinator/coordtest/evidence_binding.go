@@ -40,7 +40,7 @@ func EvidenceBindingSuite(t *testing.T, newStores func(t *testing.T) SkillStores
 			coordinator.WithAttemptIDs(func() string { return fmt.Sprintf("att-%d", attempts.Add(1)) }),
 			coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("e-%d", execs.Add(1)) }),
 			coordinator.WithApprovalIDs(func() string { return fmt.Sprintf("appr-%d", apprs.Add(1)) }))
-		if _, err := c.TrustContent(ctx, maintainer, project, domain.TrustProject, "", ""); err != nil {
+		if _, err := c.TrustContent(ctx, "evidence_binding-1", maintainer, project, domain.TrustProject, "", ""); err != nil {
 			t.Fatal(err)
 		}
 		return env{st, c}
