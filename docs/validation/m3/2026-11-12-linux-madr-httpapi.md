@@ -1,6 +1,6 @@
 # Linux MADR-httpapi proposal evidence — 2026-11-12
 
-Scope: [#83](https://github.com/rluders/amaru/issues/83), proposed [ADR-0059](../../architecture/adr/0059-adapt-the-prototype-http-handlers-to-the-platform-public-api.md). Reviewer/runner: Codex for Ricardo Lüders. Target inspected: #18 integration at `fa8bb475979dc39e81d05fffd00dfa40eeb87ae7`. This is a documentation proposal, not HTTP implementation or migration approval.
+Scope: [#83](https://github.com/rluders/amaru/issues/83), accepted [ADR-0059](../../architecture/adr/0059-adapt-the-prototype-http-handlers-to-the-platform-public-api.md). Reviewer/runner: Codex for Ricardo Lüders. Target inspected: #18 integration at `fa8bb475979dc39e81d05fffd00dfa40eeb87ae7`. This record covers the documentation decision and source evidence; no HTTP implementation is delivered.
 
 ## Source and method
 
@@ -19,7 +19,7 @@ go test -count=1 -json ./internal/transport/httpapi/...
 
 ## Findings and architecture review
 
-Verdict: **sound as a proposed selective adaptation; needs human decision before migration**. Platform state ownership, pure domain, public client contracts and Worker isolation remain unchanged; no dependency or infrastructure is introduced. The simpler unchanged-package import fails the current authentication and durable replay requirements. Fresh implementations remain appropriate where contracts diverge.
+Verdict: **sound selective adaptation; approved by the product owner on 2026-11-12**. Platform state ownership, pure domain, public client contracts and Worker isolation remain unchanged; no dependency or infrastructure is introduced. The simpler unchanged-package import fails the current authentication and durable replay requirements. Fresh implementations remain appropriate where contracts diverge.
 
 | Source location | Observed behavior / risk | Required disposition |
 |---|---|---|
@@ -29,10 +29,10 @@ Verdict: **sound as a proposed selective adaptation; needs human decision before
 | `events.go:24-90` | Replay from predecessor bus; close-on-replay-loss/overflow, ping and shutdown handling | Reference lifecycle tests, compose durable Amaru replay and public envelopes, preserve explicit resync and Project scope |
 | `agents.go:61-101` | Pointer fields preserve partial edits, but this handler alone does not establish stale-write conflict protection | Retain patch semantics; #219 verifies conflicts at the authoritative mutation boundary |
 
-The ADR maps all source file groups, source terminology, current contracts, tests, provenance and all eight readiness checks. #83's prerequisite #8 and #18's prerequisite #15 are closed. Approval remains absent. #84's separate migration/authentication decision remains open; this proposal does not waive it. The historical #83 egress gate is superseded by the owner's fresh #168 decision; the backlog map now records that explicitly.
+The ADR maps all source file groups, source terminology, current contracts, tests, provenance and all eight readiness checks. #83's prerequisite #8 and #18's prerequisite #15 are closed. Approval is recorded in ADR-0059 following the owner's instruction in the PR #323 review session: "Proposal approved. Updated and get it merged." #84's separate migration/authentication decision remains open; this proposal does not waive it. The historical #83 egress gate is superseded by the owner's fresh #168 decision; the backlog map now records that explicitly.
 
 ## Amaru checks and limits
 
 `make check` on PR #322's merged #18 result (`fa8bb475979dc39e81d05fffd00dfa40eeb87ae7`) passed, exit 0, on Linux. The proposal's `make check` also passed, exit 0, including documentation, formatting, contract/SDK and Platform checks. These are local results, not CI; no HTTP behavior is inferred from document checks.
 
-Environment: Linux x86_64 on the local development machine; Platform/source Go 1.27 toolchain. No paid API or real agent was used. Native macOS/Windows, a running Amaru API/browser, end-to-end auth/security, transport load behavior and real Providers are **not validated**. Readiness checks 5 (Amaru implementation tests), 6 (real validation) and 8 (owner approval) remain unmet as stated in the proposal. Human approval must name the component, exact commit, selected Adapt boundary, fresh-import history and these gaps before code moves.
+Environment: Linux x86_64 on the local development machine; Platform/source Go 1.27 toolchain. No paid API or real agent was used. Native macOS/Windows, a running Amaru API/browser, end-to-end auth/security, transport load behavior and real Providers are **not validated**. Readiness checks 5 (Amaru implementation tests) and 6 (real validation) remain unmet and were explicitly accepted as evidence gaps for this decision. Check 8 (owner approval) is met: the approval covers the component, exact commit, selected Adapt boundary and fresh-import history. The separate #84 gate remains.

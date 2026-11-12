@@ -1,15 +1,15 @@
 ---
 title: Adapt selected prototype HTTP handlers to the Platform public API
-status: proposed
+status: accepted
 date: 2026-11-12
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0059. Adapt selected prototype HTTP handlers to the Platform public API
 
 ## Context
 
-This is the migration proposal for `MADR-httpapi` ([#83](https://github.com/rluders/amaru/issues/83), parent [#18](https://github.com/rluders/amaru/issues/18)). [ADR-0007](0007-reuse-of-earlier-internal-code-is-a-separate-activity.md) requires component approval before code moves. The planned disposition is **Adapt**, with a fresh import and provenance. This proposal neither moves code nor authorizes it before acceptance.
+This is the accepted migration decision for `MADR-httpapi` ([#83](https://github.com/rluders/amaru/issues/83), parent [#18](https://github.com/rluders/amaru/issues/18)). [ADR-0007](0007-reuse-of-earlier-internal-code-is-a-separate-activity.md) requires component approval before code moves. The approved disposition is **Adapt**, with a fresh import and provenance. This decision authorizes only the selected adaptation below; no implementation is moved by this documentation change.
 
 **Verified source:** `rluders/weave-obsidian`, commit `c8a2f6e983beba59edc446f36df2f442edaa9855`, the [ADR-0032](0032-migration-baseline-is-a-pinned-commit.md) baseline; component `runtime/internal/transport/httpapi/`. On 2026-11-12, its immutable Git tree contained 26 Go files, 4,078 lines and 55 test functions. The [source evidence record](../../validation/m3/2026-11-12-linux-madr-httpapi.md) records inspection and all 55 tests passing against that commit. These are predecessor tests, not evidence that Amaru serves an API.
 
@@ -19,7 +19,7 @@ Amaru already owns [OpenAPI](../../../packages/contracts/openapi/openapi.yaml), 
 
 ## Decision
 
-The following is proposed, subject to human approval:
+The product owner approved the following adaptation:
 
 1. **Source, disposition and history.** Adapt selected behavior and handler/test code from the exact component and commit above, using **fresh import with provenance**, without subtree history or a compatibility layer. Each implementation PR records source path and blob ID for copied/adapted material in `services/platform/PROVENANCE.md` and links this ADR from its README. Amaru becomes canonical; do not change or synchronize the predecessor. Any later source commit requires an explicit provenance review and owner approval.
 2. **Placement and ownership.** HTTP adapters live outside the pure domain under `services/platform`, invoke Platform commands/queries through its ports, and own no authoritative state. They never use predecessor app managers, stores or Event buffers. Clients use only the public API; Workers remain Step runners. Keep the same public contracts across deployment models; authentication composition supplies the authenticated Organization/Project context. Local browser authentication is #92 and its migration decision #84, not granted by this ADR. No new package is created until a real implementation and validation target land.
@@ -41,7 +41,7 @@ The following is proposed, subject to human approval:
 
 ## Behavior verification plan
 
-All rows are **proposed / not validated in Amaru's HTTP adapter**.
+All rows are **required implementation verification / not validated in Amaru's HTTP adapter**.
 
 | Behavior | Amaru verification; source reference |
 |---|---|
@@ -63,9 +63,9 @@ All rows are **proposed / not validated in Amaru's HTTP adapter**.
 | 3 | Accepted target boundaries | **Met:** ADR-0003/0004 (client/contracts), ADR-0025 (version policy), ADR-0034 (browser security), ADR-0042/0044 (durability/restart), ADR-0043 (definitions/state), and ADR-0007/0032 (migration). #84's component approval is still pending |
 | 4 | Existing contracts and fixtures | **Met for current target:** linked OpenAPI, schemas, fixtures, SDK and routeguard. This does not certify a running server or authorize new wire shapes |
 | 5 | Self-contained Amaru behavior tests | **Unmet in implementation; plan supplied:** table above, local fakes/fixtures only. Required before implementation acceptance |
-| 6 | Real validation | **Unmet:** no Amaru API/browser/security run or real Provider run. Proposal acceptance must explicitly acknowledge this gap, not mark the target verified. Linux is required for M3; native macOS/Windows are best effort and not validated here |
+| 6 | Real validation | **Unmet:** no Amaru API/browser/security run or real Provider run. The product owner accepted this evidence gap for the migration decision, without marking the target verified. Linux is required for M3; native macOS/Windows are best effort and not validated here |
 | 7 | Licensing and provenance | **Met for decision basis:** [ADR-0026](0026-fair-code-community-license-with-commercial-licensing.md). Fresh imports must record file/blob provenance; no license file or license text is changed by this proposal |
-| 8 | Owner approval of component, disposition, commit and history | **Unmet:** awaiting explicit product-owner approval of this proposal and the listed evidence gaps. No code may move yet |
+| 8 | Owner approval of component, disposition, commit and history | **Met:** Ricardo Lüders approved the component, exact commit, selected Adapt boundary, fresh-import history and listed evidence gaps on 2026-11-12; see Approval |
 
 ## Consequences
 
@@ -81,4 +81,4 @@ The shared Platform/Worker/client boundaries remain unchanged. No library or inf
 
 ## Approval
 
-Proposed by: Codex on 2026-11-12 for #83. Awaiting product-owner approval of the exact source commit, selected Adapt disposition, fresh import with provenance, and readiness gaps 5, 6 and 8. No approval recorded; `deciders` remains empty.
+Proposed by: Codex on 2026-11-12 for #83. Approved by: Ricardo Lüders (product owner) on 2026-11-12, in the PR #323 review session: "Proposal approved. Updated and get it merged." Approval covers the exact source commit, selected Adapt boundary, fresh import with provenance and the stated evidence gaps in readiness checks 5 and 6; those implementation/real-validation gaps remain unmet. Readiness check 8 is now met. #84 remains a separate decision; no approval of authentication migration is inferred.
