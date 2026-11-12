@@ -84,16 +84,31 @@ type platform struct {
 
 func startPlatform(t *testing.T, store *fakes.ExecutionStore, run embedded.Runner) *platform {
 	t.Helper()
+	return startPlatformWithLink(t, store, run, inproc.Pair)
+}
+
+func startPlatformWithLink(t *testing.T, store *fakes.ExecutionStore, run embedded.Runner, pair func() (ports.PlatformLink, ports.WorkerLink)) *platform {
+	t.Helper()
 	c := coordinator.New(store, time.Now, coordtest.Permissive)
 	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := c.Reconcile(ctx); err != nil {
 		t.Fatal(err)
 	}
-	pl, wl := inproc.Pair()
+	pl, wl := pair()
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() { defer wg.Done(); _ = c.Serve(ctx, pl, "embedded") }()
-	go func() { defer wg.Done(); _ = (&embedded.Worker{HeartbeatPeriod: time.Hour, Runner: run}).Run(ctx, wl) }()
+	go func() {
+		defer wg.Done()
+		if err := c.Serve(ctx, pl, "embedded"); err != nil {
+			t.Errorf("Serve: %v", err)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if err := (&embedded.Worker{HeartbeatPeriod: time.Hour, Runner: run}).Run(ctx, wl); err != nil {
+			t.Errorf("Worker.Run: %v", err)
+		}
+	}()
 	p := &platform{c: c, stop: func() { cancel(); pl.Close(); wg.Wait() }}
 	t.Cleanup(p.stop)
 	return p
