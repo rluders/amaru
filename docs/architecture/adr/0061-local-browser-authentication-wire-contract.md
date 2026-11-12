@@ -1,8 +1,8 @@
 ---
 title: Define the compact browser authentication wire contract
-status: proposed
+status: accepted
 date: 2026-11-12
-deciders:
+deciders: Ricardo Lüders (product owner)
 ---
 
 # 0061. Define the compact browser authentication wire contract
@@ -13,11 +13,11 @@ deciders:
 
 **Verified baseline:** #18 integration `9e368b468cb4933320ea51a16d5050c2c9742fb0`, including merged PR #325. The [OpenAPI contract](../../../packages/contracts/openapi/openapi.yaml) declares bearer authentication only, permits Event-stream query tokens and describes missing Origin as a token path. There are no auth operations or session schemas. The [SDK](../../../packages/sdk/README.md) checks compatibility before product requests but does not implement browser authentication. The [routeguard](../../../packages/contracts/routeguard/routeguard.go) applies the first top-level server base to every path; the accepted unversioned `/auth/launch` cannot be represented correctly by silently declaring it under `/v1`.
 
-This proposal completes the compact authentication contract. It does not supersede ADR-0034 or authorize additional predecessor imports. **Nothing below is implemented or browser-validated.** Public authentication operations, credential lifetimes and the SDK browser transport are consequential security/contract choices requiring owner approval before implementation.
+This decision completes the compact authentication contract. It does not supersede ADR-0034 or authorize additional predecessor imports. **Nothing below is implemented or browser-validated.** Public authentication operations, credential lifetimes and the SDK browser transport were approved by the product owner on 2026-11-12; implementation and validation remain required under #92.
 
 ## Decision
 
-Proposed for approval:
+Approved contract:
 
 ### Operations and credentials
 
@@ -54,7 +54,7 @@ Browser requests and native bearer requests have explicit, independently testabl
 
 Implementation acceptance requires deterministic expiry/replay/concurrent-exchange tests, missing/foreign Origin and hostile Host tests, missing/wrong CSRF, mixed credentials, logout and restart invalidation, WebSocket expiry/revocation, entropy/admission failure, and zero command dispatch on rejection. Test the SDK against running loopback routes and compare registered routes with OpenAPI. Exercise exact 60-second/eight-hour boundaries with a fake clock. Capture redirects, response bodies and logs for leaks without printing test credentials. Native Linux discovery permissions and a real Linux browser launch remain required evidence for their respective claims; macOS/Windows remain best effort and Windows ACL behavior must not be inferred from Linux. No insecure permission fallback is allowed.
 
-**Architecture review: sound as a proposal, pending owner decision.** Platform owns authentication and domain state; clients use public operations; OS/session adapters stay outside domain. There are no new dependencies or infrastructure. Partial code exchange consumes the code before exposing a session; an interrupted redirect requires a fresh launch. Duplicate exchange fails; restart discards auth state. Compatibility checks remain distinct from identity proof. Session expiry and rejected guards prevent stale authorization, and logs require explicit secret filtering. Revisit if remote identity, cross-origin UI hosting or persistent sessions are introduced; ADR-0028 governs other deployment identities.
+**Architecture review: sound; owner decision recorded below.** Platform owns authentication and domain state; clients use public operations; OS/session adapters stay outside domain. There are no new dependencies or infrastructure. Partial code exchange consumes the code before exposing a session; an interrupted redirect requires a fresh launch. Duplicate exchange fails; restart discards auth state. Compatibility checks remain distinct from identity proof. Session expiry and rejected guards prevent stale authorization, and logs require explicit secret filtering. Revisit if remote identity, cross-origin UI hosting or persistent sessions are introduced; ADR-0028 governs other deployment identities.
 
 ## Alternatives considered
 
@@ -65,4 +65,4 @@ Implementation acceptance requires deterministic expiry/replay/concurrent-exchan
 
 ## Approval
 
-Proposed by: Codex on 2026-11-12 for #92. Awaiting product-owner approval of the operations, eight-hour absolute session lifetime, CSRF delivery and distinct browser/native transports. No approval recorded.
+Proposed by: Codex on 2026-11-12 for #92 in [PR #326](https://github.com/rluders/amaru/pull/326). Approved by: Ricardo Lüders (product owner), 2026-11-12, in the implementation conversation: “I squashed commit by mistale PR #326, but it was approved.” PR #326 was squash-merged into #18 integration at `238fd9c1796e3454d8dfdddab2b71c87253bf2a6`. Approval covers the operations, eight-hour absolute session lifetime, CSRF delivery and distinct browser/native transports. This follow-up records the approved status; #92 implementation, browser/security validation and #18 combined acceptance remain open.
