@@ -29,7 +29,7 @@ type DownloadOptions struct {
 	// only.
 	AllowPrivate bool
 	// Client replaces the default one. The caller then owns the redirect and address rules.
-	Client *http.Client
+	Client HTTPDoer
 	// Timeout bounds the whole download when Client is nil; zero means ten minutes.
 	Timeout time.Duration
 }

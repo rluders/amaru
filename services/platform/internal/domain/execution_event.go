@@ -5,6 +5,7 @@ import "time"
 // Kinds of ExecutionEvent the coordinator records for restart recovery. Other kinds are added
 // with the transitions that cause them.
 const (
+	EventEgressDecision      = "egress.decision"
 	EventStepRetried         = "step.retried"
 	EventStepResumed         = "step.resumed"
 	EventStepInterrupted     = "step.interrupted"

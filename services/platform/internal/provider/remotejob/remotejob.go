@@ -59,11 +59,16 @@ func (e *HTTPError) Retryable() bool {
 // answers before it does. A 5xx may have followed an accepted request.
 func (e *HTTPError) NotAccepted() bool { return e.Status == http.StatusTooManyRequests }
 
+// HTTPDoer sends a request. An egress.Sender supplies Platform consent and address checks.
+type HTTPDoer interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 // Client sends authenticated JSON requests to one base URL.
 type Client struct {
 	BaseURL string
 	// HTTP is the underlying client; nil means one with Timeout.
-	HTTP *http.Client
+	HTTP HTTPDoer
 	// Timeout bounds a request when HTTP is nil; zero means DefaultTimeout.
 	Timeout time.Duration
 	// MaxResponse bounds a JSON or raw response body; zero means DefaultMaxResponse. A longer
@@ -73,7 +78,7 @@ type Client struct {
 	Header func(h http.Header)
 }
 
-func (c *Client) http() *http.Client {
+func (c *Client) http() HTTPDoer {
 	if c.HTTP != nil {
 		return c.HTTP
 	}

@@ -518,3 +518,10 @@ func TestEveryCommandIdempotentWithPostgres(t *testing.T) {
 	coordtest.IdempotencySuite(t, factory)
 	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
 }
+
+func TestEgressConsentWithPostgres(t *testing.T) {
+	coordtest.EgressSuite(t, func(t *testing.T) (ports.ExecutionStore, ports.GrantStore) {
+		db := migratedDB(t)
+		return NewExecutionStore(db), NewGrantStore(db)
+	})
+}
