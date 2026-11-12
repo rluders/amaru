@@ -1,8 +1,9 @@
 ---
 title: Store Project discovery settings in Platform state
-status: accepted
+status: superseded
 date: 2026-11-12
 deciders: Ricardo Lüders
+superseded-by: 0065
 ---
 
 # 0064. Store Project discovery settings in Platform state
