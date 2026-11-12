@@ -116,13 +116,13 @@ flowchart LR
 - **Dependencies:** M2; migration ADRs for `domain`/`ports`, `app`, `provider/*`, `platform`, `store` (reimplemented on PostgreSQL with the outbox, [ADR-0015](adr/0015-postgresql-is-the-only-database-bundled-in-compact-installs.md)), `transport/httpapi`.
 - **Work Packages:** WP-M3-01 … WP-M3-07.
 - **Exit criteria:**
-  - Ported tests are green on Linux, macOS and Windows.
+  - Ported tests are green on Linux; macOS and Windows are best effort, with missing native evidence recorded as not validated (owner decision 2026-11-12).
   - The crash-injection suite passes.
   - Ungranted Capability use is refused.
   - Approval waits survive restarts.
   - Codex and OpenCode refuse unenforceable confinement.
   - No Obsidian, prototype or vendor identifiers remain in the core packages.
-- **Validation:** `make check` with fakes, run natively on Linux, macOS and Windows; a recorded headless run per OS with a real agent provider. Without hosted CI, the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules define the per-OS checks, the evidence and when a missing OS blocks exit.
+- **Validation:** `make check` with fakes and crash recovery on PostgreSQL run natively on Linux; a recorded Linux headless run with a real agent provider. macOS and Windows runs are best effort and do not block M3 exit (owner decision 2026-11-12). Without hosted CI, the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules define the per-OS checks, the evidence and when a missing OS blocks exit.
 - **Risks:**
   - Prototype file-store semantics vs PostgreSQL transactions (store is reimplemented with prototype tests as specification);
   - Windows process-tree semantics (GAP-05);

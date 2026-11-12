@@ -160,8 +160,8 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Organization as an implicit scope.
 - **Features:** EXE-001, WRK-001, WRK-002, AGT-001, AGT-004, CAP-001.
 - **Depends on:** M2; a migration ADR.
-- **Done when:** ported domain tests and the architecture test are green on three OSes.
-- **Validation:** `make check` on Linux, macOS and Windows per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules (no hosted CI).
+- **Done when:** ported domain tests and the architecture test are green on Linux. macOS and Windows are best effort for remaining M3 work (owner decision 2026-11-12); unrun platforms remain not validated.
+- **Validation:** `make check` on Linux, with macOS and Windows best effort for M3, per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules (no hosted CI).
 
 ### WP-M3-02 Storage adapter
 - **Issue:** [#14](https://github.com/rluders/amaru/issues/14)
@@ -185,9 +185,9 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - The crash-injection suite.
 - **Features:** EXE-002, EXE-003, EXE-005, EXE-006, WFL-001, WFL-002, WFL-003, WFL-004, ENV-001, CAP-004.
 - **Depends on:** WP-M3-01, WP-M3-02.
-- **Done when:** the crash-injection suite passes and a cancel on Windows kills the process tree. *Status 2026-10-28:* integrated with Linux evidence; the crash-injection suite passes on Linux and a cancel ends a real process tree on Linux ([record](../validation/m3/2026-10-28-linux-wp-m3-03.md)). The Windows cancel is **not validated** (Windows and macOS runs deferred by the product owner, [validation](../engineering/validation.md#scope-decision-product-owner-2026-10-28)) and stays owed before the M3 exit.
+- **Done when:** the crash-injection suite and process-tree cancellation pass on Linux; Windows and macOS are best effort (owner decision 2026-11-12). *Status 2026-10-28:* integrated with Linux evidence; the crash-injection suite passes on Linux and a cancel ends a real process tree on Linux ([record](../validation/m3/2026-10-28-linux-wp-m3-03.md)). The Windows cancel is **not validated** (Windows and macOS runs deferred by the product owner, [validation](../engineering/validation.md#scope-decision-product-owner-2026-10-28)) and does not block M3 exit under the [2026-11-12 owner decision](../engineering/validation.md#scope-decision-product-owner-2026-11-12).
 - **Dependency candidate (not adopted):** [`rluders/lane`](https://github.com/rluders/lane) v2.1.0 (start-up, health and graceful shutdown of service components; one dependency, `golang.org/x/sync`) for the Platform composition root, which first appears with the embedded Worker ([#145](https://github.com/rluders/amaru/issues/145)). Adopting it needs an ADR, a pinned version and a resolved license (GitHub reports none for the repository; the owner decides) before any import. `Coordinator.Reconcile` stays a plain function either way.
-- **Validation:** tests on Linux, macOS and Windows per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules; the Windows process-tree cancel is a native Windows run.
+- **Validation:** tests on Linux, with macOS and Windows best effort for M3, per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules; any Windows process-tree evidence must come from a native Windows run.
 
 ### WP-M3-04 Policy, Grants and Approval
 - **Issue:** [#16](https://github.com/rluders/amaru/issues/16)

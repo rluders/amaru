@@ -1,6 +1,6 @@
 # Failure and Recovery Model
 
-Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](ARCHITECTURE.md#11-workflow-durability-and-recovery) and [§17](ARCHITECTURE.md#17-failure-modes-and-recovery-expectations). The engine that implements this model is Amaru's own state machine on PostgreSQL with a transactional outbox to NATS ([ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md), [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md)). This document states the requirements it must meet.
+Status: **accepted** requirements (2026-10-25), not fully implemented. Coordinator restart recovery has Linux unit and integration coverage; see the [EXE-002 record](../validation/m3/2026-11-12-linux-exe-002.md) for its limits. Extends [ARCHITECTURE §11](ARCHITECTURE.md#11-workflow-durability-and-recovery) and [§17](ARCHITECTURE.md#17-failure-modes-and-recovery-expectations). The engine that implements this model is Amaru's own state machine on PostgreSQL with a transactional outbox to NATS ([ADR-0042](adr/0042-durable-execution-with-explicit-restart-semantics.md), [ADR-0016](adr/0016-nats-jetstream-message-bus-embedded-in-compact-installs.md)). This document states the requirements it must meet.
 
 ## 1. Evidence from the prototype (verified)
 
@@ -65,6 +65,6 @@ Status: **accepted** (2026-10-25), not implemented. Extends [ARCHITECTURE §11](
 
 ## 4. Verification approach
 
-- A **crash-injection suite** runs the representative Workflow ([ARCHITECTURE §15](ARCHITECTURE.md#15-representative-workflow-execution)) and kills the Platform at every Step state transition. It asserts there is no lost or duplicated consequential action. It runs in `make check` with fakes.
+- The coordinator **crash-injection suite** simulates restarts for every Step state in `make check` with fakes. The shared cases also run against PostgreSQL in `make platform-test-pg`; on Linux that target additionally kills coordinator child processes in each state and before/after protocol commits and before message delivery. It checks durable state, atomic events, fencing and stable idempotency keys. This is coordinator integration evidence, not a complete Platform executable or real-provider run. The representative Workflow ([ARCHITECTURE §15](ARCHITECTURE.md#15-representative-workflow-execution)) still needs end-to-end validation.
 - A **partition suite** for Workers runs from M5.
-- **Recorded manual runs** on each OS for cancellation and restart. The prototype never validated Windows (GAP-05).
+- **Recorded manual runs** for cancellation and restart: Linux is required for remaining M3; other OSes are best effort under the [2026-11-12 owner decision](../engineering/validation.md#scope-decision-product-owner-2026-11-12). M4 native requirements are unchanged. The prototype never validated Windows (GAP-05).

@@ -2,9 +2,8 @@
 // fake and the PostgreSQL adapter run the same suite, so the restart rule is checked against both
 // (ADR-0042, WP-M3-03 acceptance).
 //
-// A "crash" here is a restart: the process state is thrown away and a new Coordinator is built over
-// a store that holds only what was committed. The suite does not kill an OS process; killing the
-// real Platform process is validated separately (see docs/engineering/validation.md).
+// CrashInjection simulates restarts; ProcessCrashInjection additionally kills coordinator child
+// processes against PostgreSQL. Neither suite claims to test a complete Platform executable.
 package coordtest
 
 import (
@@ -25,11 +24,10 @@ var (
 
 func clock() time.Time { return now }
 
-// Restart returns a Coordinator over a store that has only the committed data.
+// Restart reopens a store that holds only the committed data.
 type Restart func(t *testing.T, s ports.ExecutionStore) ports.ExecutionStore
 
-// step drives one Step into a state through documented transitions, committing after each move,
-// the way the coordinator will: a transition is durable before the next one starts.
+// scenario describes the durable state at which a crash occurs.
 type scenario struct {
 	name string
 	// path moves the Step (and Execution) from pending/queued to the state under test.
@@ -161,8 +159,8 @@ func named(t *testing.T, name string) scenario {
 	return scenario{}
 }
 
-// seed stores the scenario as the Platform would have left it before the crash: every move was
-// committed on its own, in order.
+// seed commits a scenario's final state. ProtocolDurability separately exercises the coordinator's
+// individual transitions through Serve rather than seeding their final state.
 func seed(t *testing.T, s ports.ExecutionStore, sc scenario) (domain.Execution, domain.StepExecution) {
 	t.Helper()
 	ctx := context.Background()
@@ -190,6 +188,7 @@ func seed(t *testing.T, s ports.ExecutionStore, sc scenario) (domain.Execution, 
 // is committed, the process "crashes", and Reconcile must apply ADR-0042 exactly.
 func CrashInjection(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore, restart Restart) {
 	ctx := context.Background()
+	ProtocolDurability(t, newStore, restart)
 
 	for _, sc := range scenarios() {
 		t.Run(sc.name, func(t *testing.T) {
@@ -210,6 +209,22 @@ func CrashInjection(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 				t.Fatalf("got step %s / execution %s, want %s / %s", st.State, e.State, sc.step, sc.exec)
 			}
 			evs, _ := s.Events(ctx, "e1")
+			// Every state must converge across two restarts, including Approval and terminal states.
+			s = restart(t, s)
+			if _, err := coordinator.New(s, clock).Reconcile(ctx); err != nil {
+				t.Fatal(err)
+			}
+			e2, steps2, err := s.Get(ctx, "e1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			evs2, err := s.Events(ctx, "e1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if e.Version != e2.Version || st.Version != steps2[0].Version || len(evs) != len(evs2) {
+				t.Fatal("second restart changed settled state or events")
+			}
 			if sc.action == "" {
 				// Untouched: same versions, no event, no report entry.
 				if st.Version != st0.Version || e.Version != e0.Version || len(evs) != 0 || rep.Retried+rep.Resumed+rep.Interrupted != 0 {
