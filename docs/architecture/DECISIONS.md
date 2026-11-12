@@ -88,6 +88,8 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 | [0057](adr/0057-confine-agent-writes-to-the-worktree-with-landlock-in-a-launch-helper.md) | Confine agent writes to the worktree with Landlock, applied by a launch helper, and refuse the Step when it cannot be enforced | accepted | 2026-10-28 |
 | [0058](adr/0058-command-idempotency-conflicts-and-retention.md) | Command idempotency rejects conflicting reuse and has no automatic expiry in M3 | accepted | 2026-11-12 |
 | [0059](adr/0059-adapt-the-prototype-http-handlers-to-the-platform-public-api.md) | Adapt selected prototype HTTP handlers to the Platform public API | accepted | 2026-11-12 |
+| [0060](adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md) | Adapt selected prototype auth and discovery helpers for compact installs | accepted | 2026-11-12 |
+| [0061](adr/0061-local-browser-authentication-wire-contract.md) | Define the compact browser authentication wire contract | proposed | 2026-11-12 |
 
 ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-25 in the planning session that closed every question in [OPEN_QUESTIONS](OPEN_QUESTIONS.md). Where the owner delegated a question ("you can decide"), the ADR's Approval section says so. ADRs 0040–0043 were accepted the same day under the owner's delegation in a second planning pass that closed the residual questions Q23–Q54; they supersede 0020, 0019, 0014 and 0027 respectively, which stay in the log as `superseded`. ADRs 0044 and 0045 were drafted by an agent from the WP-M1-02 spike and accepted by the product owner on 2026-10-26.
 
@@ -98,4 +100,3 @@ ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-2
 ## Relationship to the prototype ADRs
 
 The earlier internal implementation has its own ADR-001…029 (two files numbered 009). They govern that codebase and are **not** Amaru decisions. They are evidence: an Amaru ADR that keeps, changes or drops a prototype decision cites it.
-| [0060](adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md) | Adapt selected prototype auth and discovery helpers for compact installs | accepted | 2026-11-12 |
