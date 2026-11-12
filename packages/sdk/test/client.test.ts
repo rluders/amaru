@@ -112,3 +112,18 @@ test("explicit health remains credential-free even on a native client", async ()
   assert.equal(seen[0]!.credentials, "omit");
   assert.equal(seen[0]!.headers.get("Authorization"), null);
 });
+
+
+test("Project settings keep false patches and selected Project identity on the wire", async () => {
+  const { f, seen } = fakeFetch(() => Response.json({ importClaudeSkills: false }));
+  const client = createClient({ baseUrl: "http://x.test/v1", token: "fake", fetch: f });
+  const { data } = await client.PATCH("/projects/{projectId}/settings", {
+    params: { path: { projectId: "project-a" } }, body: { importClaudeSkills: false },
+  });
+  assert.deepEqual(data, { importClaudeSkills: false });
+  assert.equal(seen[0]!.method, "PATCH");
+  assert.equal(seen[0]!.url, "http://x.test/v1/projects/project-a/settings");
+  assert.deepEqual(await seen[0]!.json(), { importClaudeSkills: false });
+  await client.GET("/projects/{projectId}/settings", { params: { path: { projectId: "project-b" } } });
+  assert.equal(seen[1]!.url, "http://x.test/v1/projects/project-b/settings");
+});

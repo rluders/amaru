@@ -869,7 +869,7 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     get:
       operationId: getSettings
-      description: The project's Amaru switches (`.Amaru/settings.json`); all off by default.
+      description: The project's Platform-owned discovery preferences (ADR-0064); all off by default.
       responses:
         '200':
           description: OK
