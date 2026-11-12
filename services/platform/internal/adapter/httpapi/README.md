@@ -4,6 +4,6 @@ Owned by WP-M3-06 (#18), Project isolation #191. `SettingsHandler` serves the ex
 
 Trusted composition supplies one Auth instance, ProjectAccess using its Principal callback, and the same Instance's SettingsStore. The returned handler includes authentication; do not wrap it in another Auth instance. Production startup and other resources are not implemented here. Settings PATCH never reads or writes Project files, starts a Worker, grants trust or performs Skill discovery.
 
-From the repository root, `make platform-test` runs these tests and `make check` runs the full checks. For focused race verification, from `services/platform`, run `go test -race -count=10 ./internal/adapter/httpapi`. Tests use fake stores, real compact authentication and a temporary loopback listener; no paid APIs or real agents. Native browser and SDK validation remain separate.
+From the repository root, `make platform-test` runs these tests and `make check` runs the full checks. For focused race verification, from `services/platform`, run `go test -race -count=10 ./internal/adapter/httpapi`. Tests use fake stores, real compact authentication and a temporary loopback listener; no paid APIs or real agents. The generated SDK also exercises these handlers in the test-only auth fixture via `make sdk-ts`; actual browser SDK and full product acceptance remain separate.
 
 See the [operation inventory and limits](../../../../../docs/engineering/project-access.md#guarded-settings-http-adapter).
