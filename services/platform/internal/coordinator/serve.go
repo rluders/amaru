@@ -31,7 +31,7 @@ func (c *Coordinator) wake() <-chan struct{} {
 const maxEditAttempts = 4
 
 // Serve runs one Worker session over link until the context ends or the link closes (both return
-// nil). It is the Platform's half of the pull protocol: a Worker's Offer gives it credit, Queued
+// nil). Unrelated failures remain errors even during shutdown. It is the Platform's half of the pull protocol: a Worker's Offer gives it credit, Queued
 // Steps are leased to it, one attempt per Lease, and each reply of the Worker is applied.
 //
 // Every state change is committed to the store before the message that announces it is sent, so
@@ -39,7 +39,13 @@ const maxEditAttempts = 4
 //
 // workerID names the Worker in the Lease. The embedded Worker and a remote one differ only in the
 // link: identity and authentication of remote Workers (ADR-0024) are not implemented.
-func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, workerID string) error {
+func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, workerID string) (err error) {
+	defer func() {
+		// Normalize this session's cancellation at every exit, preserving unrelated failures.
+		if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
+			err = nil
+		}
+	}()
 	msgs := make(chan ports.WorkerMessage)
 	errc := make(chan error, 1)
 	pumpCtx, stop := context.WithCancel(ctx)
@@ -92,7 +98,7 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 		case <-ctx.Done():
 			return nil
 		case err := <-errc:
-			if errors.Is(err, ports.ErrLinkClosed) || ctx.Err() != nil {
+			if errors.Is(err, ports.ErrLinkClosed) {
 				return nil
 			}
 			return err
@@ -145,7 +151,7 @@ func (c *Coordinator) assignOne(ctx context.Context, link ports.PlatformLink, wo
 		return "", err
 	}
 	if err := link.Send(ctx, asg); err != nil {
-		if errors.Is(err, ports.ErrLinkClosed) || ctx.Err() != nil {
+		if errors.Is(err, ports.ErrLinkClosed) {
 			return "", nil
 		}
 		return "", err
@@ -371,7 +377,7 @@ func revoke(ctx context.Context, link ports.PlatformLink, attemptID, reason stri
 
 // send treats a closed link as the end of the session, not as a failure of the coordinator.
 func send(ctx context.Context, link ports.PlatformLink, m ports.PlatformMessage) error {
-	if err := link.Send(ctx, m); err != nil && !errors.Is(err, ports.ErrLinkClosed) && ctx.Err() == nil {
+	if err := link.Send(ctx, m); err != nil && !errors.Is(err, ports.ErrLinkClosed) {
 		return err
 	}
 	return nil
