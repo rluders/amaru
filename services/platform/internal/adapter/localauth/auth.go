@@ -1,5 +1,5 @@
 // Package localauth implements ADR-0034/0061 at the compact HTTP boundary.
-// It owns ephemeral credentials only; it never imports domain state.
+// It owns ephemeral credentials and supplies the compact local administrator identity.
 package localauth
 
 import (
@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rluders/amaru/services/platform/internal/domain"
 )
 
 const CookieName = "amaru_session"
@@ -176,6 +178,8 @@ func (a *Auth) browser(r *http.Request) *session {
 	return a.sessions[id]
 }
 
+type administratorKey struct{}
+
 type sessionKey struct{}
 
 // WatchSocket registers a transport's close function before upgrading a cookie
@@ -278,6 +282,7 @@ func (a *Auth) Handler(next http.Handler) http.Handler {
 			// A native socket lasts at most until this Auth instance closes.
 			r = r.WithContext(context.WithValue(r.Context(), sessionKey{}, a.nativeCtx))
 		}
+		r = r.WithContext(context.WithValue(r.Context(), administratorKey{}, a))
 		a.mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
@@ -375,4 +380,17 @@ func (a *Auth) sessionOperation(w http.ResponseWriter, r *http.Request, s *sessi
 	default:
 		reject(w, 405, "invalid_request")
 	}
+}
+
+// Principal rechecks Handler-authenticated context on every application call, including replay.
+// Health/root requests, another Auth instance, logout, expiry and shutdown grant no identity.
+func (a *Auth) Principal(ctx context.Context) (domain.Principal, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.expire()
+	lifetime, ok := ctx.Value(sessionKey{}).(context.Context)
+	if a.closed || ctx.Err() != nil || ctx.Value(administratorKey{}) != a || !ok || lifetime.Err() != nil {
+		return domain.Principal{}, domain.ErrNotPermitted
+	}
+	return domain.Principal{Kind: domain.PrincipalHuman, ID: "local-administrator", Role: domain.RoleOwner}, nil
 }

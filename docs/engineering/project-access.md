@@ -1,0 +1,37 @@
+# Compact Project access boundary
+
+[ADR-0062](../architecture/adr/0062-project-bound-public-operations-and-secret-resolution.md) is accepted following owner approval in [PR #330](https://github.com/rluders/amaru/pull/330). `coordinator.ProjectAccess` implements the first #191 application slice around existing Execution operations. It does not implement a product HTTP server or complete [#191](https://github.com/rluders/amaru/issues/191).
+
+Construct `NewProjectAccess` with the existing coordinator, the Instance's attached Project store and `localauth.Auth.Principal`. Every call rechecks authentication and attached Project identity. Compact composition has one configured Organization; its local administrator has owner access to those Projects. No membership database or multi-Organization authorization is implemented. The authentication callback is a trusted composition dependency, never a principal decoded from a request body or headers. A custom callback must enforce current authorization on every call.
+
+`Auth.Principal` accepts only context established by that Auth instance's guarded downstream dispatch. Credential-free health/root requests and another Instance's context confer no identity. It refuses cancelled requests, logged-out/expired browser sessions and shutdown native contexts. Identity is the Instance-local `local-administrator`; session IDs and bearer values never become domain actor IDs. Origin/CSRF checks still precede authenticated dispatch.
+
+`ProjectAccess` uses the coordinator's own authoritative store, preserving the trusted internal APIs for scheduling and recovery. It refuses invalid/unattached Project selectors before resource lookup. A foreign or missing Execution/Approval returns exactly `domain.ErrNotFound` with no returned child records, replay outcome or cursor. Approval ownership checks both its Project and its gating Execution. Ownership is checked before calling command replay or Evidence's context/artifact/audit readers. Existing stores already preserve immutable Execution Project identity; this slice changes no persisted storage contract, migration or transaction semantics. A read-only `ports.EvidenceReader` keeps the coordinator dependent only on domain/ports; trusted composition supplies the existing Evidence reader.
+
+Manual Submit derives Project, principal and trigger from the trusted boundary. Cancel derives the human Actor and ActorID; Approval decisions derive their principal. Existing coordinator Policy, Approval, version checks, atomic writes and `(command name, key)` command namespace remain in force. Same-key requests for different Projects conflict; they do not receive independent records. A current owner can replay the same request after state changes; a revoked session cannot replay it.
+
+## Operation inventory and remaining composition
+
+Inspected against `packages/contracts/openapi/amaru.yaml` and the [coordinator command inventory](command-idempotency.md). This is an application/source mapping, not a claim that these HTTP routes are served.
+
+| Public operation family | This slice | Remaining delivery gate |
+|---|---|---|
+| Execution create; Workflow run | Authorized manual `Submit`, including Project/actor binding before replay | Project-selected Workflow/Agent/Skill/Environment resolution and wire-to-domain mapping; do not pass client definitions directly into this internal Submit request |
+| Execution detail/cancel | Project-bound `Execution` and `Cancel` | HTTP handlers and shared contract/SDK acceptance |
+| Execution definition/Evidence | Ownership before pinned definition return or Evidence assembly | Public mapping; direct Artifact ID/content access still needs its own ownership boundary |
+| Project and Execution Event replay | Project authorization plus ownership of any Execution filter before the existing journal read; trusted clock/window | Typed envelope mapping, WebSocket lifecycle and cursor wire mapping |
+| Approval detail/decision | Project-bound `Approval` and `DecideApproval` before replay | List/query adapters, HTTP handlers and contract/SDK acceptance |
+| Project list/detail/attach | Existing Project/attach components are unchanged | Authenticated product composition |
+| Execution lists, Work Packages/Items and dependencies | No new implementation | Project-selected authoritative query/mutation paths; reject cross-Project dependencies |
+| Workflow/Agent/Team CRUD/source, settings | No new implementation | Project-selected definition/configuration loading and versioned API/disk reconciliation (#219) |
+| Artifact list/detail/content; delivery-loop query | No new implementation | Project-bound access; delivery-loop implementation remains M4 |
+| Health/auth, Provider/Capability discovery | Existing auth subset remains; identity now available to composition | Product startup, authenticated discovery and applicable protocol mapping |
+| Grant and trust mutations (internal command inventory) | Existing trusted commands unchanged | Any future public exposure must authorize the target Project/Grant before replay; never expose raw coordinator methods |
+
+Event stream and Evidence reader passed to application calls are trusted deployment dependencies. They must use the same authoritative Instance data as the coordinator. Event replay windows are deployment configuration, never client input. The Evidence reader retains its existing sequential-read consistency limits. Neither auth nor this boundary stores product state or changes Worker/Provider contracts.
+
+## Evidence and limits
+
+[Linux validation record](../validation/m3/2026-11-12-linux-prj-002-access.md) covers two registered Projects, matching Step names, foreign/missing IDs, replay, conflicting keys, child-read ordering, cursor withholding, concurrent duplicate cancellation and authentication revocation. The tests compose the real auth guard and application boundary with fake stores. They establish application behavior, not a running public API, real Project attachment, durable-adapter restart or full two-client transport acceptance.
+
+Remaining #191 work includes two attached temporary Git Projects with matching definition/secret names, Project-selected settings/definitions and Work dependencies, the exact-scope secrets port/resolver and Policy/Approval delivery, independent dispatch under failure/wait, and composed API/SDK acceptance. An encrypted production secret backend and authorized assignment delivery remain open gates; fake secret resolution alone cannot close #191. #191, #18 and M3 remain open. Linux is required; macOS/Windows are best effort and unvalidated by this slice.
