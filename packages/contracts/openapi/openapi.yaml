@@ -16,11 +16,12 @@ servers:
       description: Dynamic; published by the local Platform
 security:
 - bearer: []
+- browserSession: []
 paths:
   /health:
     get:
       operationId: getHealth
-      summary: Liveness + versions. The only route reachable without a token.
+      summary: Liveness + versions. Unauthenticated, Host-checked health probe.
       security: []
       responses:
         '200':
@@ -29,6 +30,78 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/Health.json
+  /auth/launch-codes:
+    post:
+      operationId: createLaunchCode
+      summary: Native CLI/Desktop only; issue a single-use 256-bit code, valid for 60 seconds.
+      description: Empty body. Administrator bearer only, no Cookie or Origin. All auth responses use no-store and no-referrer.
+      security:
+      - bearer: []
+      responses:
+        '201':
+          description: Launch code; never log or persist it.
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/LaunchCode.json
+        default:
+          $ref: '#/components/responses/Error'
+  /auth/launch:
+    servers:
+    - url: /
+    get:
+      operationId: exchangeLaunchCode
+      summary: Exchange one launch code for an eight-hour absolute browser session.
+      description: Exact bound Host required. Consume once, set host-only HttpOnly SameSite=Strict Path=/ cookie and redirect to /. No redirect parameter. Secure where permitted on loopback. No-store and no-referrer, including errors.
+      security: []
+      parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+      responses:
+        '303':
+          description: Code-free root; session credential only in Set-Cookie.
+          headers:
+            Location:
+              schema:
+                type: string
+                const: /
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/Error'
+  /auth/session:
+    get:
+      operationId: getSession
+      summary: Read CSRF token and absolute expiry of an existing browser session; never renew.
+      description: Cookie only. No-store and no-referrer. No foreign-Origin response or wildcard CORS.
+      security:
+      - browserSession: []
+      responses:
+        '200':
+          description: Session metadata; contains no session credential.
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/BrowserSession.json
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      operationId: deleteSession
+      summary: Revoke only this browser session and expire its cookie.
+      description: Cookie plus exact allowed Origin and matching X-Amaru-CSRF required. No-store and no-referrer.
+      security:
+      - browserSession: []
+        csrf: []
+      responses:
+        '204':
+          description: Session revoked; expired Set-Cookie.
+        default:
+          $ref: '#/components/responses/Error'
   /projects:
     get:
       operationId: listProjects
@@ -44,6 +117,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: attachProject
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       summary: Attach a project root (idempotent). 400 invalid_request when root is not an absolute existing directory.
       requestBody:
         required: true
@@ -121,6 +198,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createExecution
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: |
         Resolves `capability` (and optional `providerId`) to a provider and starts the execution.
         `idempotencyKey` is required and makes retries safe under ADR-0058. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
@@ -160,6 +241,10 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     post:
       operationId: cancelExecution
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         Requires `idempotencyKey`. A retry of the same key and normalized request returns the original command
         result, even after the Execution ends. A new cancellation of a terminal Execution is `conflict`.
@@ -224,8 +309,9 @@ paths:
         increasing `seq` (the per-Project cursor; every event carries `id`, `projectId`, `resource` and optional
         `correlationId`). `since=<seq>` replays retained events with seq > since. When the cursor cannot be served
         the server sends one `ResyncRequired` frame and the client reloads state through the HTTP queries, then
-        resumes from `resumeFrom`. The token is sent as an `Authorization: Bearer` header or `?token=` (browsers
-        cannot set WebSocket headers).
+        resumes from `resumeFrom`. Native clients use an Authorization bearer header without Origin or Cookie.
+        Browsers use the same-origin session cookie and an allowed Origin. Query token parameters are rejected.
+        Sessions close their established sockets on expiry or logout.
       parameters:
       - name: since
         in: query
@@ -257,6 +343,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createWorkPackage
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: The Platform assigns the id (a ULID). New packages start as `planned`.
       requestBody:
         required: true
@@ -295,6 +385,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateWorkPackage
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       parameters:
       - name: id
         in: path
@@ -338,6 +432,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createWorkItem
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         The Platform assigns the id (a ULID) and the display key (`<PROJECTKEY>-<n>`, unique per Instance). Errors - invalid_request, not_found (unknown
         package).
@@ -378,6 +476,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateWorkItem
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         Status is set by the user and never derived from executions. `blockedReason` is only kept while status is
         `blocked`.
@@ -418,6 +520,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createWorkflow
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: The Platform assigns the id (WF-001, …). Persisted under `.Amaru/workflows/`.
       requestBody:
         required: true
@@ -456,6 +562,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateWorkflow
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       parameters:
       - name: id
         in: path
@@ -503,6 +613,10 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     post:
       operationId: runWorkflow
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         Starts one Execution through the normal execution path, carrying a Step Execution per workflow step (`steps`).
         Executable steps run sequentially, one provider run each; the first failure stops later steps. Trigger steps
@@ -550,6 +664,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createAgent
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         Persisted at `.Amaru/agents/<id>.json`. Errors - invalid_request, conflict (id already exists). Retire an
         Agent in use with status `disabled`; an Agent no Workflow refers to can be deleted.
@@ -590,6 +708,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateAgent
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         The body names the `expectedRevision` the caller read. Errors - not_found, invalid_request, conflict (the Agent
         is at another revision, or is deleted).
@@ -616,6 +738,10 @@ paths:
           $ref: '#/components/responses/Error'
     delete:
       operationId: deleteAgent
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         Removes `.Amaru/agents/<id>.json`; recorded revisions are kept. Errors - not_found, conflict (a Workflow step
         still refers to the Agent - disable it instead - or `expectedRevision` is stale).
@@ -653,6 +779,10 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createTeam
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: Persisted at `.Amaru/teams/<id>.json`. Errors - invalid_request, conflict (id exists).
       requestBody:
         required: true
@@ -691,6 +821,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateTeam
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       parameters:
       - name: id
         in: path
@@ -714,6 +848,10 @@ paths:
           $ref: '#/components/responses/Error'
     delete:
       operationId: deleteTeam
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: Errors - not_found, conflict (a workflow step still uses the team).
       parameters:
       - name: id
@@ -743,6 +881,10 @@ paths:
           $ref: '#/components/responses/Error'
     patch:
       operationId: updateSettings
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       requestBody:
         required: true
         content:
@@ -883,6 +1025,10 @@ paths:
         $ref: ../schemas/Ulid.json
     post:
       operationId: decideApproval
+      security:
+      - bearer: []
+      - browserSession: []
+        csrf: []
       description: >-
         A human principal approves or rejects a `requested` Approval. `idempotencyKey` is required; identical retries
         return the original decision and conflicting reuse is `conflict` (ADR-0058, no automatic expiry in M3). Only humans may decide (ADR-0036); the decider is the
@@ -906,11 +1052,23 @@ paths:
           $ref: '#/components/responses/Error'
 components:
   schemas:
+    LaunchCode:
+      $ref: ../schemas/LaunchCode.json
+    BrowserSession:
+      $ref: ../schemas/BrowserSession.json
     # Not returned by an HTTP operation: the frames of the WebSocket on `events`. Declared here so that generated
     # clients get the frame types from the contract instead of hand-writing them.
     StreamFrame:
       $ref: ../schemas/events/Frame.json
   securitySchemes:
+    browserSession:
+      type: apiKey
+      in: cookie
+      name: amaru_session
+    csrf:
+      type: apiKey
+      in: header
+      name: X-Amaru-CSRF
     bearer:
       type: http
       scheme: bearer
@@ -944,5 +1102,8 @@ x-protocol:
   headers:
     X-Amaru-Protocol: Set on every response; integer major version.
   origin-policy: >-
-    Requests with an Origin header are accepted only from an explicit allowlist; CORS preflight is answered for
-    that allowlist only, never `*`. Requests without Origin require a valid token.
+    Exact bound loopback Host and port on every request. Native bearer clients must send no Cookie or Origin.
+    Browser cookies require an allowed Origin for non-GET requests and WebSocket upgrades; non-GET also requires
+    X-Amaru-CSRF. Mixed credentials and query tokens are rejected. No wildcard CORS. Only health and the launch
+    exchange are unauthenticated. Browser session reads reject foreign Origin. Cookie sessions expire after eight
+    hours without renewal; restart rotates credentials. See ADR-0034 and ADR-0061.

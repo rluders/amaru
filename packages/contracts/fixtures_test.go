@@ -320,7 +320,7 @@ func TestEveryAreaIsCovered(t *testing.T) {
 		have[e.Schema][kindOutcome[e.Kind]] = true
 	}
 	for _, s := range []string{
-		"Approval.json", "DecideApproval.json", "Principal.json", "PolicyRequest.json", "PolicyDecision.json", "Grant.json",
+		"LaunchCode.json", "BrowserSession.json", "Approval.json", "DecideApproval.json", "Principal.json", "PolicyRequest.json", "PolicyDecision.json", "Grant.json",
 		"UsageReport.json", "UsageRecord.json", "StepExecution.json",
 		"events/Event.json", "events/EventList.json", "events/Frame.json", "events/ResyncRequired.json",
 		"events/ApprovalEvent.json", "events/PolicyEvaluated.json", "events/GrantChanged.json", "events/UsageRecorded.json", "events/ResultRejectedStale.json",
@@ -342,7 +342,7 @@ func TestFixturesHaveNoSecretsOrPrototypeNames(t *testing.T) {
 			return err
 		}
 		b, _ := os.ReadFile(p)
-		if m := secret.Find(b); m != nil {
+		if m := secret.Find(scanFixture(p, b)); m != nil {
 			t.Errorf("%s looks like it contains a secret value", p)
 		}
 		low := strings.ToLower(string(b) + p)
@@ -353,4 +353,24 @@ func TestFixturesHaveNoSecretsOrPrototypeNames(t *testing.T) {
 		}
 		return nil
 	})
+}
+
+// Only the declared all-zero, public test vector is exempt from the token-key
+// heuristic. Other fields and every other value still undergo secret scanning.
+func scanFixture(path string, b []byte) []byte {
+	if !strings.HasPrefix(filepath.ToSlash(path), "fixtures/api/v1/BrowserSession/") {
+		return b
+	}
+	return bytes.ReplaceAll(b, []byte(`"csrfToken": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"`), []byte(`"csrfToken": "fake"`))
+}
+func TestAuthFixtureExemptionIsExact(t *testing.T) {
+	fake := []byte(`{"csrfToken": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "secret": "still-detected"}`)
+	got := scanFixture("fixtures/api/v1/BrowserSession/valid.json", fake)
+	if bytes.Equal(fake, got) || !bytes.Contains(got, []byte(`"secret": "still-detected"`)) {
+		t.Fatal("fixture scanner exemption is not narrowly scoped")
+	}
+	other := []byte(`{"csrfToken": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBA"}`)
+	if !bytes.Equal(scanFixture("fixtures/api/v1/BrowserSession/valid.json", other), other) || !bytes.Equal(scanFixture("fixtures/api/v1/Other/valid.json", fake), fake) {
+		t.Fatal("scanner masked an undeclared token")
+	}
 }

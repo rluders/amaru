@@ -74,6 +74,7 @@ test("replacement Instance is checked again and a failed check can recover", asy
   let commands = 0;
   const client = createClient({
     baseUrl: "http://x.test/v1",
+    token: "native-fixture",
     fetch: async input => {
       if ((input as Request).url.endsWith("/health")) return Response.json({ ...health, protocolVersion: version });
       commands++;
@@ -128,7 +129,7 @@ test("loopback HTTP negotiation rejects redirects and prevents mutation on misma
   t.after(() => new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
-  const client = createClient({ baseUrl: `http://127.0.0.1:${address.port}/v1` });
+  const client = createClient({ baseUrl: `http://127.0.0.1:${address.port}/v1`, token: "native-fixture" });
   await client.POST("/projects/{projectId}/executions/{id}/cancel", command);
   mode = "incompatible";
   await assert.rejects(client.POST("/projects/{projectId}/executions/{id}/cancel", command), { kind: "incompatible" });

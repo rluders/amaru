@@ -2,7 +2,11 @@ package routeguard
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -50,7 +54,7 @@ func TestContractRoutesAreUnderV1AndIncludeTheDeliveryLoop(t *testing.T) {
 	}
 	have := set(rs)
 	for _, r := range rs {
-		if !strings.HasPrefix(r.Path, "/v1/") {
+		if !strings.HasPrefix(r.Path, "/v1/") && r != (Route{"GET", "/auth/launch"}) {
 			t.Errorf("%s is not under /v1", r)
 		}
 	}
@@ -154,4 +158,75 @@ func mustPatterns(t *testing.T, p ...string) []Route {
 		t.Fatal(err)
 	}
 	return rs
+}
+
+func TestServerOverridePrecedence(t *testing.T) {
+	doc := `openapi: 3.1.0
+servers: [{url: 'http://localhost:7777/v1'}]
+paths:
+  /launch:
+    servers: [{url: '/'}]
+    get: {operationId: launch}
+    post:
+      operationId: other
+      servers: [{url: '/native'}]
+  /health:
+    get: {operationId: health}
+`
+	got, err := FromOpenAPI(strings.NewReader(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Route{{"GET", "/launch"}, {"POST", "/native/launch"}, {"GET", "/v1/health"}}
+	if rep := Compare(want, got); !rep.OK() {
+		t.Fatal(rep.String())
+	}
+}
+
+// The compact adapter registers this exact list with net/http.ServeMux. Other
+// product routes remain the parent #18 composition gate, not an auth claim.
+func TestAuthAdapterRegistrationsMatchContract(t *testing.T) {
+	f, err := parser.ParseFile(token.NewFileSet(), "../../../services/platform/internal/adapter/localauth/auth.go", nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var patterns []string
+	ast.Inspect(f, func(n ast.Node) bool {
+		spec, ok := n.(*ast.ValueSpec)
+		if !ok || len(spec.Names) != 1 || spec.Names[0].Name != "authPatterns" {
+			return true
+		}
+		list, ok := spec.Values[0].(*ast.CompositeLit)
+		if !ok {
+			t.Fatal("authPatterns must remain a literal registration list")
+		}
+		for _, e := range list.Elts {
+			lit, ok := e.(*ast.BasicLit)
+			if !ok {
+				t.Fatal("nonliteral auth route")
+			}
+			s, err := strconv.Unquote(lit.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			patterns = append(patterns, s)
+		}
+		return false
+	})
+	if len(patterns) != 4 {
+		t.Fatal("expected four auth registrations")
+	}
+	registered, err := FromPatterns(patterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var declared []Route
+	for _, r := range contractRoutes(t) {
+		if strings.HasPrefix(r.Path, "/auth/") || strings.HasPrefix(r.Path, "/v1/auth/") {
+			declared = append(declared, r)
+		}
+	}
+	if rep := Compare(declared, registered); !rep.OK() {
+		t.Fatal(rep.String())
+	}
 }

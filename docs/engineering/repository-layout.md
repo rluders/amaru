@@ -20,7 +20,7 @@ amaru/
 │   ├── security/           security model
 ├── spikes/wp-m1-02/        Go module: WP-M1-02 validation experiments (throwaway, not the Platform)
 ├── packages/contracts/     versioned API, event, Provider and Worker contracts, shared fixtures, route-drift guard (Go module, Protobuf, TypeScript test tooling)
-├── services/platform/      Go module: Platform core, domain state machines and architecture test so far (WP-M3-01; nothing else of the Platform exists yet)
+├── services/platform/      Go module: partial Platform core and adapters, including compact authentication/discovery; composed API remains in progress
 ├── packages/sdk/           TypeScript SDK generated from the OpenAPI contract, plus the event-stream client (own pnpm lockfile)
 └── tools/doccheck/         Go (stdlib only): offline documentation checker
 ```

@@ -75,3 +75,16 @@ Fresh import with provenance ([ADR-0049](../../docs/architecture/adr/0049-adapt-
 
 ## New in #168 egress consent
 - `domain/egress.go` and `internal/egress/` (FEAT-POL-004): written fresh in Amaru, no prototype source and no migration ADR (the #83 blocker link was dropped by the owner on 2026-10-28). The prototype `transport/webhook/sender.go` was read as a behavioral reference only (no redirects, resolve then dial the vetted IP, one bad answer blocks, link-local always blocked). The special-purpose address ranges were written from memory of the IANA registries and not checked against the registry text; the list errs toward refusing. No dependency added.
+
+## Compact authentication and discovery (#92)
+
+Selective **Adapt**, fresh import with provenance, authorized by accepted [ADR-0060](../../docs/architecture/adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md). Source `rluders/weave-obsidian` at `c8a2f6e983beba59edc446f36df2f442edaa9855`:
+
+| Source | Blob | Target and change |
+|---|---|---|
+| `runtime/internal/auth/token.go` | `9d9ed33a557126de54b8b5ca4a160d98dbcb12d4` | `internal/adapter/localauth/auth.go`: 32 random bytes, raw URL-safe base64, constant-time comparison. Empty tokens rejected; entropy seam added for failure tests. `MustRandHex` excluded. |
+| `runtime/internal/auth/token_test.go` | `cd4c0d3dad55c922540832690b06e89809562481` | Behavioral reference for random-size/distinctness/comparison tests; no credential-printing diagnostics retained. |
+| `runtime/internal/discovery/discovery.go` | `8768e5145cbdf5a73e15fcfaedc4c1b864d8e7a8` | `internal/adapter/discovery/`: temp-write/rename and owner cleanup adapted. Anchored paths, strict private file checks, lifetime cross-process lock and bounded credential-free schema/build/protocol probe replace unsafe source behavior. Amaru field/file names, no legacy aliases. |
+| `runtime/internal/discovery/discovery_test.go` | `62424052aca02c5d5296aa61af85c09bb429ef2a` | Behavioral reference for private atomic publication, ownership and liveness. New Linux tests cover active-owner exclusion across processes, stale replacement, unsafe paths, entropy failure and unsafe probes. |
+
+Browser sessions, launch exchange, CSRF, lifetime revocation, contracts and SDK transport are new Amaru work under accepted ADR-0034/0061. No predecessor middleware or unrelated helper was imported. No predecessor repository was changed. No history preservation or extra dependency. Evidence and limits: [IAM-001 Linux record](../../docs/validation/m3/2026-11-12-linux-iam-001.md).

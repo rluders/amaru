@@ -11,11 +11,75 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Liveness + versions. The only route reachable without a token. */
+        /** Liveness + versions. Unauthenticated, Host-checked health probe. */
         get: operations["getHealth"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/launch-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Native CLI/Desktop only; issue a single-use 256-bit code, valid for 60 seconds.
+         * @description Empty body. Administrator bearer only, no Cookie or Origin. All auth responses use no-store and no-referrer.
+         */
+        post: operations["createLaunchCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/launch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Exchange one launch code for an eight-hour absolute browser session.
+         * @description Exact bound Host required. Consume once, set host-only HttpOnly SameSite=Strict Path=/ cookie and redirect to /. No redirect parameter. Secure where permitted on loopback. No-store and no-referrer, including errors.
+         */
+        get: operations["exchangeLaunchCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read CSRF token and absolute expiry of an existing browser session; never renew.
+         * @description Cookie only. No-store and no-referrer. No foreign-Origin response or wildcard CORS.
+         */
+        get: operations["getSession"];
+        put?: never;
+        post?: never;
+        /**
+         * Revoke only this browser session and expire its cookie.
+         * @description Cookie plus exact allowed Origin and matching X-Amaru-CSRF required. No-store and no-referrer.
+         */
+        delete: operations["deleteSession"];
         options?: never;
         head?: never;
         patch?: never;
@@ -184,7 +248,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** @description WebSocket upgrade, one stream per Project. The first frame is `Hello`, then `Event` frames with strictly increasing `seq` (the per-Project cursor; every event carries `id`, `projectId`, `resource` and optional `correlationId`). `since=<seq>` replays retained events with seq > since. When the cursor cannot be served the server sends one `ResyncRequired` frame and the client reloads state through the HTTP queries, then resumes from `resumeFrom`. The token is sent as an `Authorization: Bearer` header or `?token=` (browsers cannot set WebSocket headers). */
+        /** @description WebSocket upgrade, one stream per Project. The first frame is `Hello`, then `Event` frames with strictly increasing `seq` (the per-Project cursor; every event carries `id`, `projectId`, `resource` and optional `correlationId`). `since=<seq>` replays retained events with seq > since. When the cursor cannot be served the server sends one `ResyncRequired` frame and the client reloads state through the HTTP queries, then resumes from `resumeFrom`. Native clients use an Authorization bearer header without Origin or Cookie. Browsers use the same-origin session cookie and an allowed Origin. Query token parameters are rejected. Sessions close their established sockets on expiry or logout. */
         get: operations["events"];
         put?: never;
         post?: never;
@@ -582,6 +646,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** LaunchCode */
+        LaunchCode: {
+            code: string;
+            expiresAt: components["schemas"]["Timestamp"];
+        };
+        /** BrowserSession */
+        BrowserSession: {
+            csrfToken: string;
+            expiresAt: components["schemas"]["Timestamp"];
+        };
         StreamFrame: components["schemas"]["Frame"];
         /**
          * ProtocolVersion
@@ -2172,6 +2246,90 @@ export interface operations {
                     "application/json": components["schemas"]["Health"];
                 };
             };
+        };
+    };
+    createLaunchCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Launch code; never log or persist it. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaunchCode"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    exchangeLaunchCode: {
+        parameters: {
+            query: {
+                code: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code-free root; session credential only in Set-Cookie. */
+            303: {
+                headers: {
+                    Location?: "/";
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session metadata; contains no session credential. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrowserSession"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session revoked; expired Set-Cookie. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
         };
     };
     listProjects: {

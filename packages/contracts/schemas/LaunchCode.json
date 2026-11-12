@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/LaunchCode.json",
+  "title": "LaunchCode",
+  "type": "object",
+  "required": [
+    "code",
+    "expiresAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$"
+    },
+    "expiresAt": {
+      "$ref": "Timestamp.json"
+    }
+  }
+}

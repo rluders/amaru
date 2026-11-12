@@ -6,22 +6,46 @@ export interface ClientOptions {
   baseUrl: string;
   /** Bearer token. Sent as an Authorization header only; never put it in a URL for HTTP calls. */
   token?: string;
+  /** Browser transport: read the CSRF value obtained from GET /auth/session from memory. Mutations require it. */
+  csrfToken?(): string | undefined;
   /** Replaces globalThis.fetch (tests, custom transports). */
   fetch?: typeof globalThis.fetch;
 }
 
 /** Typed HTTP client: every path, parameter, body and response comes from the generated contract types. */
 export function createClient(options: ClientOptions) {
+  if (options.token && options.csrfToken) throw new Error("Choose native bearer or browser session authentication.");
+  const browser = !options.token;
   const client = createOpenApiClient<paths>({
     baseUrl: options.baseUrl,
+    credentials: browser ? "same-origin" : "omit",
+    redirect: "error",
     ...(options.fetch ? { fetch: options.fetch } : {}),
     ...(options.token ? { headers: { Authorization: `Bearer ${options.token}` } } : {}),
   });
   client.use({
-    async onRequest({ request, schemaPath, options }) {
-      if (schemaPath === "/health") return;
+    async onRequest({ request, schemaPath, options: transport }) {
+      if (schemaPath === "/health") {
+        request.headers.delete("Authorization");
+        request.headers.delete("Cookie");
+        request.headers.delete("X-Amaru-CSRF");
+        return new Request(request, { credentials: "omit" });
+      }
       // Check every operation: a restarted/replaced Instance must negotiate again.
-      await checkCompatibility(options.baseUrl, options.fetch, request.signal);
+      await checkCompatibility(transport.baseUrl, transport.fetch, request.signal);
+      if (schemaPath === "/auth/launch") {
+        // openapi-fetch concatenates baseUrl and path; it does not apply path servers.
+        const url = new URL(request.url);
+        url.pathname = "/auth/launch";
+        request.headers.delete("Authorization");
+        request.headers.delete("Cookie");
+        return new Request(url, { method: request.method, headers: request.headers, credentials: "omit", redirect: "manual", signal: request.signal });
+      }
+      if (browser && request.method !== "GET") {
+        const csrf = options.csrfToken?.();
+        if (!csrf) throw new Error("Browser mutation requires a session CSRF token.");
+        request.headers.set("X-Amaru-CSRF", csrf);
+      }
     },
   });
   return client;
@@ -50,7 +74,7 @@ async function checkCompatibility(baseUrl: string, fetch: typeof globalThis.fetc
   const probe = createOpenApiClient<paths>({ baseUrl, fetch });
   let health: components["schemas"]["Health"] | undefined;
   try {
-    const result = await probe.GET("/health", { signal, redirect: "error", cache: "no-store" });
+    const result = await probe.GET("/health", { signal, redirect: "error", cache: "no-store", credentials: "omit" });
     if (!result.response.ok) throw new CompatibilityError("connection");
     health = result.data;
   } catch (error) {

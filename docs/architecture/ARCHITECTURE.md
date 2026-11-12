@@ -445,3 +445,7 @@ No architecture question is open; Q1–Q54 were closed on 2026-10-25 ([OPEN_QUES
 | Configuration | Deployment < Organization < Project < user, with locks | [0039](adr/0039-configuration-scopes-and-resolution-order.md) |
 
 Observability technology (not an ADR-level dependency): OpenTelemetry (OTLP) traces and metrics, a Prometheus scrape endpoint, and structured JSON logs via Go `log/slog`.
+
+## Compact authentication implementation evidence
+
+The ADR-0034/0061 compact HTTP/session and private-discovery adapters exist under `services/platform/internal/adapter`, outside the pure domain. Their Linux unit, loopback integration and Firefox evidence is scoped in [IAM-001 validation](../validation/m3/2026-11-12-linux-iam-001.md). They do not supply a composed product server, CLI/UI or cross-platform private-discovery support. Public Event transport and lifecycle-watch wiring remain part of #18; secret-safe structured logging remains #170. Sessions own no authoritative product state, and no Worker/Provider boundary changes.
