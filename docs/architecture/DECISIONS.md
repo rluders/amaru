@@ -98,3 +98,4 @@ ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-2
 ## Relationship to the prototype ADRs
 
 The earlier internal implementation has its own ADR-001…029 (two files numbered 009). They govern that codebase and are **not** Amaru decisions. They are evidence: an Amaru ADR that keeps, changes or drops a prototype decision cites it.
+| [0060](adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md) | Adapt selected prototype auth and discovery helpers for compact installs | accepted | 2026-11-12 |
