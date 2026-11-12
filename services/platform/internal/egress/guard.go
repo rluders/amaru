@@ -27,6 +27,8 @@ type Guard struct {
 	Resolver Resolver
 	// Timeout bounds one dial; zero means 10 s.
 	Timeout time.Duration
+	// Dial receives only vetted IP literals; nil uses net.Dialer. Composition roots may inject it.
+	Dial func(context.Context, string, string) (net.Conn, error)
 }
 
 func (g Guard) resolve(ctx context.Context, host string) ([]netip.Addr, error) {
@@ -81,9 +83,13 @@ func (g Guard) DialContext(ctx context.Context, network, address string) (net.Co
 		timeout = 10 * time.Second
 	}
 	d := net.Dialer{Timeout: timeout}
+	dial := g.Dial
+	if dial == nil {
+		dial = d.DialContext
+	}
 	var last error
 	for _, a := range addrs {
-		c, err := d.DialContext(ctx, network, net.JoinHostPort(a.String(), port))
+		c, err := dial(ctx, network, net.JoinHostPort(a.String(), port))
 		if err == nil {
 			return c, nil
 		}

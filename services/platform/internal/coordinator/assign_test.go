@@ -89,3 +89,5 @@ func TestEveryCommandIdempotent(t *testing.T) {
 	coordtest.IdempotencySuite(t, factory)
 	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
 }
+
+func TestEgressConsent(t *testing.T) { coordtest.EgressSuite(t, newFakes) }
