@@ -1,15 +1,15 @@
 ---
 title: Store Project discovery settings in Platform state
-status: proposed
+status: accepted
 date: 2026-11-12
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0064. Store Project discovery settings in Platform state
 
 ## Context
 
-After [PR #337](https://github.com/rluders/amaru/pull/337), [PRJ-002 #191](https://github.com/rluders/amaru/issues/191) still needs isolated settings. The authorized Project application boundary and committed Workflow loader exist; settings storage and public handlers do not. This proposal resolves the single existing discovery switch before implementation, rather than adopting the wider draft configuration format.
+After [PR #337](https://github.com/rluders/amaru/pull/337), [PRJ-002 #191](https://github.com/rluders/amaru/issues/191) still needs isolated settings. The authorized Project application boundary and committed Workflow loader exist; settings storage and public handlers do not. This decision resolves the single existing discovery switch before implementation, rather than adopting the wider draft configuration format.
 
 Verified at #18 integration `4f918078dc484b5a431eb05ac85bfa551b4f2fd6`:
 
@@ -23,7 +23,7 @@ The choice is whether this discovery preference is a Git definition or Platform 
 
 ## Decision
 
-**Proposed; requires product-owner approval before implementation.**
+**Accepted by the product owner; implementation and verification remain pending.**
 
 1. **Keep discovery preferences in the Platform.** Store `importClaudeSkills` against the attached Project identity in the existing PostgreSQL adapter. Missing settings for an attached Project mean `false`; absent/unattached Projects return the same safe not-found result as the existing Project boundary. All clones of that Project on this Instance share the preference. Another Project, another Instance or a new attachment with a different Project identity does not inherit it. It is neither a user-wide default nor a credential/consent record.
 2. **Preserve the existing resource shape.** Keep the boolean in `ProjectSettings` and partial-update semantics in `UpdateSettings`. Use the current authenticated administrator/Project boundary before reads and mutations; never accept an Organization, root path or identity from the settings payload. Reject empty, unknown-field and non-boolean updates without writes. Apply a patch atomically to the current stored settings, preserving unspecified fields. Concurrent patches serialize at the authoritative store; for this one switch, the last committed explicit value wins. A repeated patch sets the same value. Do not claim expected-version conflicts or original-outcome command replay for this unversioned resource; adding either requires a separate reviewed shared-contract change.
@@ -44,7 +44,7 @@ Implementation and evidence required after approval:
 - Update schema/OpenAPI descriptions, generated SDK and focused fixtures/tests; serve the existing GET/PATCH resource only through #18's guarded product composition. Before claiming full #191, demonstrate discovery honors the preference for two actual attached roots and that enabling discovery cannot grant content trust.
 - Run focused race checks, isolated PostgreSQL tests when store/migration code changes, and `make check` on candidate and merged Linux results. macOS/Windows remain best effort for M3. A proposal check is documentation evidence, not settings behavior validation.
 
-**Architecture review: needs human decision.** The proposal keeps the accepted Platform/Client/Worker and pure-domain boundaries, avoids implicit repository mutation, and makes concurrent updates and failure behavior explicit. Its trade-off is Instance-local preference persistence instead of Git portability. This ADR does not complete #191, #18 or M3; execution configuration, other definitions, Work dependencies, secrets, clone lookup and composed API acceptance remain independent gates. Revisit if an actual second setting needs versioned edits, Organization defaults or a Git-reviewable execution effect.
+**Architecture review: accepted by the product owner.** The decision keeps the accepted Platform/Client/Worker and pure-domain boundaries, avoids implicit repository mutation, and makes concurrent updates and failure behavior explicit. Its trade-off is Instance-local preference persistence instead of Git portability. This ADR does not complete #191, #18 or M3; execution configuration, other definitions, Work dependencies, secrets, clone lookup and composed API acceptance remain independent gates. Revisit if an actual second setting needs versioned edits, Organization defaults or a Git-reviewable execution effect.
 
 ## Alternatives considered
 
@@ -54,4 +54,4 @@ Implementation and evidence required after approval:
 
 ## Approval
 
-Proposed by: Codex for #191 on 2026-11-12. Approved by: pending product-owner decision. No settings runtime implementation is authorized by this proposed ADR alone.
+Proposed by Codex for #191 on 2026-11-12. Approved by Ricardo Lüders (product owner) on 2026-11-12 in the repository task conversation: "Proposal on PR #338 approved. Update, merge, sync." Recorded in [PR #338](https://github.com/rluders/amaru/pull/338). Acceptance authorizes implementation; it is not evidence of implemented settings behavior.
