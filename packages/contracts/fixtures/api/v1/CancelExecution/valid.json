@@ -1,0 +1,4 @@
+{
+  "idempotencyKey": "cancel-1",
+  "reason": "Stopped by owner"
+}

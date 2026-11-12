@@ -110,7 +110,7 @@ func TestWorkerInterfaceParity(t *testing.T) {
 					}
 					if tc.outcome == ports.OutcomeCancelled {
 						r.until("running state", func() bool { return stepOf(t, r.store, a.ExecutionID).State == domain.StepRunning })
-						if _, _, err := r.c.Cancel(r.ctx, coordinator.CancelRequest{Key: "cancel", ExecutionID: a.ExecutionID,
+						if _, _, err := r.c.Cancel(r.ctx, coordinator.CancelRequest{ActorID: "tester", Key: "cancel", ExecutionID: a.ExecutionID,
 							By: domain.Actor{Kind: domain.ActorHuman, Authority: "owner"}}); err != nil {
 							t.Fatal(err)
 						}

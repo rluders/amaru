@@ -505,3 +505,16 @@ func TestEvidenceBoundApprovalsWithPostgres(t *testing.T) {
 		return coordtest.SkillStores{Executions: NewExecutionStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Skills: NewSkillStore(db), Contexts: NewContextStore(db)}
 	}, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+func TestEveryCommandIdempotentWithPostgres(t *testing.T) {
+	factory := func(t *testing.T) coordtest.CommandStores {
+		db := migratedDB(t)
+		var reopen func() coordtest.CommandStores
+		reopen = func() coordtest.CommandStores {
+			return coordtest.CommandStores{Executions: NewExecutionStore(db), Grants: NewGrantStore(db), Trust: NewTrustStore(db), Projects: NewProjectStore(db), Reopen: reopen}
+		}
+		return reopen()
+	}
+	coordtest.IdempotencySuite(t, factory)
+	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
+}

@@ -52,3 +52,19 @@ void (() => {
   // @ts-expect-error path parameters are required
   void client.GET("/projects/{projectId}/executions/{id}/events", {});
 });
+
+
+test("mutating execution and Approval commands carry caller keys in their bodies", async () => {
+  const { f, seen } = fakeFetch(() => Response.json({}));
+  const client = createClient({ baseUrl: "http://x.test/v1", fetch: f });
+  await client.POST("/projects/{projectId}/executions/{id}/cancel", {
+    params: { path: { projectId: "p", id: "e" } },
+    body: { idempotencyKey: "cancel-1", reason: "Stopped by owner" },
+  });
+  await client.POST("/projects/{projectId}/approvals/{approvalId}/decision", {
+    params: { path: { projectId: "p", approvalId: "a" } },
+    body: { idempotencyKey: "decision-1", outcome: "approved", evidenceDigest: "sha256:abc" },
+  });
+  assert.deepEqual(await seen[0]!.json(), { idempotencyKey: "cancel-1", reason: "Stopped by owner" });
+  assert.equal((await seen[1]!.json()).idempotencyKey, "decision-1");
+});

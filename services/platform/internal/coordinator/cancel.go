@@ -21,6 +21,8 @@ type CancelRequest struct {
 	ExecutionID string
 	Reason      string
 	By          domain.Actor
+	// ActorID is the authenticated human identity; Policy actors identify themselves in Authority.
+	ActorID string `json:",omitempty"`
 }
 
 // Cancelled is the outcome of Cancel, as recorded for the key.
@@ -49,10 +51,10 @@ var systemActor = domain.Actor{Kind: domain.ActorPolicy, Authority: CmdCancel}
 // domain.ErrInvalidTransition. A held Step whose Worker has no session here (the Worker is gone)
 // is not reached: it ends by the restart rule, and Reconcile then settles the cancel.
 func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled, bool, error) {
-	if req.Key == "" || req.ExecutionID == "" {
+	if !validCommandKey(req.Key) || req.ExecutionID == "" {
 		return Cancelled{}, false, fmt.Errorf("%w: cancel needs an idempotency key and an execution id", domain.ErrInvalid)
 	}
-	if !req.By.MayCancel() {
+	if !req.By.MayCancel() || (req.By.Kind == domain.ActorHuman && req.ActorID == "") {
 		return Cancelled{}, false, fmt.Errorf("%w: %q may not cancel an execution", domain.ErrNotPermitted, req.By.Kind)
 	}
 	fp, err := fingerprint(req)
@@ -60,12 +62,15 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 		return Cancelled{}, false, err
 	}
 	for range maxEditAttempts {
-		if out, found, err := replay[Cancelled](ctx, c, CmdCancel, req.Key, fp); err != nil || found {
+		if out, found, err := replay[Cancelled](ctx, c.store, CmdCancel, req.Key, fp); err != nil || found {
 			return out, found, err
 		}
 		e, steps, err := c.store.Get(ctx, req.ExecutionID)
 		if err != nil {
 			return Cancelled{}, false, err
+		}
+		if out, found, err := replay[Cancelled](ctx, c.store, CmdCancel, req.Key, fp); err != nil || found {
+			return out, found, err
 		}
 		if e.State.Terminal() {
 			return Cancelled{}, false, fmt.Errorf("%w: execution %s is %s", domain.ErrInvalidTransition, e.ID, e.State)

@@ -77,3 +77,15 @@ func TestApprovalOverInProcessLink(t *testing.T) {
 func TestPolicyOverInProcessLink(t *testing.T) {
 	coordtest.PolicySuite(t, newFakes, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
 }
+
+func TestEveryCommandIdempotent(t *testing.T) {
+	factory := func(*testing.T) coordtest.CommandStores {
+		e, p, g := fakes.NewExecutionStore(), fakes.NewProjectStore(), fakes.NewGrantStore()
+		tr := fakes.NewTrustStore(p)
+		fakes.LinkAudit(e, g)
+		fakes.LinkTrustAudit(e, tr)
+		return coordtest.CommandStores{Executions: e, Projects: p, Grants: g, Trust: tr}
+	}
+	coordtest.IdempotencySuite(t, factory)
+	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
+}

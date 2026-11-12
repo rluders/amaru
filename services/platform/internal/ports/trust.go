@@ -10,6 +10,11 @@ import (
 // and ref; it is never deleted, so a revoked record and the hash it held stay readable. Every
 // Save is audited in the same transaction.
 type TrustStore interface {
+	CommandReader
+	// SaveOnce atomically stores the trust, audit event and command outcome. A taken key returns
+	// ErrDuplicateCommand and writes nothing. Revocation of a replaced trust returns ErrConflict.
+	SaveOnce(ctx context.Context, rec domain.CommandRecord, t domain.Trust) error
+
 	AuditLog
 	// Save stores t, replacing the record of the same Project, kind and ref. A Trust that is not
 	// revoked is a grant of trust (a first one, a renewal at a new hash, or a trust after a

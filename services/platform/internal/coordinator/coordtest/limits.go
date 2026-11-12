@@ -331,7 +331,7 @@ func limitLifecycle(t *testing.T, newStore func(*testing.T) ports.ExecutionStore
 					s.expectNothing()
 					assertLimitWaiting(t, store, next.Execution.ID, 2, scope.reason)
 					if outcome == ports.OutcomeCancelled {
-						if _, _, err := c.Cancel(s.ctx, coordinator.CancelRequest{Key: "cancel", ExecutionID: first.Execution.ID, By: human}); err != nil {
+						if _, _, err := c.Cancel(s.ctx, coordinator.CancelRequest{ActorID: "tester", Key: "cancel", ExecutionID: first.Execution.ID, By: human}); err != nil {
 							t.Fatal(err)
 						}
 						if m, ok := s.recv().(ports.Cancel); !ok || m.AttemptID != a.AttemptID {

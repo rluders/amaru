@@ -26,6 +26,17 @@ const trustColumns = `project_key, kind, ref, hash, trusted_by, trusted_at, revo
 const foreignKeyViolation = "23503"
 
 func (s *TrustStore) Save(ctx context.Context, t domain.Trust) error {
+	return s.save(ctx, t, nil)
+}
+
+func (s *TrustStore) SaveOnce(ctx context.Context, rec domain.CommandRecord, t domain.Trust) error {
+	if err := rec.Valid(); err != nil {
+		return err
+	}
+	return s.save(ctx, t, &rec)
+}
+
+func (s *TrustStore) save(ctx context.Context, t domain.Trust, rec *domain.CommandRecord) error {
 	if err := t.Validate(); err != nil {
 		return err
 	}
@@ -34,6 +45,11 @@ func (s *TrustStore) Save(ctx context.Context, t domain.Trust) error {
 		return fmt.Errorf("postgres: save trust: %w", err)
 	}
 	defer tx.Rollback()
+	if rec != nil {
+		if err := insertCommand(ctx, tx, *rec); err != nil {
+			return err
+		}
+	}
 	// Lock the row, so the audit event is derived from the record this write replaces.
 	prev, err := scanTrust(tx.QueryRowContext(ctx,
 		`SELECT `+trustColumns+` FROM project_trust WHERE project_key = $1 AND kind = $2 AND ref = $3 FOR UPDATE`,
@@ -45,6 +61,10 @@ func (s *TrustStore) Save(ctx context.Context, t domain.Trust) error {
 		return err
 	default:
 		prevp = &prev
+	}
+	if rec != nil && t.RevokedAt != nil && prevp != nil &&
+		(t.Hash != prevp.Hash || t.TrustedBy != prevp.TrustedBy || !t.TrustedAt.Equal(prevp.TrustedAt)) {
+		return domain.ErrConflict
 	}
 	ev, err := domain.TrustAuditEvent(prevp, t)
 	if err != nil {
@@ -117,4 +137,8 @@ func scanTrust(r rowScanner) (domain.Trust, error) {
 	t.ProjectKey, t.Kind, t.TrustedAt = domain.ProjectKey(key), domain.TrustKind(kind), t.TrustedAt.UTC()
 	t.RevokedAt = utcPtr(timePtr(revoked))
 	return t, nil
+}
+
+func (s *TrustStore) Command(ctx context.Context, name, key string) (domain.CommandRecord, error) {
+	return (&ExecutionStore{db: s.db}).Command(ctx, name, key)
 }

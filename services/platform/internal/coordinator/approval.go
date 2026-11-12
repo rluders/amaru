@@ -105,8 +105,11 @@ type Decided struct {
 // with the same request. A person without the role, an Agent, a stale digest, a rejection without
 // a rationale and an Approval already decided or voided write nothing.
 func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (Decided, bool, error) {
-	if req.Key == "" || req.ApprovalID == "" {
+	if !validCommandKey(req.Key) || req.ApprovalID == "" {
 		return Decided{}, false, fmt.Errorf("%w: a decision needs an idempotency key and an approval id", domain.ErrInvalid)
+	}
+	if req.By.Kind != domain.PrincipalHuman || req.By.ID == "" || !req.By.Role.Valid() || !req.By.Role.MayDecideApprovals() {
+		return Decided{}, false, domain.ErrNotPermitted
 	}
 	fp, err := fingerprint(struct {
 		Approval, Rationale, Digest string
@@ -117,7 +120,7 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 		return Decided{}, false, err
 	}
 	for range maxEditAttempts {
-		if out, found, err := replay[Decided](ctx, c, CmdDecideApproval, req.Key, fp); err != nil || found {
+		if out, found, err := replay[Decided](ctx, c.store, CmdDecideApproval, req.Key, fp); err != nil || found {
 			return out, found, err
 		}
 		a, err := c.store.Approval(ctx, req.ApprovalID)
@@ -127,6 +130,10 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 		e, steps, err := c.store.Get(ctx, a.Gate.ExecutionID)
 		if err != nil {
 			return Decided{}, false, err
+		}
+		// A concurrent decision may have committed since the first replay lookup.
+		if out, found, err := replay[Decided](ctx, c.store, CmdDecideApproval, req.Key, fp); err != nil || found {
+			return out, found, err
 		}
 		i := indexOfStep(steps, a.Gate.StepID)
 		if i < 0 {

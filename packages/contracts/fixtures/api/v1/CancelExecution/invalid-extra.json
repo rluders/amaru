@@ -1,0 +1,4 @@
+{
+  "idempotencyKey": "k",
+  "actor": "untrusted"
+}

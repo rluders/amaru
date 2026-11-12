@@ -1,1 +1,3 @@
-{}
+{
+  "idempotencyKey": "command-1"
+}

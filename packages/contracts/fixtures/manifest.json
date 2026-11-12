@@ -2362,6 +2362,61 @@
       "kind": "invalid",
       "expect": "invalid",
       "error": "pattern@/dependsOn/0"
+    },
+    {
+      "file": "api/v1/CancelExecution/invalid-empty-key.json",
+      "schema": "CancelExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "minLength@/idempotencyKey"
+    },
+    {
+      "file": "api/v1/CancelExecution/invalid-extra.json",
+      "schema": "CancelExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/"
+    },
+    {
+      "file": "api/v1/CancelExecution/invalid-long-key.json",
+      "schema": "CancelExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "maxLength@/idempotencyKey"
+    },
+    {
+      "file": "api/v1/CancelExecution/invalid-no-idempotency-key.json",
+      "schema": "CancelExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/CancelExecution/valid.json",
+      "schema": "CancelExecution.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/CreateExecution/invalid-no-idempotency-key.json",
+      "schema": "CreateExecution.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/DecideApproval/invalid-no-idempotency-key.json",
+      "schema": "DecideApproval.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/RunWorkflow/invalid-no-idempotency-key.json",
+      "schema": "RunWorkflow.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
     }
   ]
 }

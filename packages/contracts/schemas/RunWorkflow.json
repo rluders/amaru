@@ -15,7 +15,11 @@
     "idempotencyKey": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 128
+      "maxLength": 128,
+      "description": "Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058)."
     }
-  }
+  },
+  "required": [
+    "idempotencyKey"
+  ]
 }

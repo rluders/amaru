@@ -106,7 +106,7 @@ export interface paths {
         put?: never;
         /**
          * @description Resolves `capability` (and optional `providerId`) to a provider and starts the execution.
-         *     `idempotencyKey` makes retries safe. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
+         *     `idempotencyKey` is required and makes retries safe under ADR-0058. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
          */
         post: operations["createExecution"];
         delete?: never;
@@ -146,7 +146,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Idempotent. Cancelling a terminal execution returns it unchanged. */
+        /** @description Requires `idempotencyKey`. A retry of the same key and normalized request returns the original command result, even after the Execution ends. A new cancellation of a terminal Execution is `conflict`. Conflicting key reuse is `conflict`; command records have no automatic expiry in M3 (ADR-0058). */
         post: operations["cancelExecution"];
         delete?: never;
         options?: never;
@@ -570,7 +570,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description A human principal approves or rejects a `requested` Approval. Only humans may decide (ADR-0036); the decider is the authenticated principal, never a body field. Errors: `not_found`; `forbidden` when the role, Team or separation-of-duties rule is not met (recorded as an Event, the Approval is unchanged); `conflict` when the Approval is not `requested` or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are decided by ADR-0048 (accepted 2026-10-26). */
+        /** @description A human principal approves or rejects a `requested` Approval. `idempotencyKey` is required; identical retries return the original decision and conflicting reuse is `conflict` (ADR-0058, no automatic expiry in M3). Only humans may decide (ADR-0036); the decider is the authenticated principal, never a body field. Errors: `not_found`; `forbidden` when the role, Team or separation-of-duties rule is not met (recorded as an Event, the Approval is unchanged); `conflict` when the Approval is not `requested` or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are decided by ADR-0048 (accepted 2026-10-26). */
         post: operations["decideApproval"];
         delete?: never;
         options?: never;
@@ -1027,8 +1027,15 @@ export interface components {
                 /** @description Artifact id (project-relative note path) for asset.generate. */
                 artifactId?: string;
             } & (unknown | unknown);
-            idempotencyKey?: string;
+            /** @description Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058). */
+            idempotencyKey: string;
             workItemId?: components["schemas"]["WorkItemId"];
+        };
+        /** CancelExecution */
+        CancelExecution: {
+            /** @description Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058). */
+            idempotencyKey: string;
+            reason?: string;
         };
         /**
          * Ulid
@@ -1627,7 +1634,8 @@ export interface components {
         RunWorkflow: {
             providerId?: string;
             workItemId?: components["schemas"]["WorkItemId"];
-            idempotencyKey?: string;
+            /** @description Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058). */
+            idempotencyKey: string;
         };
         /**
          * AgentModel
@@ -2092,6 +2100,8 @@ export interface components {
             /** @description The digest the approver was shown; a mismatch with the Approval is `conflict`. */
             evidenceDigest: components["schemas"]["Digest"];
             rationale?: string;
+            /** @description Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058). */
+            idempotencyKey: string;
         };
         /**
          * Hello
@@ -2364,7 +2374,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelExecution"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

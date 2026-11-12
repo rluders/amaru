@@ -37,8 +37,8 @@ type ExecutionStore interface {
 	// approvals are stored with the Execution, at version 1, each with its `approval.requested`
 	// audit event in the same write; each must be requested and gate a Step in steps.
 	CreateOnce(ctx context.Context, rec domain.CommandRecord, e domain.Execution, steps []domain.StepExecution, approvals ...domain.Approval) (domain.Execution, []domain.StepExecution, error)
-	// Command returns the stored record for (name, key), or domain.ErrNotFound.
-	Command(ctx context.Context, name, key string) (domain.CommandRecord, error)
+	CommandReader
+
 	// Commit applies the change and returns the stored rows with their new versions (the
 	// Execution, if any, then the Steps in the order given) and the appended events with their Seq.
 	// It returns domain.ErrConflict when any version is stale and domain.ErrNotFound when a row
@@ -98,4 +98,9 @@ type ExecutionQueue interface {
 	// ByAttempt returns the Step that was leased as attemptID, even after its Lease ended, or
 	// domain.ErrNotFound.
 	ByAttempt(ctx context.Context, attemptID string) (StepRef, error)
+}
+
+// CommandReader reads durable outcomes in the authoritative store's (name, key) namespace.
+type CommandReader interface {
+	Command(ctx context.Context, name, key string) (domain.CommandRecord, error)
 }

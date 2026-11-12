@@ -24,7 +24,7 @@ func CancelSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 	}
 	ctx := context.Background()
 	cancel := func(c *coordinator.Coordinator, key, exec string) (coordinator.Cancelled, bool, error) {
-		return c.Cancel(ctx, coordinator.CancelRequest{Key: key, ExecutionID: exec, Reason: "no longer needed", By: human})
+		return c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: key, ExecutionID: exec, Reason: "no longer needed", By: human})
 	}
 	state := func(t *testing.T, s ports.ExecutionStore, exec string) (domain.Execution, map[string]domain.StepState) {
 		t.Helper()
@@ -95,7 +95,7 @@ func CancelSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 			t.Fatalf("replay %+v replayed=%v err=%v", again, replayed, err)
 		}
 		before := kinds(t, store, got.Execution.ID)
-		if _, _, err := c.Cancel(ctx, coordinator.CancelRequest{Key: "c1", ExecutionID: got.Execution.ID, Reason: "other", By: human}); !errors.Is(err, domain.ErrKeyReused) {
+		if _, _, err := c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: "c1", ExecutionID: got.Execution.ID, Reason: "other", By: human}); !errors.Is(err, domain.ErrKeyReused) {
 			t.Fatalf("got %v, want ErrKeyReused", err)
 		}
 		if _, _, err := cancel(c, "c2", got.Execution.ID); !errors.Is(err, domain.ErrInvalidTransition) {
@@ -113,7 +113,7 @@ func CancelSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 		for name, by := range map[string]domain.Actor{
 			"none": {}, "delivery loop": {Kind: domain.ActorDeliveryLoop, Authority: "x"}, "policy without a rule": {Kind: domain.ActorPolicy},
 		} {
-			_, _, err := c.Cancel(ctx, coordinator.CancelRequest{Key: "c-" + name, ExecutionID: got.Execution.ID, By: by})
+			_, _, err := c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: "c-" + name, ExecutionID: got.Execution.ID, By: by})
 			if !errors.Is(err, domain.ErrNotPermitted) {
 				t.Errorf("%s: got %v, want ErrNotPermitted", name, err)
 			}
@@ -121,7 +121,7 @@ func CancelSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 		if e, _ := state(t, store, got.Execution.ID); e.State != domain.ExecQueued {
 			t.Fatalf("a refused cancel changed the Execution to %s", e.State)
 		}
-		if _, _, err := c.Cancel(ctx, coordinator.CancelRequest{Key: "p", ExecutionID: got.Execution.ID, By: domain.Actor{Kind: domain.ActorPolicy, Authority: "rule-1"}}); err != nil {
+		if _, _, err := c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: "p", ExecutionID: got.Execution.ID, By: domain.Actor{Kind: domain.ActorPolicy, Authority: "rule-1"}}); err != nil {
 			t.Fatalf("a named Policy rule may cancel: %v", err)
 		}
 	})

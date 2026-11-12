@@ -14,6 +14,7 @@ import (
 // GrantStore is an in-memory ports.GrantStore.
 type GrantStore struct {
 	mu   sync.Mutex
+	cmds map[[2]string]domain.CommandRecord
 	byID map[string]domain.Grant
 	log  *AuditLog
 }
@@ -24,15 +25,31 @@ var (
 )
 
 func NewGrantStore() *GrantStore {
-	return &GrantStore{byID: map[string]domain.Grant{}, log: &AuditLog{}}
+	return &GrantStore{byID: map[string]domain.Grant{}, cmds: map[[2]string]domain.CommandRecord{}, log: &AuditLog{}}
 }
 
-func (s *GrantStore) Create(_ context.Context, g domain.Grant) (domain.Grant, error) {
+func (s *GrantStore) Create(ctx context.Context, g domain.Grant) (domain.Grant, error) {
+	return s.create(ctx, g, nil)
+}
+
+func (s *GrantStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Grant{}, err
+	}
+	return s.create(ctx, g, &rec)
+}
+
+func (s *GrantStore) create(ctx context.Context, g domain.Grant, rec *domain.CommandRecord) (domain.Grant, error) {
 	if err := g.Validate(); err != nil {
 		return domain.Grant{}, err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if rec != nil {
+		if _, exists := s.cmds[[2]string{rec.Name, rec.Key}]; exists {
+			return domain.Grant{}, domain.ErrDuplicateCommand
+		}
+	}
 	if _, ok := s.byID[g.ID]; ok {
 		return domain.Grant{}, fmt.Errorf("%w: grant %s", domain.ErrExists, g.ID)
 	}
@@ -41,6 +58,9 @@ func (s *GrantStore) Create(_ context.Context, g domain.Grant) (domain.Grant, er
 		return domain.Grant{}, err
 	}
 	g.Version = 1
+	if rec != nil {
+		s.cmds[[2]string{rec.Name, rec.Key}] = clone(*rec)
+	}
 	s.byID[g.ID] = cloneGrant(g)
 	s.log.append(ev)
 	return cloneGrant(g), nil
@@ -56,12 +76,28 @@ func (s *GrantStore) Get(_ context.Context, id string) (domain.Grant, error) {
 	return cloneGrant(g), nil
 }
 
-func (s *GrantStore) Update(_ context.Context, g domain.Grant) (domain.Grant, error) {
+func (s *GrantStore) Update(ctx context.Context, g domain.Grant) (domain.Grant, error) {
+	return s.update(ctx, g, nil)
+}
+
+func (s *GrantStore) UpdateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Grant{}, err
+	}
+	return s.update(ctx, g, &rec)
+}
+
+func (s *GrantStore) update(ctx context.Context, g domain.Grant, rec *domain.CommandRecord) (domain.Grant, error) {
 	if err := g.Validate(); err != nil {
 		return domain.Grant{}, err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if rec != nil {
+		if _, exists := s.cmds[[2]string{rec.Name, rec.Key}]; exists {
+			return domain.Grant{}, domain.ErrDuplicateCommand
+		}
+	}
 	old, ok := s.byID[g.ID]
 	if !ok {
 		return domain.Grant{}, fmt.Errorf("%w: grant %s", domain.ErrNotFound, g.ID)
@@ -86,6 +122,9 @@ func (s *GrantStore) Update(_ context.Context, g domain.Grant) (domain.Grant, er
 		s.log.append(ev)
 	}
 	g.Version = old.Version + 1
+	if rec != nil {
+		s.cmds[[2]string{rec.Name, rec.Key}] = clone(*rec)
+	}
 	s.byID[g.ID] = cloneGrant(g)
 	return cloneGrant(g), nil
 }
@@ -135,4 +174,14 @@ func sameGrant(a, b domain.Grant) bool {
 // Audit implements ports.AuditLog.
 func (s *GrantStore) Audit(ctx context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
 	return s.log.Audit(ctx, after, limit)
+}
+
+func (s *GrantStore) Command(_ context.Context, name, key string) (domain.CommandRecord, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rec, ok := s.cmds[[2]string{name, key}]
+	if !ok {
+		return domain.CommandRecord{}, domain.ErrNotFound
+	}
+	return clone(rec), nil
 }
