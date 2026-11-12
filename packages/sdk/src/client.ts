@@ -1,5 +1,5 @@
 import createOpenApiClient from "openapi-fetch";
-import type { paths } from "./generated/schema.ts";
+import type { components, paths } from "./generated/schema.ts";
 
 export interface ClientOptions {
   /** Platform API root including the major version, for example http://127.0.0.1:7777/v1. */
@@ -12,11 +12,59 @@ export interface ClientOptions {
 
 /** Typed HTTP client: every path, parameter, body and response comes from the generated contract types. */
 export function createClient(options: ClientOptions) {
-  return createOpenApiClient<paths>({
+  const client = createOpenApiClient<paths>({
     baseUrl: options.baseUrl,
     ...(options.fetch ? { fetch: options.fetch } : {}),
     ...(options.token ? { headers: { Authorization: `Bearer ${options.token}` } } : {}),
   });
+  client.use({
+    async onRequest({ request, schemaPath, options }) {
+      if (schemaPath === "/health") return;
+      // Check every operation: a restarted/replaced Instance must negotiate again.
+      await checkCompatibility(options.baseUrl, options.fetch, request.signal);
+    },
+  });
+  return client;
 }
 
 export type Client = ReturnType<typeof createClient>;
+
+export type CompatibilityFailure = "connection" | "invalid-health" | "incompatible";
+
+/** Safe to display as a connection/compatibility state; contains no URL, credentials or response body. */
+export class CompatibilityError extends Error {
+  readonly kind: CompatibilityFailure;
+
+  constructor(kind: CompatibilityFailure) {
+    super({
+      connection: "Cannot connect to the Instance health endpoint.",
+      "invalid-health": "The Instance returned an invalid health response.",
+      incompatible: "The Instance protocol is incompatible; this client supports protocol major 1.",
+    }[kind]);
+    this.name = "CompatibilityError";
+    this.kind = kind;
+  }
+}
+
+async function checkCompatibility(baseUrl: string, fetch: typeof globalThis.fetch, signal: AbortSignal): Promise<void> {
+  const probe = createOpenApiClient<paths>({ baseUrl, fetch });
+  let health: components["schemas"]["Health"] | undefined;
+  try {
+    const result = await probe.GET("/health", { signal, redirect: "error", cache: "no-store" });
+    if (!result.response.ok) throw new CompatibilityError("connection");
+    health = result.data;
+  } catch (error) {
+    if (error instanceof CompatibilityError) throw error;
+    if (error instanceof SyntaxError) throw new CompatibilityError("invalid-health");
+    throw new CompatibilityError("connection");
+  }
+  // Generated types describe valid wire data; they do not validate an untrusted response.
+  if (!health || typeof health !== "object" ||
+      !Number.isSafeInteger(health.protocolVersion) || health.protocolVersion < 1 ||
+      health.status !== "ok" || typeof health.platformVersion !== "string" || !health.platformVersion ||
+      typeof health.startedAt !== "string" || !Number.isFinite(Date.parse(health.startedAt)) ||
+      !Number.isSafeInteger(health.uptimeSec) || health.uptimeSec < 0) {
+    throw new CompatibilityError("invalid-health");
+  }
+  if (health.protocolVersion !== 1) throw new CompatibilityError("incompatible");
+}

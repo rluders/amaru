@@ -6,6 +6,9 @@ function fakeFetch(respond: (req: Request) => Response) {
   const seen: Request[] = [];
   const f = async (input: Request | URL | string, init?: RequestInit): Promise<Response> => {
     const req = input instanceof Request ? input : new Request(input, init);
+    if (new URL(req.url).pathname.endsWith("/health")) {
+      return Response.json({ status: "ok", protocolVersion: 1, platformVersion: "test", startedAt: "2026-11-12T00:00:00Z", uptimeSec: 0 });
+    }
     seen.push(req);
     return respond(req);
   };
