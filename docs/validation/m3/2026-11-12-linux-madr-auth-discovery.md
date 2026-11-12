@@ -2,7 +2,7 @@
 
 ## Scope and environment
 
-Runner: Codex for Ricardo Lüders. Linux `7.2.11-100.fc43.x86_64`, Go `go1.26.0 linux/amd64`. Amaru base: `56d6b7f31ddd2e189f9591e79383fc04447b0e4b`, #18 integration branch. Decision: proposed [ADR-0060](../../architecture/adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md), issue [#84](https://github.com/rluders/amaru/issues/84).
+Runner: Codex for Ricardo Lüders. Linux `7.2.11-100.fc43.x86_64`, Go `go1.26.0 linux/amd64`. Amaru base: `56d6b7f31ddd2e189f9591e79383fc04447b0e4b`, #18 integration branch. Decision: accepted [ADR-0060](../../architecture/adr/0060-adapt-the-prototype-auth-and-discovery-for-compact-installs.md), issue [#84](https://github.com/rluders/amaru/issues/84).
 
 Source: `rluders/weave-obsidian` at immutable commit `c8a2f6e983beba59edc446f36df2f442edaa9855`. Inspected the four files below using `git show` at that SHA. No source repository was changed and no code was moved into Amaru.
 
@@ -32,10 +32,10 @@ Tests executed: `TestTokenUniqueAndComparable`, `TestWriteIsAtomicPrivateAndRemo
 - Source HTTP middleware (`server.go` lines 197–243) allows missing Origin and Event-stream query tokens. It cannot supply ADR-0034's launch/session/Host/CSRF boundary; ADR-0059 excludes it from adaptation.
 - Current OpenAPI `x-protocol.origin-policy` is token-only for missing Origin. #92 must reconcile browser-session metadata, auth operations and CSRF wire details through the existing contract review/fixture/SDK process; no endpoint was invented in this proposal.
 
-Architecture review: **needs human decision** on selective adaptation, exact source/history and evidence gaps. No domain/client/Worker boundary change, dependency or infrastructure introduced. Implementation constraints and self-contained behavior tests are in ADR-0060.
+Architecture review: Ricardo Lüders approved selective adaptation, exact source/history and evidence gaps on 2026-11-12; see ADR-0060 Approval. No domain/client/Worker boundary change, dependency or infrastructure introduced. Implementation constraints and self-contained behavior tests are in ADR-0060.
 
 ## Limits and approval
 
 No Amaru authentication/discovery code or new tests are implemented here. Amaru browser launch, session lifecycle, Host/Origin/CSRF rejection, concurrent discovery cleanup, runtime log redaction and native OS permissions are **not validated**. No complete security audit was performed. Linux is required for remaining M3; macOS/Windows are best effort and not validated here. Windows security requirements remain requirements even though native validation is deferred.
 
-Readiness 1–4 and 7 have decision-stage evidence; 5 (Amaru tests), 6 (real validation) and 8 (owner approval) remain unmet. This proposed ADR does not close #84 or authorize code migration. The product owner must explicitly approve the component, selected Adapt boundary, exact commit, fresh import with provenance and stated gaps before acceptance.
+Readiness 1–4, 7 and 8 have decision-stage evidence; 5 (Amaru tests) and 6 (real validation) remain unmet implementation requirements. Ricardo Lüders explicitly approved the component, selected Adapt boundary, exact commit, fresh import with provenance and stated gaps on 2026-11-12 in the implementation conversation: “Proposal approved. Update, and merge. Sync, and continue next task.” Accepted ADR-0060 authorizes only its selected adaptation scope; #84 closes after merge, while #92 and #18 remain open.
