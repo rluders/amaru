@@ -4,11 +4,18 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**No blocking questions.** Q61 was closed by owner approval of ADR-0062 on 2026-11-12; #191 implementation and verification remain pending. Q60 was closed by owner approval of ADR-0058 on 2026-11-12; EXE-005 implementation and contract verification remain pending. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
+**No blocking questions.** Q62 was closed by owner approval of ADR-0063 on 2026-11-12; #335 implementation and verification remain pending. Q61 was closed by owner approval of ADR-0062 on 2026-11-12; #191 implementation and verification remain pending. Q60 was closed by owner approval of ADR-0058 on 2026-11-12; EXE-005 implementation and contract verification remain pending. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
   - Q13's metadata split now keeps Teams out of Git (Q27).
+
+### Q62. Terminal Execution aggregation and mixed Step outcomes
+
+- **Question:** how does ordinary Step failure stop remaining work and settle its parent when other Steps are leased, awaiting Approval, interrupted or timed out? How does it race with explicit cancellation and human resume?
+- **Evidence:** #334 exposed a parent remaining `running` after final Step failure and restart; [#335](https://github.com/rluders/amaru/issues/335) records the reproduction. The predecessor stops on failure, but the accepted durable model preserves human waits and permits multiple held Steps.
+- **Decision:** [accepted ADR-0063](adr/0063-terminal-execution-aggregation-and-failure-drain.md): drain a failed run, preserve human waits, let committed explicit cancellation take precedence, and aggregate atomically after all Steps end. Includes explicit pre-start completion transitions and a resume guard during drain.
+- **Owner:** Ricardo Lüders. **Status:** closed; Ricardo Lüders explicitly approved ADR-0063 in the repository task conversation on 2026-11-12 ("Accept the proposed. Update and merge."); recorded in [PR #336](https://github.com/rluders/amaru/pull/336). Runtime implementation and verification in #335 remain pending. #18/#191 stay open.
 
 ### Q61. Public Project scope and ambiguous secret names
 
