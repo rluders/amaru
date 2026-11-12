@@ -26,6 +26,9 @@ type DefinitionPin struct {
 
 var revisionPattern = regexp.MustCompile(`^([0-9a-f]{40}|[0-9a-f]{64})$`)
 
+// ValidDefinitionRevision reports whether revision is a full lowercase Git commit ID.
+func ValidDefinitionRevision(revision string) bool { return revisionPattern.MatchString(revision) }
+
 // Pin validates w and returns the pin for it. revision is a Git commit id (SHA-1 or SHA-256, in
 // lowercase hex) or empty. A draft or archived Workflow cannot be pinned because it cannot run.
 func Pin(w Workflow, revision string) (DefinitionPin, error) {
@@ -35,7 +38,7 @@ func Pin(w Workflow, revision string) (DefinitionPin, error) {
 	if w.Status != WorkflowActive {
 		return DefinitionPin{}, invalid("workflow %s is %s; only an active workflow can run", w.ID, w.Status)
 	}
-	if revision != "" && !revisionPattern.MatchString(revision) {
+	if revision != "" && !ValidDefinitionRevision(revision) {
 		return DefinitionPin{}, invalid("revision must be a full Git commit id in lowercase hex")
 	}
 	snap, err := json.Marshal(w)

@@ -70,8 +70,8 @@ func (a *ProjectAccess) Execution(ctx context.Context, project domain.ProjectKey
 }
 
 // Submit derives attribution and Project identity from authorized context, not the body.
-// Client-supplied Workflow/Steps remain trusted internal inputs until Project definition loading
-// is composed; this method is not an HTTP create/run handler.
+// Workflow/Steps remain trusted internal inputs; named committed Workflow runs use RunWorkflow.
+// This method is not an HTTP create/run handler.
 func (a *ProjectAccess) Submit(ctx context.Context, project domain.ProjectKey, req SubmitRequest) (Submitted, bool, error) {
 	by, err := a.authorize(ctx, project)
 	if err != nil {
