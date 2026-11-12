@@ -518,3 +518,15 @@ func TestEveryCommandIdempotentWithPostgres(t *testing.T) {
 	coordtest.IdempotencySuite(t, factory)
 	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
 }
+
+func TestTerminalWithPostgres(t *testing.T) {
+	factory := func(t *testing.T) ports.ExecutionStore { return NewExecutionStore(migratedDB(t)) }
+	t.Run("in-process", func(t *testing.T) {
+		coordtest.TerminalSuite(t, factory, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+	})
+	t.Run("serialized", func(t *testing.T) {
+		coordtest.TerminalSuite(t, factory, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) {
+			return coordtest.SerializedLink(inproc.Pair())
+		})
+	})
+}

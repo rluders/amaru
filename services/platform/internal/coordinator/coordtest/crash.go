@@ -125,26 +125,26 @@ func scenarios() []scenario {
 		{"succeeded", func(e *domain.Execution, s *domain.StepExecution) error {
 			_ = e.Start(t0)
 			return chain(plan, lease(true), start, func(s *domain.StepExecution) error { return s.Finish(t0, domain.StepSucceeded, nil) })(s)
-		}, domain.StepSucceeded, "", "", domain.ExecRunning},
+		}, domain.StepSucceeded, "", "", domain.ExecSucceeded},
 		{"failed", func(e *domain.Execution, s *domain.StepExecution) error {
 			_ = e.Start(t0)
 			return chain(plan, lease(true), start, func(s *domain.StepExecution) error {
 				return s.Finish(t0, domain.StepFailed, &domain.ExecError{Code: "x", Message: "y"})
 			})(s)
-		}, domain.StepFailed, "", "", domain.ExecRunning},
+		}, domain.StepFailed, "", "", domain.ExecFailed},
 		{"cancelled", func(e *domain.Execution, s *domain.StepExecution) error {
 			_ = e.Start(t0)
 			return chain(plan, func(s *domain.StepExecution) error { return s.Cancel(t0) })(s)
 		},
-			domain.StepCancelled, "", "", domain.ExecRunning},
+			domain.StepCancelled, "", "", domain.ExecCancelled},
 		{"skipped", func(e *domain.Execution, s *domain.StepExecution) error {
 			_ = e.Start(t0)
 			return s.Skip(t0, "not needed")
-		}, domain.StepSkipped, "", "", domain.ExecRunning},
+		}, domain.StepSkipped, "", "", domain.ExecSucceeded},
 		{"refused", func(e *domain.Execution, s *domain.StepExecution) error {
 			_ = e.Start(t0)
 			return s.Refuse(t0, "policy")
-		}, domain.StepRefused, "", "", domain.ExecRunning},
+		}, domain.StepRefused, "", "", domain.ExecFailed},
 	}
 }
 
@@ -225,7 +225,12 @@ func CrashInjection(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 			if e.Version != e2.Version || st.Version != steps2[0].Version || len(evs) != len(evs2) {
 				t.Fatal("second restart changed settled state or events")
 			}
-			if sc.action == "" {
+			if sc.step.Terminal() {
+				if st.Version != st0.Version || e.Version != e0.Version+1 || len(evs) != 1 || e.EndedAt == nil {
+					t.Fatal("terminal Step was not aggregated exactly once")
+				}
+				return
+			} else if sc.action == "" {
 				// Untouched: same versions, no event, no report entry.
 				if st.Version != st0.Version || e.Version != e0.Version || len(evs) != 0 || rep.Retried+rep.Resumed+rep.Interrupted != 0 {
 					t.Fatalf("a Step that must be left alone changed: step v%d→v%d, exec v%d→v%d, events %v, report %+v",

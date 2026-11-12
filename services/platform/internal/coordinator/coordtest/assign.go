@@ -174,14 +174,14 @@ func AssignmentSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 			t.Fatalf("ack: %#v", ack)
 		}
 		e, st := s.step("e1", "s1")
-		if st.State != domain.StepSucceeded || st.CurrentLease != nil || st.EndedAt == nil || e.State != domain.ExecRunning {
+		if st.State != domain.StepSucceeded || st.CurrentLease != nil || st.EndedAt == nil || e.State != domain.ExecSucceeded || e.EndedAt == nil {
 			t.Fatalf("step %+v, execution %s", st, e.State)
 		}
 		kinds := []string{}
 		for _, ev := range s.events("e1") {
 			kinds = append(kinds, ev.Kind)
 		}
-		want := []string{domain.EventStepLeased, domain.EventStepStarted, domain.EventStepSucceeded}
+		want := []string{domain.EventStepLeased, domain.EventStepStarted, domain.EventStepSucceeded, domain.EventExecCompleted}
 		if fmt.Sprint(kinds) != fmt.Sprint(want) {
 			t.Fatalf("events %v, want %v", kinds, want)
 		}
@@ -196,7 +196,10 @@ func AssignmentSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		s.send(ports.AcceptAttempt{AttemptID: a.AttemptID, FencingToken: 1})
 		s.send(ports.Result{AttemptID: a.AttemptID, FencingToken: 1, Outcome: ports.OutcomeFailed, ErrorCode: "tests_failed", ErrorDetail: "2 failed"})
 		s.recv()
-		_, st := s.step("e1", "s1")
+		e, st := s.step("e1", "s1")
+		if e.State != domain.ExecFailed || e.EndedAt == nil {
+			t.Fatalf("parent remains %s after final Step", e.State)
+		}
 		if st.State != domain.StepFailed || st.Error == nil || st.Error.Code != "tests_failed" || st.Error.Message != "2 failed" {
 			t.Fatalf("step: %+v", st)
 		}

@@ -121,6 +121,9 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 	}
 	for range maxEditAttempts {
 		if out, found, err := replay[Decided](ctx, c.store, CmdDecideApproval, req.Key, fp); err != nil || found {
+			if err == nil && found {
+				err = c.settle(ctx, out.Step.ExecutionID)
+			}
 			return out, found, err
 		}
 		a, err := c.store.Approval(ctx, req.ApprovalID)
@@ -133,7 +136,20 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 		}
 		// A concurrent decision may have committed since the first replay lookup.
 		if out, found, err := replay[Decided](ctx, c.store, CmdDecideApproval, req.Key, fp); err != nil || found {
+			if err == nil && found {
+				err = c.settle(ctx, out.Step.ExecutionID)
+			}
 			return out, found, err
+		}
+		stopping, err := c.stopping(ctx, e, steps)
+		if err != nil {
+			return Decided{}, false, err
+		}
+		if stopping {
+			if err := c.settle(ctx, e.ID); err != nil {
+				return Decided{}, false, err
+			}
+			return Decided{}, false, fmt.Errorf("%w: execution is draining", domain.ErrInvalidTransition)
 		}
 		i := indexOfStep(steps, a.Gate.StepID)
 		if i < 0 {
@@ -175,13 +191,16 @@ func (c *Coordinator) DecideApproval(ctx context.Context, req DecideRequest) (De
 		if err != nil {
 			return Decided{}, false, fmt.Errorf("encode outcome: %w", err)
 		}
-		_, err = c.store.Commit(ctx, ports.ExecutionChange{Steps: []domain.StepExecution{st}, Approvals: []domain.Approval{a},
+		_, err = c.store.Commit(ctx, ports.ExecutionChange{Execution: &e, CheckSteps: steps, Steps: []domain.StepExecution{st}, Approvals: []domain.Approval{a},
 			Events:  []domain.ExecutionEvent{ev},
 			Command: &domain.CommandRecord{Name: CmdDecideApproval, Key: req.Key, Fingerprint: fp, Result: result, At: now}})
 		if errors.Is(err, domain.ErrConflict) || errors.Is(err, domain.ErrDuplicateCommand) {
 			continue // the Approval, the Step or the key moved under us; read again
 		}
 		if err != nil {
+			return Decided{}, false, err
+		}
+		if err := c.settle(ctx, e.ID); err != nil {
 			return Decided{}, false, err
 		}
 		c.Wake()
@@ -200,8 +219,8 @@ func indexOfStep(steps []domain.StepExecution, id string) int {
 }
 
 // voidWaiting voids the requested Approvals that gate the Steps in ended, because the Execution
-// was cancelled. A decided Approval is left as it is.
-func (c *Coordinator) voidWaiting(ctx context.Context, executionID string, ended []string, now time.Time) ([]domain.Approval, error) {
+// was cancelled or failed. A decided Approval is left as it is.
+func (c *Coordinator) voidWaiting(ctx context.Context, executionID string, ended []string, now time.Time, reason string) ([]domain.Approval, error) {
 	all, err := c.store.Approvals(ctx, executionID)
 	if err != nil {
 		return nil, err
@@ -211,7 +230,7 @@ func (c *Coordinator) voidWaiting(ctx context.Context, executionID string, ended
 		if a.State != domain.ApprovalRequested || !slices.Contains(ended, a.Gate.StepID) {
 			continue
 		}
-		if err := a.Void(now, "execution_cancelled"); err != nil {
+		if err := a.Void(now, reason); err != nil {
 			return nil, err
 		}
 		out = append(out, a)

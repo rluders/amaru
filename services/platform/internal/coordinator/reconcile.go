@@ -110,8 +110,8 @@ func (c *Coordinator) Reconcile(ctx context.Context) (ReconcileReport, error) {
 		if err := c.reconcileOne(ctx, id, &rep); err != nil {
 			return rep, fmt.Errorf("reconcile: execution %s: %w", id, err)
 		}
-		if err := c.settleCancel(ctx, id); err != nil {
-			return rep, fmt.Errorf("reconcile: execution %s: settle cancel: %w", id, err)
+		if err := c.settle(ctx, id); err != nil {
+			return rep, fmt.Errorf("reconcile: execution %s: settle: %w", id, err)
 		}
 		rep.Executions++
 	}
@@ -119,12 +119,25 @@ func (c *Coordinator) Reconcile(ctx context.Context) (ReconcileReport, error) {
 }
 
 func (c *Coordinator) reconcileOne(ctx context.Context, id string, rep *ReconcileReport) error {
+	for range maxEditAttempts {
+		err := c.reconcileAttempt(ctx, id, rep)
+		if !errors.Is(err, domain.ErrConflict) {
+			return err
+		}
+	}
+	return fmt.Errorf("%w: execution %s kept changing during reconciliation", domain.ErrConflict, id)
+}
+
+func (c *Coordinator) reconcileAttempt(ctx context.Context, id string, rep *ReconcileReport) error {
 	exec, steps, err := c.store.Get(ctx, id)
 	if err != nil {
 		return err
 	}
+	if exec.State.Terminal() {
+		return nil
+	}
 	now := c.now()
-	var change ports.ExecutionChange
+	change := ports.ExecutionChange{Execution: &exec, CheckSteps: append([]domain.StepExecution(nil), steps...)}
 	var kept, resumed, retried, interrupted int
 	for _, st := range steps {
 		if st.State.Terminal() {
@@ -162,7 +175,7 @@ func (c *Coordinator) reconcileOne(ctx context.Context, id string, rep *Reconcil
 		waiting = true
 	}
 
-	if len(change.Steps) > 0 || change.Execution != nil {
+	if len(change.Steps) > 0 || waiting {
 		if _, err := c.store.Commit(ctx, change); err != nil {
 			if errors.Is(err, domain.ErrConflict) {
 				return fmt.Errorf("another writer changed the execution during reconcile: %w", err)

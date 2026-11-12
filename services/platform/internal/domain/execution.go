@@ -23,9 +23,9 @@ var ExecStates = []ExecState{ExecQueued, ExecRunning, ExecWaiting, ExecSucceeded
 
 // execTransitions is the complete set of documented transitions. Anything absent is invalid.
 var execTransitions = map[ExecState][]ExecState{
-	ExecQueued:  {ExecRunning, ExecCancelled},
+	ExecQueued:  {ExecRunning, ExecSucceeded, ExecFailed, ExecCancelled},
 	ExecRunning: {ExecWaiting, ExecSucceeded, ExecFailed, ExecCancelled},
-	ExecWaiting: {ExecRunning, ExecFailed, ExecCancelled},
+	ExecWaiting: {ExecRunning, ExecSucceeded, ExecFailed, ExecCancelled},
 }
 
 func (s ExecState) Valid() bool { return slices.Contains(ExecStates, s) }
@@ -88,8 +88,7 @@ func (e *Execution) Wait() error { return e.move(ExecRunning, ExecWaiting) }
 func (e *Execution) Resume() error { return e.move(ExecWaiting, ExecRunning) }
 
 // Finish moves the Execution to a terminal state. Failed requires err. Which terminal states
-// are reachable depends on the current state (waiting cannot succeed; queued can only be
-// cancelled).
+// are reachable depends on the current state (ADR-0063 permits pre-start completion).
 func (e *Execution) Finish(now time.Time, to ExecState, err *ExecError) error {
 	if !to.Terminal() {
 		return fmt.Errorf("%w: execution %s -> %s is not terminal", ErrInvalidTransition, e.State, to)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
@@ -115,7 +116,7 @@ func TestCommandsProviderFailureAndCancellation(t *testing.T) {
 	secret := "injected-provider-value"
 	l, _ := New(&buf, secret)
 	store := fakes.NewExecutionStore()
-	c := coordinator.New(store, time.Now)
+	c := coordinator.New(store, time.Now, coordtest.Permissive)
 	ctx := WithIdentity(context.Background(), Identity{InstanceID: "instance", CorrelationID: "command-correlation", ProjectID: "project"})
 	got, _, err := c.Submit(ctx, coordinator.SubmitRequest{Key: "submit", ProjectID: "project", By: domain.Principal{ID: "human", Kind: domain.PrincipalHuman}, Steps: []coordinator.StepSpec{{Name: "check", Capability: "code.test"}}})
 	if err != nil {

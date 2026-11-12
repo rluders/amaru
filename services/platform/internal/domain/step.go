@@ -32,7 +32,7 @@ var StepStates = []StepState{StepPending, StepSkipped, StepRefused, StepAwaiting
 
 // stepTransitions is the complete set of documented transitions. Anything absent is invalid.
 var stepTransitions = map[StepState][]StepState{
-	StepPending:          {StepSkipped, StepRefused, StepAwaitingApproval, StepQueued},
+	StepPending:          {StepSkipped, StepRefused, StepAwaitingApproval, StepQueued, StepCancelled},
 	StepAwaitingApproval: {StepQueued, StepFailed, StepCancelled},
 	StepQueued:           {StepLeased, StepCancelled},
 	StepLeased:           {StepRunning, StepQueued},
@@ -272,9 +272,12 @@ func (s *StepExecution) Start(now time.Time) error {
 	return nil
 }
 
-// Cancel moves queued → cancelled. A running Step is cancelled through Finish.
+// Cancel moves pending or queued → cancelled. A running Step is cancelled through Finish.
 func (s *StepExecution) Cancel(now time.Time) error {
-	if err := s.move(StepQueued, StepCancelled); err != nil {
+	if s.State != StepPending && s.State != StepQueued {
+		return fmt.Errorf("%w: cancel from %s", ErrInvalidTransition, s.State)
+	}
+	if err := s.move(s.State, StepCancelled); err != nil {
 		return err
 	}
 	s.EndedAt = &now

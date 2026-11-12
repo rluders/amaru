@@ -98,6 +98,9 @@ stateDiagram-v2
     running --> succeeded
     running --> failed
     waiting --> failed : approval rejected / expired
+    queued --> succeeded : all Steps skipped (ADR-0063)
+    queued --> failed : rejection / refusal before start (ADR-0063)
+    waiting --> succeeded : all Steps succeeded or skipped (ADR-0063)
     queued --> cancelled
     running --> cancelled
     waiting --> cancelled
@@ -105,7 +108,7 @@ stateDiagram-v2
     failed --> [*]
     cancelled --> [*]
 ```
-The prototype has `queued, running, succeeded, failed, cancelled` with a pending approval keeping the step `running` (`domain/execution.go`). Amaru adds an explicit `waiting` state so clients and schedulers can distinguish idle waits **[Proposed]**.
+The Amaru domain state machine and coordinator implement these transitions, including the explicit `waiting` state and [ADR-0063](adr/0063-terminal-execution-aggregation-and-failure-drain.md) terminal aggregation rules. See [Execution completion](../engineering/execution-lifecycle.md) for implemented behavior and validation limits.
 
 ### 5.2 Step Execution
 ```mermaid
@@ -115,6 +118,7 @@ stateDiagram-v2
     pending --> refused : policy or confinement refusal
     pending --> awaiting_approval : policy requires approval
     pending --> queued : planned
+    pending --> cancelled : execution cancellation / failure drain (ADR-0063)
     awaiting_approval --> queued : approved
     awaiting_approval --> failed : rejected / expired
     queued --> leased : worker accepts

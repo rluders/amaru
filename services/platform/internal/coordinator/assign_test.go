@@ -89,3 +89,7 @@ func TestEveryCommandIdempotent(t *testing.T) {
 	coordtest.IdempotencySuite(t, factory)
 	t.Run("atomicity", func(t *testing.T) { coordtest.CommandAtomicitySuite(t, factory) })
 }
+
+func TestTerminalOverInProcessLink(t *testing.T) {
+	coordtest.TerminalSuite(t, newFake, func(*testing.T) (ports.PlatformLink, ports.WorkerLink) { return inproc.Pair() })
+}

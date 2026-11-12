@@ -104,7 +104,7 @@ func TimeoutSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore
 		for _, ev := range s.events(got.Execution.ID) {
 			kinds = append(kinds, ev.Kind)
 		}
-		if kinds[len(kinds)-1] != domain.EventStepTimedOut {
+		if kinds[len(kinds)-2] != domain.EventStepTimedOut || kinds[len(kinds)-1] != domain.EventExecWaiting {
 			t.Fatalf("events %v", kinds)
 		}
 		// Even an idempotent Step is not offered again: a person resumes or cancels it.

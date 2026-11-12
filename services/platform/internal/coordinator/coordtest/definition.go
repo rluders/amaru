@@ -106,18 +106,16 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		got := submit(t, build(s), "k1", flow())
 		e, _, _ := s.Get(ctx, got.Execution.ID)
 		before := *e.Definition
+		state := e.State
 		other := flow()
 		other.Name = "Swapped"
 		pin, _ := domain.Pin(other, "")
 		e.Definition = &pin
-		if err := e.Start(clock()); err != nil {
-			t.Fatal(err)
-		}
 		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &e}); err != nil {
 			t.Fatal(err)
 		}
 		after, _, _ := reopen(t, s).Get(ctx, got.Execution.ID)
-		if after.State != domain.ExecRunning || after.Definition == nil || after.Definition.Hash != before.Hash || string(after.Definition.Snapshot) != string(before.Snapshot) {
+		if after.State != state || after.Definition == nil || after.Definition.Hash != before.Hash || string(after.Definition.Snapshot) != string(before.Snapshot) {
 			t.Fatalf("pin moved: %+v", after.Definition)
 		}
 	})

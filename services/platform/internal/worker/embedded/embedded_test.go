@@ -106,12 +106,12 @@ func TestStepRunsEndToEndThroughTheWorkerInterface(t *testing.T) {
 	r := newRig(t, &embedded.Worker{HeartbeatPeriod: time.Hour, Runner: embedded.RunnerFunc(
 		func(_ context.Context, a ports.Assignment) embedded.Outcome { got = a; return succeed(nil, a) })}, time.Minute)
 	r.queue("e1", "s1")
-	r.until("the Step to succeed", func() bool { return r.states("e1")["s1"] == domain.StepSucceeded })
+	r.until("the Execution to succeed", func() bool { e, _, _ := r.store.Get(r.ctx, "e1"); return e.State == domain.ExecSucceeded })
 	if got.StepID != "s1" || got.Capability != "code.test" || got.Lease.FencingToken != 1 || got.IdempotencyKey != "e1/s1" {
 		t.Fatalf("the Runner saw %+v", got)
 	}
 	e, _, _ := r.store.Get(r.ctx, "e1")
-	if e.State != domain.ExecRunning {
+	if e.State != domain.ExecSucceeded {
 		t.Fatalf("execution %s", e.State)
 	}
 }
@@ -195,7 +195,7 @@ func TestHeartbeatRenewsTheLeaseWhileTheRunnerWorks(t *testing.T) {
 		return steps[0].CurrentLease != nil && steps[0].CurrentLease.ExpiresAt.After(first)
 	})
 	close(release)
-	r.until("the Step to succeed", func() bool { return r.states("e1")["s1"] == domain.StepSucceeded })
+	r.until("the Execution to succeed", func() bool { e, _, _ := r.store.Get(r.ctx, "e1"); return e.State == domain.ExecSucceeded })
 }
 
 func TestClosingTheLinkCancelsRunningWorkAndReportsNothing(t *testing.T) {

@@ -11,6 +11,8 @@ const (
 	EventExecWaiting         = "execution.waiting"
 	EventExecCancelRequested = "execution.cancel_requested"
 	EventExecCancelled       = "execution.cancelled"
+	EventExecCompleted       = "execution.completed"
+	EventExecFailed          = "execution.failed"
 	EventStepLeased          = "step.leased"
 	EventStepStarted         = "step.started"
 	EventStepRejected        = "step.attempt_rejected"

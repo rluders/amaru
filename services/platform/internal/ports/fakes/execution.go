@@ -184,6 +184,11 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		}
 		return 0, fmt.Errorf("%w: step %s", domain.ErrNotFound, st.ID)
 	}
+	for _, st := range c.CheckSteps {
+		if _, err := index(st); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+	}
 	idx := make([]int, len(c.Steps))
 	for i, st := range c.Steps {
 		n, err := index(st)

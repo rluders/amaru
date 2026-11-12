@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -240,12 +241,10 @@ func (c *Coordinator) onAccept(ctx context.Context, link ports.PlatformLink, m p
 		ch := &change{events: []domain.ExecutionEvent{{Kind: domain.EventStepStarted, StepID: st.ID, At: now}}}
 		switch e.State {
 		case domain.ExecQueued:
-			ch.exec = true
 			if err := e.Start(now); err != nil {
 				return nil, err
 			}
 		case domain.ExecWaiting:
-			ch.exec = true
 			if err := e.Resume(); err != nil {
 				return nil, err
 			}
@@ -279,6 +278,9 @@ func (c *Coordinator) onReject(ctx context.Context, m ports.RejectAttempt) error
 		return nil // nothing to undo
 	}
 	if err == nil {
+		if err := c.settle(ctx, ref.ExecutionID); err != nil {
+			return err
+		}
 		c.Wake() // another Worker may take it
 	}
 	return err
@@ -356,7 +358,7 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 	if err != nil {
 		return err
 	}
-	if err := c.settleCancel(ctx, ref.ExecutionID); err != nil {
+	if err := c.settle(ctx, ref.ExecutionID); err != nil {
 		return err
 	}
 	c.Wake() // a finished Step frees a slot a queued Step may be waiting for
@@ -375,9 +377,8 @@ func send(ctx context.Context, link ports.PlatformLink, m ports.PlatformMessage)
 	return nil
 }
 
-// change is what an edit wants committed besides the Step: the Execution (when exec is set) and events.
+// change carries the Events committed with an edit. The parent version always participates.
 type change struct {
-	exec   bool
 	events []domain.ExecutionEvent
 }
 
@@ -399,6 +400,8 @@ func (c *Coordinator) edit(ctx context.Context, ref ports.StepRef, fn func(*doma
 		if idx < 0 {
 			return fmt.Errorf("%w: step %s", domain.ErrNotFound, ref.StepID)
 		}
+		snapshot := append([]domain.StepExecution(nil), steps...)
+		parentState := e.State
 		ch, err := fn(&e, &steps[idx])
 		if err != nil {
 			return err
@@ -406,10 +409,26 @@ func (c *Coordinator) edit(ctx context.Context, ref ports.StepRef, fn func(*doma
 		if ch == nil {
 			return nil
 		}
-		w := ports.ExecutionChange{Steps: []domain.StepExecution{steps[idx]}, Events: ch.events}
-		if ch.exec {
-			w.Execution = &e
+		if steps[idx].State == domain.StepLeased && snapshot[idx].State == domain.StepQueued {
+			stopping, err := c.stopping(ctx, e, snapshot)
+			if err != nil {
+				return err
+			}
+			if stopping {
+				return fmt.Errorf("%w: execution is draining", domain.ErrInvalidTransition)
+			}
 		}
+		if e.State == domain.ExecRunning && slices.ContainsFunc(steps, func(st domain.StepExecution) bool {
+			return st.State == domain.StepInterrupted || st.State == domain.StepTimedOut
+		}) {
+			if err := e.Wait(); err != nil {
+				return err
+			}
+			if parentState != domain.ExecWaiting {
+				ch.events = append(ch.events, domain.ExecutionEvent{Kind: domain.EventExecWaiting, At: c.now()})
+			}
+		}
+		w := ports.ExecutionChange{Execution: &e, CheckSteps: snapshot, Steps: []domain.StepExecution{steps[idx]}, Events: ch.events}
 		if _, err := c.store.Commit(ctx, w); !errors.Is(err, domain.ErrConflict) {
 			return err
 		}

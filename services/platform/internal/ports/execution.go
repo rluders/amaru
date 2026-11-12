@@ -11,9 +11,12 @@ import (
 // nothing is. The Version of each Execution and Step is the version it was read at; the store
 // refuses the whole change when any of them is stale.
 type ExecutionChange struct {
-	Execution *domain.Execution       // optional
-	Steps     []domain.StepExecution  // optional
-	Events    []domain.ExecutionEvent // appended in order; Seq and ExecutionID are set by the store
+	// CheckSteps validates read-only Step versions in the same transaction as the write.
+	// It neither changes those rows nor advances their versions.
+	CheckSteps []domain.StepExecution
+	Execution  *domain.Execution       // optional
+	Steps      []domain.StepExecution  // optional
+	Events     []domain.ExecutionEvent // appended in order; Seq and ExecutionID are set by the store
 	// Command, when set, is stored in the same write. A record with the same Name and Key makes
 	// the whole write fail with domain.ErrDuplicateCommand.
 	Command *domain.CommandRecord
@@ -60,7 +63,7 @@ type ExecutionStore interface {
 	ExecutionQueue
 }
 
-// ExecutionID is the one Execution the change belongs to: the Execution's, or its Steps'.
+// ExecutionID is the one Execution the change and its read-only checks belong to.
 // It returns domain.ErrInvalid when the change is empty or spans Executions, because one write
 // must keep one Execution's rows and log consistent.
 func (c ExecutionChange) ExecutionID() (string, error) {
@@ -68,7 +71,7 @@ func (c ExecutionChange) ExecutionID() (string, error) {
 	if c.Execution != nil {
 		id = c.Execution.ID
 	}
-	for _, st := range c.Steps {
+	for _, st := range append(append([]domain.StepExecution{}, c.Steps...), c.CheckSteps...) {
 		if id == "" {
 			id = st.ExecutionID
 		}

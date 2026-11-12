@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
+	"github.com/rluders/amaru/services/platform/internal/coordinator/coordtest"
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
 )
@@ -70,7 +71,7 @@ func TestAuthenticatedProjectAccessRechecksLogoutBeforeReplay(t *testing.T) {
 	if err := projects.Create(ctx, domain.Project{Key: key, Name: "app", CreatedAt: time.Now()}); err != nil {
 		t.Fatal(err)
 	}
-	c := coordinator.New(executions, time.Now)
+	c := coordinator.New(executions, time.Now, coordtest.Permissive)
 	api, err := coordinator.NewProjectAccess(c, projects, a.Principal)
 	if err != nil {
 		t.Fatal(err)
