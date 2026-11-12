@@ -37,7 +37,7 @@ Go module `github.com/rluders/amaru/services/platform`: the Platform core. Intro
 
 **Wire shape:** the Agent contract carries `revision` and `hash` (the head's `AgentVersion`), and `UpdateAgent`/delete carry `expectedRevision`, which `AgentHistory` checks. Nothing serves the API yet.
 
-Nothing else of the Platform exists yet: no API, Provider, process execution, timers, outbox or message bus, and no remote Worker or WebSocket transport. Approval states arrive with the other sub-issues of #13. Display-key allocation (the per-Instance counter) needs storage and arrives with WP-M3-02.
+The composed public API is not implemented. The compact authentication adapter below serves its auth subset in tests; there is no remote Worker transport or composed product WebSocket server. Other component rows above describe their own implementation limits. Approval states arrive with the other sub-issues of #13. Display-key allocation (the per-Instance counter) needs storage and arrives with WP-M3-02.
 
 ## Check
 `make platform-test` (part of `make check`). Tests use no real agents, network or paid APIs.
@@ -74,3 +74,18 @@ Aliases that normalize differently (a renamed or transferred remote, a mirror on
 Atlas (`ariga.io/atlas`) was tried first and dropped: its PostgreSQL driver links `hashicorp/hcl/v2` (MPL-2.0), a licence the owner had not accepted for the Platform (ADR-0026). Whether the Atlas CLI can still author these files is unverified without `atlas.sum`.
 
 Command idempotency (EXE-005): all seven caller-facing mutations use durable outcomes and reject conflicting reuse under ADR-0058. See the [inventory, normalization and validation boundary](../../docs/engineering/command-idempotency.md). Cancellation requires the authenticated human `ActorID` as well as its Actor; Policy actors identify their authority. This does not implement HTTP handlers.
+
+## Compact local authentication (#92)
+
+`internal/adapter/localauth` implements the accepted [ADR-0061](../../docs/architecture/adr/0061-local-browser-authentication-wire-contract.md) launch/session routes and HTTP guards, with in-memory 60-second single-use codes, eight-hour absolute sessions, per-session CSRF and distinct native bearer authentication. Construct it from a bound loopback listener, wrap the entire HTTP handler (including health), and call `Close` after serving stops. WebSocket transports must register `WatchSocket` before upgrade and stop the watch on socket close; it closes the transport on logout, expiry or Instance shutdown. The adapter does not implement product routes, health data, a CLI or logging.
+
+`internal/adapter/discovery` publishes a private `instance.json` only after binding, with a lifetime OS lock. On Linux it refuses unsafe ownership/modes/symlinks, uses anchored directory operations and atomic rename, preserves old records on failure, and prevents an old owner from deleting a replacement. State directory parents must already exist; the caller chooses the canonical per-user directory. The credential-free health probe rejects redirects, non-loopback destinations, malformed or inconsistent build/protocol/start metadata. Health alone does not establish endpoint identity. Publication fails closed on other OSes: native permission and locking support is not implemented there.
+
+Both adapters have no new dependency and are checked by `make platform-test`/`make check`. The SDK builds `internal/adapter/localauth/testserver` with the `authfixture` tag as a test-only loopback integration fixture; it is not the Platform executable. Real Firefox validation is opt-in, outside `make check`:
+
+```sh
+cd services/platform
+go test -tags browser -count=1 -run TestFirefoxLaunchSessionAndLogout -v ./internal/adapter/localauth
+```
+
+See [Linux IAM-001 evidence](../../docs/validation/m3/2026-11-12-linux-iam-001.md) and [provenance](PROVENANCE.md). #92 stays open for delivery acceptance; #18 still owns canonical state-directory/startup wiring, `amaru open` integration and composed API/WebSocket acceptance, and #170 owns structured log redaction.

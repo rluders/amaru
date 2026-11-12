@@ -32,8 +32,6 @@ export interface EventStreamOptions {
   /** API root including the major version, for example http://127.0.0.1:7777/v1 (http becomes ws, https becomes wss). */
   baseUrl: string;
   projectId: string;
-  /** Sent as ?token= because browsers cannot set WebSocket headers (contract). The URL is never passed to callbacks. */
-  token?: string;
   /** Only events of this Execution. Its `seq` values are not gap-free, so gap detection is off when set. */
   executionId?: string;
   /** Last `seq` already processed; resume replays events with seq greater than this. */
@@ -46,7 +44,7 @@ export interface EventStreamOptions {
    */
   onResync(info: { reason: ResyncRequired["reason"]; resumeFrom: number }): void | Promise<void>;
   onState?(state: StreamState): void;
-  /** Defaults to `new WebSocket(url)`. */
+  /** Browser: ambient same-origin session cookie. Native: inject a factory supplying an Authorization header, without Origin or Cookie. Never put credentials in the URL. */
   webSocket?(url: string): SocketLike;
   /** Delay in ms before attempt n (0-based). Default 500 * 2^n, capped at 15 s. */
   backoff?(attempt: number): number;
@@ -133,7 +131,6 @@ export class EventStream {
     u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
     if (this.cursor > 0) u.searchParams.set("since", String(this.cursor));
     if (this.opts.executionId) u.searchParams.set("executionId", this.opts.executionId);
-    if (this.opts.token) u.searchParams.set("token", this.opts.token);
     return u.toString();
   }
 

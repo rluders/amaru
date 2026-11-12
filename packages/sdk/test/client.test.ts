@@ -59,7 +59,7 @@ void (() => {
 
 test("mutating execution and Approval commands carry caller keys in their bodies", async () => {
   const { f, seen } = fakeFetch(() => Response.json({}));
-  const client = createClient({ baseUrl: "http://x.test/v1", fetch: f });
+  const client = createClient({ baseUrl: "http://x.test/v1", token: "native-fixture", fetch: f });
   await client.POST("/projects/{projectId}/executions/{id}/cancel", {
     params: { path: { projectId: "p", id: "e" } },
     body: { idempotencyKey: "cancel-1", reason: "Stopped by owner" },
@@ -70,4 +70,45 @@ test("mutating execution and Approval commands carry caller keys in their bodies
   });
   assert.deepEqual(await seen[0]!.json(), { idempotencyKey: "cancel-1", reason: "Stopped by owner" });
   assert.equal((await seen[1]!.json()).idempotencyKey, "decision-1");
+});
+
+test("browser cookie transport adds in-memory CSRF only to mutations", async () => {
+  const seen: Request[] = [];
+  const client = createClient({ baseUrl: "http://localhost:7777/v1", csrfToken: () => "csrf-fixture", fetch: async input => {
+    const req = input as Request; seen.push(req);
+    if (req.url.endsWith("/health")) return Response.json({ status: "ok", protocolVersion: 1, platformVersion: "test", startedAt: "2026-11-12T00:00:00Z", uptimeSec: 0 });
+    return req.method === "DELETE" ? new Response(null, { status: 204 }) : Response.json({ csrfToken: "csrf-fixture", expiresAt: "2026-11-12T08:00:00Z" });
+  } });
+  await client.GET("/auth/session");
+  await client.DELETE("/auth/session");
+  assert.deepEqual(seen.map(r => r.credentials), ["omit", "same-origin", "omit", "same-origin"]);
+  assert.ok(seen.every(r => !r.headers.has("Authorization")));
+  assert.equal(seen[1]!.headers.get("X-Amaru-CSRF"), null);
+  assert.equal(seen[3]!.headers.get("X-Amaru-CSRF"), "csrf-fixture");
+});
+
+test("browser mutation without CSRF fails before product dispatch; mixed modes rejected", async () => {
+  const { f, seen } = fakeFetch(() => new Response(null, { status: 204 }));
+  const client = createClient({ baseUrl: "http://localhost:7777/v1", fetch: f });
+  await assert.rejects(client.DELETE("/auth/session"), /CSRF token/);
+  assert.equal(seen.length, 0);
+  assert.throws(() => createClient({ baseUrl: "http://localhost:7777/v1", token: "native-fixture", csrfToken: () => "csrf" }));
+});
+
+test("launch exchange uses unversioned path, manual redirect and no credentials", async () => {
+  const { f, seen } = fakeFetch(() => new Response(null, { status: 303, headers: { Location: "/" } }));
+  const client = createClient({ baseUrl: "http://localhost:7777/v1", token: "native-fixture", fetch: f });
+  await client.GET("/auth/launch", { params: { query: { code: "fake-launch-code" } } });
+  assert.equal(new URL(seen[0]!.url).pathname, "/auth/launch");
+  assert.equal(seen[0]!.credentials, "omit");
+  assert.equal(seen[0]!.redirect, "manual");
+  assert.equal(seen[0]!.headers.get("Authorization"), null);
+});
+
+test("explicit health remains credential-free even on a native client", async () => {
+  const seen: Request[] = [];
+  const client = createClient({ baseUrl: "http://localhost:7777/v1", token: "native-fixture", fetch: async input => {seen.push(input as Request);return Response.json({});} });
+  await client.GET("/health");
+  assert.equal(seen[0]!.credentials, "omit");
+  assert.equal(seen[0]!.headers.get("Authorization"), null);
 });

@@ -31,7 +31,7 @@ var methods = map[string]bool{"get": true, "put": true, "post": true, "delete": 
 
 // FromOpenAPI reads an OpenAPI 3.x document and returns its routes, sorted.
 // The base path is the path of the first server URL (http://host:{port}/v1
-// gives /v1). A document without servers has an empty base path.
+// gives /v1). Path and operation servers override it. Without servers the base is empty.
 func FromOpenAPI(r io.Reader) ([]Route, error) {
 	var doc struct {
 		Servers []struct {
@@ -54,9 +54,21 @@ func FromOpenAPI(r io.Reader) ([]Route, error) {
 		if !strings.HasPrefix(p, "/") {
 			return nil, fmt.Errorf("routeguard: path %q does not start with /", p)
 		}
-		for m := range item {
+		pathBase, err := overrideBase(item["servers"], base)
+		if err != nil {
+			return nil, err
+		}
+		for m, node := range item {
 			if methods[strings.ToLower(m)] {
-				out = append(out, Route{Method: strings.ToUpper(m), Path: normalize(base + p)})
+				var operation map[string]yaml.Node
+				if err := node.Decode(&operation); err != nil {
+					return nil, fmt.Errorf("routeguard: decode operation: %w", err)
+				}
+				operationBase, err := overrideBase(operation["servers"], pathBase)
+				if err != nil {
+					return nil, err
+				}
+				out = append(out, Route{Method: strings.ToUpper(m), Path: normalize(operationBase + p)})
 			}
 		}
 	}
@@ -222,4 +234,20 @@ func sortRoutes(rs []Route) {
 		}
 		return rs[i].Method < rs[j].Method
 	})
+}
+
+func overrideBase(node yaml.Node, inherited string) (string, error) {
+	if node.Kind == 0 {
+		return inherited, nil
+	}
+	var servers []struct {
+		URL string `yaml:"url"`
+	}
+	if err := node.Decode(&servers); err != nil {
+		return "", fmt.Errorf("routeguard: decode servers: %w", err)
+	}
+	if len(servers) == 0 {
+		return "", nil
+	}
+	return serverBasePath(servers[0].URL), nil
 }

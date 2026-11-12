@@ -45,7 +45,6 @@ function harness(over: Partial<EventStreamOptions> = {}) {
   const stream = new EventStream({
     baseUrl: "https://platform.test/v1/",
     projectId: "p1",
-    token: "tok-fake",
     onEvent: (e: PlatformEvent) => void events.push(e.seq),
     onResync: (i) => void resyncs.push(i),
     onState: (s) => void states.push(s),
@@ -68,13 +67,13 @@ function harness(over: Partial<EventStreamOptions> = {}) {
   return { stream, sockets, socket, events, states, resyncs, sleeps, settle };
 }
 
-test("connects to the Project stream with the token and no cursor on the first connect", async () => {
+test("connects to the Project stream without credentials or a cursor on the first connect", async () => {
   const h = harness();
   const run = h.stream.start();
   const s = await h.socket(0);
   assert.equal(s.url.protocol, "wss:");
   assert.equal(s.url.pathname, "/v1/projects/p1/events");
-  assert.equal(s.url.searchParams.get("token"), "tok-fake");
+  assert.equal(s.url.searchParams.get("token"), null);
   assert.equal(s.url.searchParams.get("since"), null);
   h.stream.stop();
   await run;

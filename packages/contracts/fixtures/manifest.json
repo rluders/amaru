@@ -2417,6 +2417,46 @@
       "kind": "invalid",
       "expect": "invalid",
       "error": "required@/"
+    },
+    {
+      "file": "api/v1/BrowserSession/invalid-missing-expiry.json",
+      "schema": "BrowserSession.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/BrowserSession/invalid-short.json",
+      "schema": "BrowserSession.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/csrfToken"
+    },
+    {
+      "file": "api/v1/BrowserSession/valid.json",
+      "schema": "BrowserSession.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/LaunchCode/invalid-missing-expiry.json",
+      "schema": "LaunchCode.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "required@/"
+    },
+    {
+      "file": "api/v1/LaunchCode/invalid-short.json",
+      "schema": "LaunchCode.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "pattern@/code"
+    },
+    {
+      "file": "api/v1/LaunchCode/valid.json",
+      "schema": "LaunchCode.json",
+      "kind": "valid",
+      "expect": "valid"
     }
   ]
 }
