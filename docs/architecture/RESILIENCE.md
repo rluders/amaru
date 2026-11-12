@@ -46,7 +46,7 @@ Status: **accepted** requirements (2026-10-25), not fully implemented. Coordinat
 
 ## 3. Failure catalogue
 
-Command-key conflicts and retention are **accepted, not implemented** for EXE-005 under [ADR-0058](adr/0058-command-idempotency-conflicts-and-retention.md): reject conflicting reuse and apply no automatic expiry in M3. Affected public contracts and complete mutating-command coverage still require implementation and verification in #157.
+Command-key conflicts and retention are **implemented in the M3 coordinator** for EXE-005 under [ADR-0058](adr/0058-command-idempotency-conflicts-and-retention.md): all seven caller-facing mutations reject conflicting reuse and apply no automatic expiry in M3. The [command inventory and normalization rules](../engineering/command-idempotency.md) describe atomic records, replay authorization, contract inputs and validation boundaries. The HTTP API is not implemented.
 
 | Failure | Detection | Expected behavior | Test |
 |---|---|---|---|

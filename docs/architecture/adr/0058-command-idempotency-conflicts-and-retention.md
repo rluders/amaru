@@ -22,7 +22,7 @@ An arbitrary expiry would permit a sufficiently late retry to repeat a consequen
 
 ## Decision
 
-**Accepted by the product owner on 2026-11-12; implementation remains pending in #157.**
+**Accepted by the product owner on 2026-11-12.** Coordinator implementation, normalization, test coverage and HTTP boundaries are recorded in the [EXE-005 inventory](../../engineering/command-idempotency.md).
 
 1. A key identifies one command request within its authoritative Platform store and command name. In M3, preserve the existing `(command name, key)` namespace; Project, target and actor are request identity, not separate key namespaces. Clients must generate fresh keys for new requests. Multi-Organization public exposure must first enforce Organization isolation under [ADR-0022](0022-cloud-tenancy-row-level-isolation-by-organization.md); this decision does not authorize a shared cross-Organization replay namespace.
 2. The same key and the same command-defined normalized request return the original durably recorded outcome, even after state changes or restart. A changed target, actor or consequential payload is conflicting reuse: return a conflict, perform no mutation and reveal no original result to an unauthorized caller. Authentication and authorization apply to replay as well as first delivery. Request identity includes all fields that affect the command; it excludes transport metadata. Each exposed command must document its normalization rather than promise equivalence for arbitrary JSON encodings.

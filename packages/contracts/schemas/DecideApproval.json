@@ -6,7 +6,8 @@
   "type": "object",
   "required": [
     "outcome",
-    "evidenceDigest"
+    "evidenceDigest",
+    "idempotencyKey"
   ],
   "additionalProperties": false,
   "properties": {
@@ -23,6 +24,12 @@
     "rationale": {
       "type": "string",
       "maxLength": 4000
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058)."
     }
   }
 }

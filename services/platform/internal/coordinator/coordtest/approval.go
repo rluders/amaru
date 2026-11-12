@@ -294,7 +294,7 @@ func ApprovalSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStor
 		c := build(t, store)
 		got := push(t, c, "k1")
 		a := got.Approvals[0]
-		out, _, err := c.Cancel(ctx, coordinator.CancelRequest{Key: "c1", ExecutionID: got.Execution.ID, Reason: "not needed", By: human})
+		out, _, err := c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: "c1", ExecutionID: got.Execution.ID, Reason: "not needed", By: human})
 		if err != nil || !out.ExecutionCancelled {
 			t.Fatalf("cancel: %+v, %v", out, err)
 		}

@@ -2,5 +2,6 @@
   "capability": "agent.run",
   "input": {
     "prompt": "Summarize the design docs"
-  }
+  },
+  "idempotencyKey": "command-1"
 }

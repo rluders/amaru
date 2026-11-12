@@ -67,7 +67,7 @@ func TestCancelEndsTheProcessTreeOfARunningStep(t *testing.T) {
 			}
 
 			began := time.Now()
-			out, _, err := c.Cancel(ctx, coordinator.CancelRequest{Key: "c1", ExecutionID: got.Execution.ID, Reason: "stop", By: domain.Actor{Kind: domain.ActorHuman}})
+			out, _, err := c.Cancel(ctx, coordinator.CancelRequest{ActorID: "tester", Key: "c1", ExecutionID: got.Execution.ID, Reason: "stop", By: domain.Actor{Kind: domain.ActorHuman}})
 			if err != nil || len(out.Stopping) != 1 {
 				t.Fatalf("%+v %v", out, err)
 			}

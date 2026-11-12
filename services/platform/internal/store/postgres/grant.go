@@ -25,6 +25,17 @@ const grantColumns = `id, version, level, project_id, subject_kind, subject_id, 
 	definition_hash, granted_by, created_at, expires_at, status, revoked_by, revoked_at, revoke_reason`
 
 func (s *GrantStore) Create(ctx context.Context, g domain.Grant) (domain.Grant, error) {
+	return s.create(ctx, g, nil)
+}
+
+func (s *GrantStore) CreateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Grant{}, err
+	}
+	return s.create(ctx, g, &rec)
+}
+
+func (s *GrantStore) create(ctx context.Context, g domain.Grant, rec *domain.CommandRecord) (domain.Grant, error) {
 	if err := g.Validate(); err != nil {
 		return domain.Grant{}, err
 	}
@@ -42,6 +53,11 @@ func (s *GrantStore) Create(ctx context.Context, g domain.Grant) (domain.Grant, 
 		return domain.Grant{}, fmt.Errorf("postgres: create grant: %w", err)
 	}
 	defer tx.Rollback()
+	if rec != nil {
+		if err := insertCommand(ctx, tx, *rec); err != nil {
+			return domain.Grant{}, err
+		}
+	}
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO grants (`+grantColumns+`) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
 		g.ID, g.Version, string(g.Level), g.ProjectID, string(g.Subject.Kind), g.Subject.ID, caps, g.Resource.Type, g.Resource.Value,
@@ -55,6 +71,9 @@ func (s *GrantStore) Create(ctx context.Context, g domain.Grant) (domain.Grant, 
 	if err := tx.Commit(); err != nil {
 		return domain.Grant{}, fmt.Errorf("postgres: create grant: %w", err)
 	}
+	if rec != nil {
+		return g, nil
+	}
 	return s.Get(ctx, g.ID)
 }
 
@@ -67,6 +86,17 @@ func (s *GrantStore) Get(ctx context.Context, id string) (domain.Grant, error) {
 }
 
 func (s *GrantStore) Update(ctx context.Context, g domain.Grant) (domain.Grant, error) {
+	return s.update(ctx, g, nil)
+}
+
+func (s *GrantStore) UpdateOnce(ctx context.Context, rec domain.CommandRecord, g domain.Grant) (domain.Grant, error) {
+	if err := rec.Valid(); err != nil {
+		return domain.Grant{}, err
+	}
+	return s.update(ctx, g, &rec)
+}
+
+func (s *GrantStore) update(ctx context.Context, g domain.Grant, rec *domain.CommandRecord) (domain.Grant, error) {
 	if err := g.Validate(); err != nil {
 		return domain.Grant{}, err
 	}
@@ -75,6 +105,11 @@ func (s *GrantStore) Update(ctx context.Context, g domain.Grant) (domain.Grant, 
 		return domain.Grant{}, fmt.Errorf("postgres: update grant: %w", err)
 	}
 	defer tx.Rollback()
+	if rec != nil {
+		if err := insertCommand(ctx, tx, *rec); err != nil {
+			return domain.Grant{}, err
+		}
+	}
 	// Lock the row, so the comparison below and the write see the same Grant.
 	old, err := scanGrant(tx.QueryRowContext(ctx, `SELECT `+grantColumns+` FROM grants WHERE id = $1 FOR UPDATE`, g.ID))
 	if errors.Is(err, sql.ErrNoRows) {
@@ -113,6 +148,10 @@ func (s *GrantStore) Update(ctx context.Context, g domain.Grant) (domain.Grant, 
 	}
 	if err := tx.Commit(); err != nil {
 		return domain.Grant{}, fmt.Errorf("postgres: update grant: %w", err)
+	}
+	if rec != nil {
+		g.Version++
+		return g, nil
 	}
 	return s.Get(ctx, g.ID)
 }
@@ -165,4 +204,8 @@ func utcPtr(t *time.Time) *time.Time {
 	}
 	u := t.UTC()
 	return &u
+}
+
+func (s *GrantStore) Command(ctx context.Context, name, key string) (domain.CommandRecord, error) {
+	return (&ExecutionStore{db: s.db}).Command(ctx, name, key)
 }

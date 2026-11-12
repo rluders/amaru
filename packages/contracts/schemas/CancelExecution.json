@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://amaru.invalid/contracts/v1/schemas/CancelExecution.json",
+  "title": "CancelExecution",
+  "type": "object",
+  "required": [
+    "idempotencyKey"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Caller-generated key for one command request; conflicting reuse is conflict (ADR-0058)."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 4000
+    }
+  }
+}

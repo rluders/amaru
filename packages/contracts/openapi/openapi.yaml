@@ -123,7 +123,7 @@ paths:
       operationId: createExecution
       description: |
         Resolves `capability` (and optional `providerId`) to a provider and starts the execution.
-        `idempotencyKey` makes retries safe. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
+        `idempotencyKey` is required and makes retries safe under ADR-0058. `input` is `{prompt}` for agent.run or `{artifactId}` for asset.generate. Optional `workItemId` links the execution to a Work Item (not_found if unknown). Errors: invalid_request, provider_unavailable (no provider / not available), conflict.
       requestBody:
         required: true
         content:
@@ -160,9 +160,18 @@ paths:
     - $ref: '#/components/parameters/ProjectId'
     post:
       operationId: cancelExecution
-      description: Idempotent. Cancelling a terminal execution returns it unchanged.
+      description: >-
+        Requires `idempotencyKey`. A retry of the same key and normalized request returns the original command
+        result, even after the Execution ends. A new cancellation of a terminal Execution is `conflict`.
+        Conflicting key reuse is `conflict`; command records have no automatic expiry in M3 (ADR-0058).
       parameters:
       - $ref: '#/components/parameters/ExecutionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/CancelExecution.json
       responses:
         '200':
           description: OK
@@ -875,7 +884,8 @@ paths:
     post:
       operationId: decideApproval
       description: >-
-        A human principal approves or rejects a `requested` Approval. Only humans may decide (ADR-0036); the decider is the
+        A human principal approves or rejects a `requested` Approval. `idempotencyKey` is required; identical retries
+        return the original decision and conflicting reuse is `conflict` (ADR-0058, no automatic expiry in M3). Only humans may decide (ADR-0036); the decider is the
         authenticated principal, never a body field. Errors: `not_found`; `forbidden` when the role, Team or separation-of-duties
         rule is not met (recorded as an Event, the Approval is unchanged); `conflict` when the Approval is not `requested`
         or `evidenceDigest` differs from its current digest. Use-time reuse and re-request rules are decided by ADR-0048 (accepted 2026-10-26).

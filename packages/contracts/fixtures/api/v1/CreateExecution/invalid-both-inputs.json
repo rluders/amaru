@@ -3,5 +3,6 @@
   "input": {
     "prompt": "x",
     "artifactId": "Assets/Player.md"
-  }
+  },
+  "idempotencyKey": "command-1"
 }
