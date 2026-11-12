@@ -4,7 +4,7 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-**One blocking question.** Q60 requires owner approval before EXE-005 exposes the affected public command contracts. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
+**No blocking questions.** Q60 was closed by owner approval of ADR-0058 on 2026-11-12; EXE-005 implementation and contract verification remain pending. Q59 (2026-10-27) records delegated domain decisions. Q55 (raised by WP-M1-05) was closed on 2026-10-26 by ADR-0046; Q56–Q58 (raised by WP-M1-04) were closed the same day by ADR-0048. Two passes on 2026-10-25 closed every question:
 - **First pass, Q1–Q22 and W1–W4.** A product-owner planning session answered or delegated each question and accepted ADRs 0014–0039. Owner answers are kept as given, with spelling normalized. Where the owner delegated an answer ("you can decide"), Claude decided under that delegation and the decision was accepted in the same session.
 - **Second pass, Q23–Q54.** A full sweep of the planning documents found questions that had been left implicit: choices deferred to spikes, contradictions between ADRs, unset numeric targets, and design questions recorded only as feature "risks". The owner delegated all of them in the planning prompt ("make the most defensible decision"). Significant ones are accepted ADRs 0040–0043, which supersede 0020, 0019, 0014 and 0027. Reversible ones are decided in the document named in each entry. No first-pass owner answer was overturned. Two were refined:
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
@@ -13,8 +13,8 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 ### Q60. Command idempotency conflicts and retention
 
 - **Question:** what happens when a command key is reused with a different request, and when may deduplication records expire? [EXE-005 #157](https://github.com/rluders/amaru/issues/157) explicitly requires clarification before exposing the affected public contract.
-- **Recommendation:** reject conflicting reuse; keep durable original outcomes with no automatic expiry in M3. Resolve production deletion and Organization isolation before their public exposure. Full scope, source evidence, alternatives and implementation follow-ups: [proposed ADR-0058](adr/0058-command-idempotency-conflicts-and-retention.md).
-- **Owner:** product owner. **Status:** requires-decision; approval pending.
+- **Decision:** reject conflicting reuse; keep durable original outcomes with no automatic expiry in M3. Resolve production deletion and Organization isolation before their public exposure. Full scope, source evidence, alternatives and implementation follow-ups: [accepted ADR-0058](adr/0058-command-idempotency-conflicts-and-retention.md).
+- **Owner:** Ricardo Lüders. **Status:** closed; explicitly approved in the repository task conversation on 2026-11-12 (see ADR-0058 Approval).
 
 ### Q55. Project key and Linked-repository placement
 - **Question:** [ADR-0043](adr/0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) keys a Project by repository but does not say how the key is derived, and does not say whether Linked repositories are committed definitions. Also open: what happens to a Team slug that committed definitions still reference when the Team is renamed or deleted.
