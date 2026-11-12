@@ -1,8 +1,8 @@
 ---
 title: Bind public operations and secret resolution to an authorized Project
-status: proposed
+status: accepted
 date: 2026-11-12
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0062. Bind public operations and secret resolution to an authorized Project
@@ -19,11 +19,11 @@ Verified source boundaries, rather than a claim of a currently exposed vulnerabi
 - [ConfigLayer](../../../services/platform/internal/domain/config.go) carries a precedence scope, not a Project identity. Its pure resolver cannot establish where supplied layers came from. There is no secrets port under `services/platform/internal/ports` at this baseline.
 - [ADR-0039](0039-configuration-scopes-and-resolution-order.md) permits names in configuration but no secret values. [Q50](../OPEN_QUESTIONS.md#q50-secrets-scope-versus-encryption-key) permits Organization- and Project-visible secrets; it does not choose ambiguous name lookup or fallback behavior.
 
-The security baseline already requires Project isolation. This proposal chooses the application boundary and ambiguous secret-reference behavior needed to enforce it. It neither claims a running public API nor implements an encrypted secret store.
+The security baseline already requires Project isolation. This decision chooses the application boundary and ambiguous secret-reference behavior needed to enforce it. It neither claims a running public API nor implements an encrypted secret store.
 
 ## Decision
 
-**Proposed; requires explicit product-owner approval before implementation.**
+**Accepted by the product owner on 2026-11-12; implementation remains pending.**
 
 1. **Authorize a Project before accessing its resources.** Public command/query entry points resolve the requested Project against trusted authenticated Instance/Organization access and carry that resolved scope explicitly. An ID from a path, body, Event filter or client header is a selector, never authority. Compact M3 composition serves one configured Organization; it grants the local administrator access to attached Projects, without pretending to implement multi-Organization membership or RLS. Empty or unattached Project scope is refused before resource lookup or mutation.
 2. **Keep internal scheduling distinct from public access.** Retain the trusted coordinator's Instance-wide queue/reconciliation APIs. Add Project-bound application operations for public reads and mutations instead of exposing raw stores. Before reading child data, returning command replay or executing a mutation, verify that its Execution, Approval, Work record or definition belongs to the resolved Project. A foreign and an absent resource have the same public not-found result, with no foreign details, cursor, original command outcome or side effects. Recheck current authorization on replay; preserve atomic commits and version checks. Project identity is immutable for stored Executions. All public callers, including Evidence, definition and Artifact access, must use this boundary.
@@ -44,7 +44,7 @@ Implement and review in this order after approval:
 4. Exercise actual coordinator dispatch with fake Providers: one Project fails, one waits for Approval and the healthy Project progresses. Capture every test output channel using public secret fixtures and assert absence. Include restart and concurrent mutation cases for affected durable adapters. Run PostgreSQL integration checks when migrations/store semantics change and finish with `make check` on both the candidate and merged result.
 5. Verify the composed #18 authenticated API with two clients and linked contract/SDK fixtures. Record Linux evidence and unrun macOS/Windows behavior under the existing best-effort scope. #191, #18 and M3 remain open until their respective acceptance is demonstrated.
 
-Boundary review verdict: **needs human decision** for the public application boundary and explicit secret visibility lookup. Existing Event filtering and pure configuration resolution are reusable, but not authorization evidence. Storage failures must return without publishing a successful change; command mutation/outcome and domain Events retain their existing atomic commit. Missing scope, unknown ownership, secret lookup failure and invalid Project content fail closed for that Project. This source review is not runtime or security-test evidence.
+Boundary review verdict: **sound; approved by the product owner** for the public application boundary and explicit secret visibility lookup. Existing Event filtering and pure configuration resolution are reusable, but not authorization evidence. Storage failures must return without publishing a successful change; command mutation/outcome and domain Events retain their existing atomic commit. Missing scope, unknown ownership, secret lookup failure and invalid Project content fail closed for that Project. This source review is not runtime or security-test evidence.
 
 ## Alternatives considered
 
@@ -55,4 +55,4 @@ Boundary review verdict: **needs human decision** for the public application bou
 
 ## Approval
 
-Proposed by Codex for #191 on 2026-11-12. Approval pending; implementation must not rely on this proposal as accepted authority.
+Approved by Ricardo Lüders in the repository task conversation on 2026-11-12: “PR $330 proposal is approved, update and merge it.” Recorded in [PR #330](https://github.com/rluders/amaru/pull/330). This approval accepts the decision; it does not establish #191 implementation or validation.
