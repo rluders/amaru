@@ -89,3 +89,7 @@ go test -tags browser -count=1 -run TestFirefoxLaunchSessionAndLogout -v ./inter
 ```
 
 See [Linux IAM-001 evidence](../../docs/validation/m3/2026-11-12-linux-iam-001.md) and [provenance](PROVENANCE.md). #92 stays open for delivery acceptance; #18 still owns canonical state-directory/startup wiring, `amaru open` integration and composed API/WebSocket acceptance, and #170 owns structured log redaction.
+
+## Operational JSON logging (#170)
+
+`internal/adapter/operational` emits selected operational records separately from domain/audit Events, with trusted Instance/Project/Execution/Step and correlation identity. It reuses the domain redactor plus literal known secret values before JSON encoding. `HTTP` wraps auth to capture successful/rejected requests while omitting raw targets, headers, bodies and Provider output; `IdentityFrom` lets composition correlate command completion. Use the safe error callback for sink failures and never retry a committed command because logging failed. The SDK auth fixture uses this wrapper. Full product command/Worker/server instrumentation remains a #18 gate; this adapter alone does not complete #170. See [Linux evidence and limitations](../../docs/validation/m3/2026-11-12-linux-obs-001.md).
