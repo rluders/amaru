@@ -449,3 +449,5 @@ Observability technology (not an ADR-level dependency): OpenTelemetry (OTLP) tra
 ## Compact authentication implementation evidence
 
 The ADR-0034/0061 compact HTTP/session and private-discovery adapters exist under `services/platform/internal/adapter`, outside the pure domain. Their Linux unit, loopback integration and Firefox evidence is scoped in [IAM-001 validation](../validation/m3/2026-11-12-linux-iam-001.md). They do not supply a composed product server, CLI/UI or cross-platform private-discovery support. Public Event transport and lifecycle-watch wiring remain part of #18; secret-safe structured logging remains #170. Sessions own no authoritative product state, and no Worker/Provider boundary changes.
+
+Operational logging adapter (#170): `services/platform/internal/adapter/operational` emits selected JSON diagnostics separately from domain/audit Events, redacts known secret values and patterns, and omits raw HTTP credential channels. The test-only SDK auth fixture composes it; complete product command/Worker/server instrumentation is still a #18 gate. See [Linux evidence and limitations](../validation/m3/2026-11-12-linux-obs-001.md).

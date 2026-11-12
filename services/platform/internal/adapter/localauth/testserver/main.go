@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/rluders/amaru/services/platform/internal/adapter/discovery"
 	"github.com/rluders/amaru/services/platform/internal/adapter/localauth"
+	"github.com/rluders/amaru/services/platform/internal/adapter/operational"
 	"net"
 	"net/http"
 	"os"
@@ -46,7 +47,12 @@ func run() error {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "ok", "platformVersion": "sdk-fixture", "protocolVersion": 1, "startedAt": started, "uptimeSec": int(time.Since(started).Seconds())})
 	})
-	server := &http.Server{Handler: auth.Handler(next), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second}
+	logger, err := operational.New(os.Stdout)
+	if err != nil {
+		return err
+	}
+	handler := logger.HTTP("sdk-fixture", auth.Handler(next), func(err error) { fmt.Fprintln(os.Stderr, err.Error()) })
+	server := &http.Server{Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go func() {
