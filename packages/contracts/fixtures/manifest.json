@@ -2457,6 +2457,33 @@
       "schema": "LaunchCode.json",
       "kind": "valid",
       "expect": "valid"
+    },
+    {
+      "file": "api/v1/UpdateSettings/valid-false.json",
+      "schema": "UpdateSettings.json",
+      "kind": "valid",
+      "expect": "valid"
+    },
+    {
+      "file": "api/v1/UpdateSettings/invalid-null.json",
+      "schema": "UpdateSettings.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/importClaudeSkills"
+    },
+    {
+      "file": "api/v1/UpdateSettings/invalid-string.json",
+      "schema": "UpdateSettings.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "type@/importClaudeSkills"
+    },
+    {
+      "file": "api/v1/UpdateSettings/invalid-extra.json",
+      "schema": "UpdateSettings.json",
+      "kind": "invalid",
+      "expect": "invalid",
+      "error": "additionalProperties@/"
     }
   ]
 }

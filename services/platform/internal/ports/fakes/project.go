@@ -14,8 +14,9 @@ import (
 
 // ProjectStore is an in-memory ports.ProjectStore.
 type ProjectStore struct {
-	mu   sync.Mutex
-	byID map[domain.ProjectKey]domain.Project
+	mu       sync.Mutex
+	byID     map[domain.ProjectKey]domain.Project
+	settings map[domain.ProjectKey]domain.ProjectSettings
 }
 
 var _ ports.ProjectStore = (*ProjectStore)(nil)

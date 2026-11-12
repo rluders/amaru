@@ -509,7 +509,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** @description The project's Amaru switches (`.Amaru/settings.json`); all off by default. */
+        /** @description The project's Platform-owned discovery preferences (ADR-0064); all off by default. */
         get: operations["getSettings"];
         put?: never;
         post?: never;
@@ -1832,7 +1832,7 @@ export interface components {
         };
         /**
          * ProjectSettings
-         * @description The project's Amaru switches (.amaru/settings.json). Every switch is off by default and only widens what Amaru reads.
+         * @description The project's Platform-owned discovery preferences (ADR-0064). Every switch is off by default and only widens what Amaru reads.
          */
         ProjectSettings: {
             /** @description List .claude/skills/*\/SKILL.md as read-only Skills, untrusted until the user trusts their content. */
