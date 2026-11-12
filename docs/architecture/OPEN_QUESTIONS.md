@@ -10,6 +10,12 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
   - Q13's metadata split now keeps Teams out of Git (Q27).
 
+### Q64. Tool-native Skill discovery milestone and Project isolation acceptance
+
+- **Question:** should #191 pull actual tool-native Skill discovery into M3 despite FEAT-SKL-003 being scheduled for M7, or should its settings acceptance stop at isolated Platform persistence and product composition?
+- **Status:** open; [proposed ADR-0065](adr/0065-tool-native-skill-discovery-remains-m7.md) recommends keeping discovery/import in M7 while preserving ADR-0064's settings semantics. ADR-0064 remains accepted and its actual-discovery prerequisite remains binding until owner approval of the replacement.
+- **Evidence:** PR #343 merged settings SDK integration; the feature catalog schedules opt-in import for M7; the immutable Skill store has no file discovery/import mapping. No scanner or import behavior is claimed.
+
 ### Q63. Project discovery settings storage and authority
 
 - **Question:** does the existing `importClaudeSkills` resource write a Git settings file, enter committed configuration, or persist a Project preference in Platform state? How do concurrent unversioned patches behave?
