@@ -36,3 +36,9 @@ type ArtifactIndex interface {
 	// Artifact id. It is what the Evidence bundle reads (FEAT-ART-002).
 	ByExecution(ctx context.Context, executionID string) ([]domain.ArtifactVersion, error)
 }
+
+// EvidenceReader assembles an Execution's Evidence from the authoritative Instance stores.
+// Public callers must check Project ownership before invoking this trusted internal query.
+type EvidenceReader interface {
+	Bundle(ctx context.Context, executionID string) (domain.ExecutionEvidence, error)
+}

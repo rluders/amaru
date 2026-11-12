@@ -36,3 +36,5 @@ The proposed v1 HTTP bodies `CreateExecution`, `RunWorkflow`, `CancelExecution` 
 The [Linux EXE-005 record](../validation/m3/2026-11-12-linux-exe-005.md) identifies the implementation commit, commands and observed results.
 
 These checks do not establish a serving HTTP API, multi-Organization authorization, real Provider side effects, PostgreSQL/power-loss recovery, or native macOS/Windows behavior.
+
+The compact [Project access boundary](project-access.md) rechecks authenticated Project ownership before invoking Submit, Cancel or DecideApproval, including replay. It derives actor identity from `localauth.Auth.Principal`. Other internal coordinator methods remain trusted APIs and are not authorized public endpoints. The existing command-key namespace is unchanged.
