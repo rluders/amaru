@@ -310,6 +310,9 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 		}
 		out.Events = append(out.Events, ev)
 	}
+	if err := appendProjectEvents(ctx, tx, execID, out.Events); err != nil {
+		return ports.ExecutionChange{}, fmt.Errorf("postgres: append Project events: %w", err)
+	}
 	if err := tx.Commit(); err != nil {
 		return ports.ExecutionChange{}, fmt.Errorf("postgres: commit: %w", err)
 	}

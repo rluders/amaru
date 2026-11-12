@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -22,6 +23,7 @@ type ExecutionStore struct {
 	apprs  map[string]domain.Approval // by id
 	byExec map[string][]string        // Approval ids by Execution id, request order
 	log    *AuditLog
+	stream map[string][]recordedEvent
 }
 
 var (
@@ -38,6 +40,7 @@ func NewExecutionStore() *ExecutionStore {
 		apprs:  map[string]domain.Approval{},
 		byExec: map[string][]string{},
 		log:    &AuditLog{},
+		stream: map[string][]recordedEvent{},
 	}
 }
 
@@ -264,6 +267,11 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		ev.ExecutionID = evExec
 		ev.Seq = int64(len(s.events[evExec])) + 1
 		s.events[evExec] = append(s.events[evExec], ev)
+		project := s.execs[evExec].ProjectID
+		s.stream[project] = append(s.stream[project], recordedEvent{
+			event: domain.StreamEvent{ProjectID: project, Seq: int64(len(s.stream[project])) + 1, Event: ev},
+			at:    time.Now().UTC(),
+		})
 		out.Events = append(out.Events, clone(ev))
 	}
 	return out, nil
