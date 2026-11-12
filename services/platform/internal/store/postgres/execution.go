@@ -218,6 +218,27 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 	}
 	defer tx.Rollback()
 
+	// Serialize even writes without Events before checking a read-only Step snapshot.
+	var locked string
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM executions WHERE id = $1 FOR UPDATE`, execID).Scan(&locked); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: execution %s", domain.ErrNotFound, execID)
+		}
+		return ports.ExecutionChange{}, err
+	}
+	for _, st := range c.CheckSteps {
+		var version int64
+		err := tx.QueryRowContext(ctx, `SELECT version FROM step_executions WHERE id = $1 AND execution_id = $2`, st.ID, execID).Scan(&version)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: step %s", domain.ErrNotFound, st.ID)
+		}
+		if err != nil {
+			return ports.ExecutionChange{}, fmt.Errorf("postgres: check step %s: %w", st.ID, err)
+		}
+		if version != st.Version {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: step %s", domain.ErrConflict, st.ID)
+		}
+	}
 	out := ports.ExecutionChange{}
 	var lastSeq int64
 	if c.Command != nil {

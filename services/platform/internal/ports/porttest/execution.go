@@ -53,6 +53,44 @@ func ExecutionStore(t *testing.T, newStore func(t *testing.T) ports.ExecutionSto
 		}
 	})
 
+	t.Run("read-only Step checks reject stale snapshots atomically", func(t *testing.T) {
+		store := newStore(t)
+		e, ss := newExec("guarded", "s0", "s1")
+		e, ss = mustCreate(t, store, e, ss)
+		if err := ss[0].Plan(); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.Commit(ctx, ports.ExecutionChange{Steps: ss[:1]}); err != nil {
+			t.Fatal(err)
+		}
+		if err := e.Start(t0); err != nil {
+			t.Fatal(err)
+		}
+		rec := domain.CommandRecord{Name: "guard-test", Key: "key", Fingerprint: "fp", Result: []byte(`{}`), At: t0}
+		_, err := store.Commit(ctx, ports.ExecutionChange{Execution: &e, CheckSteps: ss, Steps: ss[1:],
+			Events: []domain.ExecutionEvent{{Kind: "test.guarded", At: t0}}, Command: &rec})
+		if !errors.Is(err, domain.ErrConflict) {
+			t.Fatalf("stale snapshot: %v", err)
+		}
+		after, steps, err := store.Get(ctx, e.ID)
+		if err != nil || after.State != domain.ExecQueued || after.Version != 1 || steps[1].Version != 1 {
+			t.Fatalf("partial write %+v %+v %v", after, steps, err)
+		}
+		if evs, _ := store.Events(ctx, e.ID); len(evs) != 0 {
+			t.Fatal("rejected guard appended Events")
+		}
+		if _, err := store.Command(ctx, rec.Name, rec.Key); !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("rejected guard saved command: %v", err)
+		}
+		if _, err := store.Commit(ctx, ports.ExecutionChange{Execution: &after, CheckSteps: steps}); err != nil {
+			t.Fatal(err)
+		}
+		_, checked, _ := store.Get(ctx, e.ID)
+		if checked[0].Version != steps[0].Version || checked[1].Version != steps[1].Version {
+			t.Fatal("read-only guard changed Step versions")
+		}
+	})
+
 	t.Run("create validates", func(t *testing.T) {
 		s := newStore(t)
 		e, steps := newExec("e1", "s1")

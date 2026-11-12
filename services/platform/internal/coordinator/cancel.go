@@ -75,6 +75,7 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 		if e.State.Terminal() {
 			return Cancelled{}, false, fmt.Errorf("%w: execution %s is %s", domain.ErrInvalidTransition, e.ID, e.State)
 		}
+		snapshot := slices.Clone(steps)
 		now := c.now()
 		out := Cancelled{ExecutionID: e.ID}
 		var held []domain.StepExecution
@@ -82,7 +83,7 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 		for i := range steps {
 			st := &steps[i]
 			switch st.State {
-			case domain.StepQueued:
+			case domain.StepPending, domain.StepQueued:
 				if err := st.Cancel(now); err != nil {
 					return Cancelled{}, false, err
 				}
@@ -119,15 +120,12 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 		if err != nil {
 			return Cancelled{}, false, fmt.Errorf("encode outcome: %w", err)
 		}
-		voided, err := c.voidWaiting(ctx, e.ID, out.Ended, now)
+		voided, err := c.voidWaiting(ctx, e.ID, out.Ended, now, "execution_cancelled")
 		if err != nil {
 			return Cancelled{}, false, err
 		}
-		ch := ports.ExecutionChange{Steps: changed, Events: events, Approvals: voided,
+		ch := ports.ExecutionChange{Execution: &e, CheckSteps: snapshot, Steps: changed, Events: events, Approvals: voided,
 			Command: &domain.CommandRecord{Name: CmdCancel, Key: req.Key, Fingerprint: fp, Result: result, At: now}}
-		if out.ExecutionCancelled || len(changed) == 0 {
-			ch.Execution = &e // the change must name its Execution; unchanged, it only moves the version
-		}
 		_, err = c.store.Commit(ctx, ch)
 		if errors.Is(err, domain.ErrConflict) || errors.Is(err, domain.ErrDuplicateCommand) {
 			continue // the Execution or the key moved under us; read again
@@ -148,71 +146,6 @@ func (c *Coordinator) Cancel(ctx context.Context, req CancelRequest) (Cancelled,
 // they are now (callers have already moved the Steps they end).
 func allEnded(steps []domain.StepExecution) bool {
 	return !slices.ContainsFunc(steps, func(s domain.StepExecution) bool { return !s.State.Terminal() })
-}
-
-// settleCancel finishes a requested cancel after a Step ended or after a restart: it ends the
-// Steps nobody holds and, when every Step has ended, moves the Execution to cancelled. It does
-// nothing for an Execution that has no cancel request or has ended.
-func (c *Coordinator) settleCancel(ctx context.Context, executionID string) error {
-	for range maxEditAttempts {
-		e, steps, err := c.store.Get(ctx, executionID)
-		if err != nil {
-			return err
-		}
-		if e.State.Terminal() {
-			return nil
-		}
-		events, err := c.store.Events(ctx, executionID)
-		if err != nil {
-			return err
-		}
-		if !slices.ContainsFunc(events, func(ev domain.ExecutionEvent) bool { return ev.Kind == domain.EventExecCancelRequested }) {
-			return nil
-		}
-		now := c.now()
-		var changed []domain.StepExecution
-		var endedIDs []string
-		var evs []domain.ExecutionEvent
-		for i := range steps {
-			st := &steps[i]
-			var err error
-			switch st.State {
-			case domain.StepQueued:
-				err = st.Cancel(now)
-			case domain.StepAwaitingApproval:
-				err = st.CancelAwaiting(now)
-			case domain.StepInterrupted, domain.StepTimedOut:
-				err = st.Abandon(now, systemActor)
-			default:
-				continue
-			}
-			if err != nil {
-				return err
-			}
-			changed = append(changed, *st)
-			endedIDs = append(endedIDs, st.ID)
-			evs = append(evs, domain.ExecutionEvent{Kind: domain.EventStepCancelled, StepID: st.ID, Reason: "execution_cancelled", At: now})
-		}
-		voided, err := c.voidWaiting(ctx, executionID, endedIDs, now)
-		if err != nil {
-			return err
-		}
-		ch := ports.ExecutionChange{Steps: changed, Events: evs, Approvals: voided}
-		if allEnded(steps) {
-			if err := e.Finish(now, domain.ExecCancelled, nil); err != nil {
-				return err
-			}
-			ch.Execution = &e
-			ch.Events = append(ch.Events, domain.ExecutionEvent{Kind: domain.EventExecCancelled, At: now})
-		}
-		if len(ch.Steps) == 0 && ch.Execution == nil {
-			return nil // nothing to settle
-		}
-		if _, err := c.store.Commit(ctx, ch); !errors.Is(err, domain.ErrConflict) {
-			return err
-		}
-	}
-	return fmt.Errorf("%w: execution %s kept changing under the cancel", domain.ErrConflict, executionID)
 }
 
 func (c *Coordinator) register(attempt string, ch chan<- ports.Cancel) {

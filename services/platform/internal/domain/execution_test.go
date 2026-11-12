@@ -10,6 +10,9 @@ var t0 = time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
 
 // documentedExec restates DOMAIN_MODEL §5.1 independently of the implementation table.
 var documentedExec = map[[2]ExecState]bool{
+	{ExecQueued, ExecSucceeded}:  true,
+	{ExecQueued, ExecFailed}:     true,
+	{ExecWaiting, ExecSucceeded}: true,
 	{ExecQueued, ExecRunning}:    true,
 	{ExecRunning, ExecWaiting}:   true,
 	{ExecWaiting, ExecRunning}:   true,
@@ -75,6 +78,7 @@ func TestExecutionFinish(t *testing.T) {
 	ok := []struct {
 		from, to ExecState
 	}{
+		{ExecQueued, ExecSucceeded}, {ExecQueued, ExecFailed}, {ExecWaiting, ExecSucceeded},
 		{ExecQueued, ExecCancelled}, {ExecRunning, ExecSucceeded}, {ExecRunning, ExecFailed}, {ExecRunning, ExecCancelled},
 		{ExecWaiting, ExecFailed}, {ExecWaiting, ExecCancelled},
 	}
@@ -85,12 +89,6 @@ func TestExecutionFinish(t *testing.T) {
 		}
 		if (c.to == ExecFailed) != (e.Error != nil) {
 			t.Errorf("%s -> %s: error recorded only for failed, got %+v", c.from, c.to, e.Error)
-		}
-	}
-	for _, c := range [][2]ExecState{{ExecQueued, ExecSucceeded}, {ExecQueued, ExecFailed}, {ExecWaiting, ExecSucceeded}} {
-		e := Execution{State: c[0]}
-		if err := e.Finish(t0, c[1], boom); !errors.Is(err, ErrInvalidTransition) || e.State != c[0] {
-			t.Errorf("%s -> %s must be invalid: %v", c[0], c[1], err)
 		}
 	}
 	for _, to := range []ExecState{ExecQueued, ExecRunning, ExecWaiting, "bogus"} {

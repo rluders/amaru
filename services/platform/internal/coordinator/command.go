@@ -116,6 +116,9 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	// our lookup and our write, and then the lookup finds it.
 	for range 2 {
 		if out, found, err := replay[Submitted](ctx, c.store, CmdSubmit, req.Key, fp); err != nil || found {
+			if err == nil && found {
+				err = c.settle(ctx, out.Execution.ID)
+			}
 			return out, found, err
 		}
 		now := c.now()
@@ -169,6 +172,9 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 			continue
 		}
 		if err != nil {
+			return Submitted{}, false, err
+		}
+		if err := c.settle(ctx, id); err != nil {
 			return Submitted{}, false, err
 		}
 		c.Wake()

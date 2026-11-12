@@ -91,10 +91,10 @@ func readEvents(t *testing.T, s ports.ExecutionStore) []domain.ExecutionEvent {
 }
 
 // ProtocolDurability exercises lease, start, remote-job recording, renewal and result commits
-// through Serve, including a durable result whose acknowledgement never reaches the Worker.
+// and parent aggregation through Serve, including a durable result whose acknowledgement never reaches the Worker.
 func ProtocolDurability(t *testing.T, newStore func(*testing.T) ports.ExecutionStore, reopen Restart) {
 	for _, after := range []bool{false, true} {
-		for commit := 1; commit <= 5; commit++ {
+		for commit := 1; commit <= 6; commit++ {
 			t.Run(fmt.Sprintf("protocol/commit-%d/after-%t", commit, after), func(t *testing.T) {
 				store := newStore(t)
 				queued(t, store, "e1", t0, "s1")
@@ -171,11 +171,25 @@ func verifyProtocolCommit(t *testing.T, store ports.ExecutionStore, durable int)
 	if durable >= 2 {
 		want = domain.StepRunning
 	}
-	if durable == 5 {
+	if durable >= 5 {
 		want = domain.StepSucceeded
 	}
+	e, _, err := store.Get(context.Background(), "e1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := domain.ExecQueued
+	if durable >= 2 {
+		parent = domain.ExecRunning
+	}
+	if durable == 6 {
+		parent = domain.ExecSucceeded
+	}
+	if e.State != parent || (e.EndedAt != nil) != (durable == 6) {
+		t.Fatalf("parent at commit %d: %+v", durable, e)
+	}
 	// queued() creates v1, then plans to v2; each successful protocol commit adds one.
-	if st.State != want || st.Version != int64(2+durable) {
+	if st.State != want || st.Version != int64(2+min(durable, 5)) {
 		t.Fatalf("durable=%d: state/version %+v", durable, st)
 	}
 	if (st.RemoteJob != nil) != (durable >= 3) {

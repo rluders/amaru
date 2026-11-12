@@ -171,3 +171,29 @@ func (a *ProjectAccess) Events(ctx context.Context, q domain.EventQuery, stream 
 	}
 	return stream.ReadEvents(ctx, q, a.coordinator.now(), window)
 }
+
+// ResumeStep rechecks Project ownership before command replay or a human transition.
+func (a *ProjectAccess) ResumeStep(ctx context.Context, project domain.ProjectKey, req HumanStepRequest) (domain.StepExecution, bool, error) {
+	by, err := a.authorize(ctx, project)
+	if err != nil {
+		return domain.StepExecution{}, false, err
+	}
+	if _, _, err := a.execution(ctx, project, req.ExecutionID); err != nil {
+		return domain.StepExecution{}, false, err
+	}
+	req.By, req.ActorID = domain.Actor{Kind: domain.ActorHuman}, by.ID
+	return a.coordinator.ResumeStep(ctx, req)
+}
+
+// AbandonStep rechecks Project ownership before command replay or a human transition.
+func (a *ProjectAccess) AbandonStep(ctx context.Context, project domain.ProjectKey, req HumanStepRequest) (domain.StepExecution, bool, error) {
+	by, err := a.authorize(ctx, project)
+	if err != nil {
+		return domain.StepExecution{}, false, err
+	}
+	if _, _, err := a.execution(ctx, project, req.ExecutionID); err != nil {
+		return domain.StepExecution{}, false, err
+	}
+	req.By, req.ActorID = domain.Actor{Kind: domain.ActorHuman}, by.ID
+	return a.coordinator.AbandonStep(ctx, req)
+}

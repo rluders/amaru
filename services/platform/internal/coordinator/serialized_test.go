@@ -39,3 +39,7 @@ func TestCancelOverSerializedLink(t *testing.T) {
 func TestLimitsOverSerializedLink(t *testing.T) {
 	coordtest.LimitsSuite(t, newFake, newSerializedLink)
 }
+
+func TestTerminalOverSerializedLink(t *testing.T) {
+	coordtest.TerminalSuite(t, newFake, newSerializedLink)
+}

@@ -124,6 +124,12 @@ func TestProjectAccess(t *testing.T) {
 			if err != domain.ErrNotFound || !reflect.DeepEqual(page, domain.EventPage{}) {
 				t.Fatalf("cursor leaked: %+v %v", page, err)
 			}
+			for _, call := range []func(context.Context, domain.ProjectKey, coordinator.HumanStepRequest) (domain.StepExecution, bool, error){api.ResumeStep, api.AbandonStep} {
+				out, replay, err := call(ctx, a, coordinator.HumanStepRequest{Key: "human", ExecutionID: id, StepID: "same-name"})
+				if err != domain.ErrNotFound || replay || !reflect.DeepEqual(out, domain.StepExecution{}) {
+					t.Fatalf("human command leaked: %+v %v %v", out, replay, err)
+				}
+			}
 			req := cancel
 			req.ExecutionID = id
 			out, replay, err := api.Cancel(ctx, a, req)
@@ -207,6 +213,11 @@ func TestProjectAccess(t *testing.T) {
 		t.Fatalf("foreign pinned definition: %v", err)
 	}
 	revoked.Store(true)
+	for _, call := range []func(context.Context, domain.ProjectKey, coordinator.HumanStepRequest) (domain.StepExecution, bool, error){api.ResumeStep, api.AbandonStep} {
+		if _, _, err := call(ctx, a, coordinator.HumanStepRequest{Key: "human", ExecutionID: first.Execution.ID}); err != domain.ErrNotPermitted {
+			t.Fatalf("revoked human command: %v", err)
+		}
+	}
 	if _, _, err := api.Cancel(ctx, b, cancel); err != domain.ErrNotPermitted {
 		t.Fatalf("revoked replay: %v", err)
 	}

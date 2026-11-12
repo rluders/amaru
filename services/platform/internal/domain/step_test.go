@@ -8,6 +8,7 @@ import (
 
 // documentedStep restates DOMAIN_MODEL §5.2 independently of the implementation table.
 var documentedStep = map[[2]StepState]bool{
+	{StepPending, StepCancelled}:          true,
 	{StepPending, StepSkipped}:            true,
 	{StepPending, StepRefused}:            true,
 	{StepPending, StepAwaitingApproval}:   true,
@@ -77,7 +78,7 @@ func TestStepMethodsRejectEveryOtherState(t *testing.T) {
 		for _, state := range StepStates {
 			s := StepExecution{State: state}
 			err := m.call(&s)
-			if state == m.from {
+			if state == m.from || (name == "Cancel" && state == StepPending) {
 				if err != nil {
 					t.Errorf("%s from %s: %v", name, state, err)
 				}

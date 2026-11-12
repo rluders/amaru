@@ -42,7 +42,7 @@ func ProcessCrashInjection(t *testing.T, newStore func(*testing.T) ports.Executi
 			}
 		})
 	}
-	for _, point := range []string{"before-1", "after-1", "before-2", "after-2", "before-3", "after-3", "before-4", "after-4", "before-5", "after-5", "assignment", "ack"} {
+	for _, point := range []string{"before-1", "after-1", "before-2", "after-2", "before-3", "after-3", "before-4", "after-4", "before-5", "after-5", "before-6", "after-6", "assignment", "ack"} {
 		t.Run("protocol/"+point, func(t *testing.T) {
 			store := newStore(t)
 			run(t, "protocol", point)
@@ -52,7 +52,7 @@ func ProcessCrashInjection(t *testing.T, newStore func(*testing.T) ports.Executi
 			case "assignment":
 				durable = 1
 			case "ack":
-				durable = 5
+				durable = 6
 			default:
 				var n int
 				if _, err := fmt.Sscanf(point, "before-%d", &n); err == nil {

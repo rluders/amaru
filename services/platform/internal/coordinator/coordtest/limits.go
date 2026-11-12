@@ -243,13 +243,14 @@ func LimitsSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 	t.Run("a failed result and a refused attempt free their slots", func(t *testing.T) {
 		store := newStore(t)
 		c := limited(store)
-		got := submit(t, c, "k1", "p1", "", 4)
+		submit(t, c, "k1", "p1", "", 4)
 		s := startSession(t, store, c, nl, "w1")
 		s.send(ports.Offer{FreeSlots: 10})
 		as := s.drain()
 		if len(as) != 2 {
 			t.Fatalf("%d assignments, want 2", len(as))
 		}
+		got := submit(t, c, "healthy", "p1", "", 3)
 		s.send(ports.AcceptAttempt{AttemptID: as[0].AttemptID, FencingToken: as[0].Lease.FencingToken})
 		s.send(ports.Result{AttemptID: as[0].AttemptID, FencingToken: as[0].Lease.FencingToken, Outcome: ports.OutcomeFailed, ErrorCode: "boom"})
 		s.send(ports.RejectAttempt{AttemptID: as[1].AttemptID})
@@ -268,7 +269,7 @@ func LimitsSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionStore,
 		if len(more) != 2 {
 			t.Fatalf("%d assignments after both slots were freed, want 2", len(more))
 		}
-		// Four Steps: one failed, the refused one is queued again, so three compete for two slots.
+		// Failure drains its Execution; three healthy Steps compete for the freed slots.
 		if w := queuedWithReason(t, store, got.Execution.ID); len(w) != 1 {
 			t.Fatalf("waiting %v, want exactly one Step", w)
 		}
