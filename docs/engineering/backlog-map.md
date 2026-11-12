@@ -306,3 +306,7 @@ Confirmed in the backlog refinement of 2026-10-25 against the roadmap exit crite
 The [Project](https://github.com/users/rluders/projects/2) holds live execution status; this file holds identity and relationships, not a second status ledger. On 2026-10-29, WP-M3-03 [#15](https://github.com/rluders/amaru/issues/15) was reopened to reflect its remaining children #129, #145, #157 and #158. The owner's Work Package OS deferral stays in force; M3 exit evidence stays owed. M1/M2 qualified exits are recorded in #60/#12. Details and limitations: [management validation](../validation/management/2026-10-29-github-management.md).
 
 The 2026-10-25/26 dependency notes above are historical decisions. Later owner corrections in issue discussions and native relationships take precedence for execution: #168 is fresh Amaru work and no longer blocked by #83; #66 is closed. Do not restore stale gates from this snapshot.
+
+
+## M3 validation scope amendment (2026-11-12)
+The product owner approved Linux-first acceptance for all remaining M3 work, including exit #20. macOS and Windows are best effort and unrun checks remain not validated. This applies to WP-M3-03 (#15) and EXE-002 (#129); no planning IDs, dependencies or M4 exit requirements change. See the [canonical validation decision](validation.md#scope-decision-product-owner-2026-11-12).
