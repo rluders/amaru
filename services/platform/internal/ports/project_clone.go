@@ -19,3 +19,19 @@ type ProjectCloneStore interface {
 	// ActiveClone returns ErrNotFound for Projects without a binding; never guesses a root.
 	ActiveClone(context.Context, domain.ProjectKey) (domain.ProjectClone, error)
 }
+
+// ProjectInspection is captured by the native Git adapter, without registration or authorization.
+// Name is a suggestion only; existing Project metadata remains authoritative.
+type ProjectInspection struct {
+	Key           domain.ProjectKey
+	Name          string
+	Root          string
+	ConfigPresent bool
+}
+
+// ProjectInspector inspects an absolute root through hardened read-only Git.
+// It returns ErrInvalid for unusable repository/config input and propagates cancellation
+// and operational process errors. It never resolves an active binding or mutates storage.
+type ProjectInspector interface {
+	Inspect(context.Context, string) (ProjectInspection, error)
+}

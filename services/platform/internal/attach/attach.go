@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -65,58 +66,55 @@ func (a Attacher) Attach(ctx context.Context, path string) (p domain.Project, cr
 	return a.Projects.RegisterClone(ctx, p, domain.ProjectClone{ProjectKey: p.Key, Root: inspected.Root})
 }
 
-// Inspection captures local identity and committed config metadata without consulting or changing storage.
-// Name is the repository's suggested name; an existing Project keeps its stored name.
-// It grants no authorization and is not a public API response.
-type Inspection struct {
-	Key           domain.ProjectKey
-	Name          string
-	Root          string
-	ConfigPresent bool
-}
-
 // Inspect requires an absolute directory and inspects its canonical repository root through
 // the same hardened read-only Git path as Attach. The caller owns authorization and binding selection.
-func (a Attacher) Inspect(ctx context.Context, path string) (Inspection, error) {
+func (a Attacher) Inspect(ctx context.Context, path string) (ports.ProjectInspection, error) {
 	if err := ctx.Err(); err != nil {
-		return Inspection{}, err
+		return ports.ProjectInspection{}, err
 	}
 	if !filepath.IsAbs(path) {
-		return Inspection{}, invalid("path must be absolute")
+		return ports.ProjectInspection{}, invalid("path must be absolute")
+	}
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) || (err == nil && !info.IsDir()) {
+		return ports.ProjectInspection{}, invalid("root is not an existing directory")
+	}
+	if err != nil {
+		return ports.ProjectInspection{}, err
 	}
 	top, err := a.one(ctx, path, "rev-parse", "--show-toplevel")
 	if err != nil {
-		return Inspection{}, invalid("not a usable git working tree: %v", err)
+		return ports.ProjectInspection{}, repositoryError(err)
 	}
 	top, err = filepath.EvalSymlinks(top)
 	if err != nil {
-		return Inspection{}, invalid("repository root is unavailable")
+		return ports.ProjectInspection{}, invalid("repository root is unavailable")
 	}
 	top, err = filepath.Abs(top)
 	if err != nil {
-		return Inspection{}, invalid("repository root is not absolute")
+		return ports.ProjectInspection{}, invalid("repository root is not absolute")
 	}
 	if shallow, err := a.one(ctx, top, "rev-parse", "--is-shallow-repository"); err != nil {
-		return Inspection{}, err
+		return ports.ProjectInspection{}, repositoryError(err)
 	} else if shallow != "false" {
-		return Inspection{}, invalid("shallow repository has no reliable root commit")
+		return ports.ProjectInspection{}, invalid("shallow repository has no reliable root commit")
 	}
 	cfg, err := a.committedConfig(ctx, top)
 	if err != nil {
-		return Inspection{}, err
+		return ports.ProjectInspection{}, repositoryError(err)
 	}
 	key, err := a.key(ctx, top, cfg)
 	if err != nil {
-		return Inspection{}, err
+		return ports.ProjectInspection{}, repositoryError(err)
 	}
 	name := cfg.Project.Name
 	if name == "" {
 		name = filepath.Base(top)
 	}
 	if err := ctx.Err(); err != nil {
-		return Inspection{}, err
+		return ports.ProjectInspection{}, err
 	}
-	return Inspection{Key: key, Name: name, Root: top, ConfigPresent: cfg.present}, nil
+	return ports.ProjectInspection{Key: key, Name: name, Root: top, ConfigPresent: cfg.present}, nil
 }
 
 // projectConfig is the part of the committed .amaru/config.yaml that attach reads.
@@ -134,7 +132,7 @@ func (a Attacher) committedConfig(ctx context.Context, top string) (projectConfi
 	var cfg projectConfig
 	head, err := a.one(ctx, top, "rev-parse", "--verify", "-q", "HEAD")
 	if err != nil {
-		return cfg, invalid("%s has no commit to derive a key from", top)
+		return cfg, repositoryError(err)
 	}
 	listed, err := a.one(ctx, top, "ls-tree", head, "--", configPath)
 	if err != nil {
@@ -219,7 +217,7 @@ func (a Attacher) remoteURL(ctx context.Context, top string) (string, error) {
 func (a Attacher) rootCommit(ctx context.Context, top string) (string, error) {
 	out, err := a.run(ctx, top, "rev-list", "--max-parents=0", "HEAD")
 	if err != nil {
-		return "", invalid("%s has no commit to derive a key from: %v", top, err)
+		return "", repositoryError(err)
 	}
 	roots := strings.Fields(string(out))
 	if len(roots) == 0 {
@@ -286,4 +284,13 @@ func (a Attacher) run(ctx context.Context, dir string, args ...string) ([]byte, 
 
 func invalid(format string, a ...any) error {
 	return fmt.Errorf("%w: attach: "+format, append([]any{domain.ErrInvalid}, a...)...)
+}
+
+// Process startup, I/O and cancellation errors must not masquerade as bad client input.
+func repositoryError(err error) error {
+	var exit exitError
+	if errors.As(err, &exit) {
+		return invalid("unusable Git repository: %v", err)
+	}
+	return err
 }

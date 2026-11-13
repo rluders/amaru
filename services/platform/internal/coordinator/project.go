@@ -29,13 +29,24 @@ func NewProjectAccess(c *Coordinator, projects ports.ProjectStore, authenticate 
 	return &ProjectAccess{c, projects, authenticate}, nil
 }
 
-func (a *ProjectAccess) authorize(ctx context.Context, project domain.ProjectKey) (domain.Principal, error) {
+func (a *ProjectAccess) administrator(ctx context.Context) (domain.Principal, error) {
 	by, err := a.authenticate(ctx)
 	if err != nil {
 		return domain.Principal{}, err
 	}
 	if by.Kind != domain.PrincipalHuman || by.ID == "" || by.Role != domain.RoleOwner || by.Sponsor != "" {
 		return domain.Principal{}, domain.ErrNotPermitted
+	}
+	if err := ctx.Err(); err != nil {
+		return domain.Principal{}, err
+	}
+	return by, nil
+}
+
+func (a *ProjectAccess) authorize(ctx context.Context, project domain.ProjectKey) (domain.Principal, error) {
+	by, err := a.administrator(ctx)
+	if err != nil {
+		return domain.Principal{}, err
 	}
 	if !project.Valid() {
 		return domain.Principal{}, domain.ErrNotFound
