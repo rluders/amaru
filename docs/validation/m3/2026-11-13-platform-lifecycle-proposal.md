@@ -1,6 +1,6 @@
 # Platform lifecycle proposal: isolated evidence and acceptance plan
 
-Date: 2026-11-13. Scope: [#357](https://github.com/rluders/amaru/issues/357), [proposed ADR-0068](../../architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md). Baseline: #18 integration `3255a7c4e16d4d43bacb05596aba65e6977974a4`, after merged PR #356. This record is **not** production Platform lifecycle validation or approval to import Lane.
+Date: 2026-11-13. Scope: [#357](https://github.com/rluders/amaru/issues/357), [accepted ADR-0068](../../architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md). Baseline: #18 integration `3255a7c4e16d4d43bacb05596aba65e6977974a4`, after merged PR #356. Owner approval is recorded in the ADR; this record is **not** production Platform lifecycle validation or production composition.
 
 ## Source-backed findings
 
@@ -65,8 +65,8 @@ These results validate the documentation and isolated compatibility proof only. 
 
 Use fake Providers and deterministic barriers for normal tests. Real PostgreSQL/NATS/process crash evidence is separate from fake-backed lifecycle tests. Linux is required for M3; native Windows/macOS are best effort under the recorded owner decision, not implied by cross-vet. No new claim of remote Worker, Provider execution or complete public Event transport.
 
-## Architecture review and remaining decision
+## Architecture review and remaining validation
 
-Verdict: **needs human decision**. One outer supervisor respects dependency direction and leaves durable business state with the Platform; explicit ownership handles Lane's cancellation semantics. No new domain contract, infrastructure choice, trust grant, wire format or migration from the predecessor. Accepted storage/messaging infrastructure requirements remain unchanged. Direct standard-library composition is the fallback if adapters become a second supervisor. A custom HTTP owner, admission latch, startup watchdog and safe diagnostics are concrete costs, not library features supplied automatically.
+Verdict before owner approval: **needs human decision**. One outer supervisor respects dependency direction and leaves durable business state with the Platform; explicit ownership handles Lane's cancellation semantics. No new domain contract, infrastructure choice, trust grant, wire format or migration from the predecessor. Accepted storage/messaging infrastructure requirements remain unchanged. Direct standard-library composition is the fallback if adapters become a second supervisor. A custom HTTP owner, admission latch, startup watchdog and safe diagnostics are concrete costs, not library features supplied automatically. The owner approved ADR-0068 on 2026-11-13; the implementation and production validation gates below remain open.
 
-The isolated proof supports the proposed ownership pattern only. Full Lane-in-Amaru runtime composition, PostgreSQL restart/crash, NATS/outbox and actual Auth/discovery plus Lane integration were **not validated**. Adoption and numeric default budgets remain proposed until Ricardo's recorded approval. #357 remains open; #18/#191/#20 retain their acceptance gates.
+The isolated proof supports the approved ownership pattern only. Full Lane-in-Amaru runtime composition, PostgreSQL restart/crash, NATS/outbox and actual Auth/discovery plus Lane integration were **not validated**. The approved decision and numeric default budgets do not claim production behavior. #357 remains open for implementation evidence; #18/#191/#20 retain their independent acceptance gates.

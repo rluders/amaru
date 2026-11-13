@@ -4,12 +4,6 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
 
 ## Questions
 
-### Q67. Platform process readiness and shutdown ownership
-
-- **Question:** should Lane supervise the first production Platform process, and which owner keeps storage/messaging alive while HTTP, embedded Worker and background work stop?
-- **Proposal:** [ADR-0068](adr/0068-platform-process-readiness-and-bounded-shutdown.md) proposes one pinned Lane supervisor, completion readiness, pre-bound HTTP/discovery ownership, separate startup/cleanup budgets and cancellation/join without domain lifecycle changes. [Evidence and remaining validation](../validation/m3/2026-11-13-platform-lifecycle-proposal.md).
-- **Owner:** Ricardo Lüders. **Status:** open; [#357](https://github.com/rluders/amaru/issues/357), under #18/M3. Human approval precedes imports; production composition remains unimplemented. No milestone exit claim.
-
 ### Q66. Public Project inspection and unavailable clone responses
 
 - **Question:** how should authenticated attach/list/detail map required config/Git metadata when existing wire descriptions conflict with committed-definition placement and the current Git inspector, and how should an unavailable attached clone affect list/detail?
@@ -139,6 +133,12 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 7. **M9 — cross-tenant isolation test** ([ADR-0022](adr/0022-cloud-tenancy-row-level-isolation-by-organization.md)).
 
 ## Closed
+
+### Q67. Platform process readiness and shutdown ownership
+- **Question:** should Lane supervise the first production Platform process, and which owner keeps storage/messaging alive while HTTP, embedded Worker and background work stop?
+- **Owner answer:** “Proposal at PR #358 is approved.”
+- **Decision:** use one Lane v2.1.0 lifecycle owner at the Platform composition root with completion-based startup readiness, explicit storage/messaging/resource ownership, bounded cancellation and join, pre-bound HTTP/Auth/discovery ownership, and secret-safe diagnostics. Preserve Coordinator and Worker business lifecycle semantics. → [ADR-0068](adr/0068-platform-process-readiness-and-bounded-shutdown.md)
+- **Status:** closed by explicit owner approval on 2026-11-13; implementation and production failure-matrix validation remain pending under #18/M3. No milestone exit claim.
 
 ### Q1. Durable workflow technology
 - **Question:** Keep a hand-written durable state machine (the prototype's model), or adopt a durable execution engine (Temporal, Restate, DBOS, Hatchet, a database-backed queue)?

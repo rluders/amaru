@@ -104,6 +104,6 @@ This is one coordinator serving multiple Worker sessions, not distributed schedu
 
 OBS-001 operational logging adapter evidence and remaining composition gates: [Linux record](../validation/m3/2026-11-12-linux-obs-001.md). `make check` includes secret-fixture capture and command/auth composition tests; it does not validate a running composed Platform server.
 
-## Proposed Platform process lifecycle
+## Platform process lifecycle
 
-The #357 [ADR-0068 proposal](../architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md) has [isolated Lane compatibility evidence and a production failure matrix](../validation/m3/2026-11-13-platform-lifecycle-proposal.md). This is not production bootstrap, PostgreSQL process restart or NATS/outbox validation. Lane imports require owner approval; the process lifecycle must retain existing embedded Worker cancel-and-join/no-result and durable reconciliation tests.
+The #357 [accepted ADR-0068](../architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md) has [isolated Lane compatibility evidence and a production failure matrix](../validation/m3/2026-11-13-platform-lifecycle-proposal.md). This is not production bootstrap, PostgreSQL process restart or NATS/outbox validation. Lane is approved but not imported; implementation must retain existing embedded Worker cancel-and-join/no-result and durable reconciliation tests.

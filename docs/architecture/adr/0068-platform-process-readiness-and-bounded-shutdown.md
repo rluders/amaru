@@ -1,8 +1,8 @@
 ---
 title: Gate Platform process readiness and bound shutdown with one lifecycle owner
-status: proposed
+status: accepted
 date: 2026-11-13
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0068. Gate Platform process readiness and bound shutdown with one lifecycle owner
@@ -15,7 +15,7 @@ The verified candidate is `github.com/rluders/lane/v2` **v2.1.0**, commit `4c139
 
 ## Decision
 
-**Proposed; requires Ricardo Lüders' approval before imports or production implementation.** Use one Lane v2.1.0 instance at the Platform composition root for process startup, readiness and shutdown. Keep Lane imports outside domain, Coordinator, ports and Worker execution logic. Do not use Lane Supervisor/restart wrappers, WorkerRunner, Scheduler or a second lifecycle supervisor. The library does not own execution state, retries, timers, leases, fencing, recovery, Policy, Approvals or domain cancellation.
+**Accepted by the product owner on 2026-11-13.** Use one Lane v2.1.0 instance at the Platform composition root for process startup, readiness and shutdown. Keep Lane imports outside domain, Coordinator, ports and Worker execution logic. Do not use Lane Supervisor/restart wrappers, WorkerRunner, Scheduler or a second lifecycle supervisor. The library does not own execution state, retries, timers, leases, fencing, recovery, Policy, Approvals or domain cancellation.
 
 ### Startup and resource ownership
 
@@ -76,4 +76,4 @@ Revisit Lane if adapter/watchdog/diagnostic machinery becomes a second superviso
 
 ## Approval
 
-Pending Ricardo Lüders' decision on #357. Proposed by Codex on 2026-11-13; no dependency import, acceptance or product lifecycle implementation is authorized by this draft.
+Proposed by Codex on 2026-11-13. Accepted by Ricardo Lüders on 2026-11-13 in the repository task conversation: “Proposal at PR #358 is approved.” The approval authorizes implementation of this decision; no dependency import or product lifecycle implementation is included in this PR. Production failure-matrix validation remains required before production acceptance.
