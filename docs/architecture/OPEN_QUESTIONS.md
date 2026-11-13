@@ -10,6 +10,13 @@ Questions that block or shape decisions. Each is closed by an ADR ([DECISIONS](D
   - The owner's "WebAssembly" answer (Q6/Q14) now also requires a separate process (Q23).
   - Q13's metadata split now keeps Teams out of Git (Q27).
 
+### Q65. Active clone selection and durable Project location
+
+- **Question:** which clone supplies local Project definitions and informational root when two clones share one Project key, and how does that choice survive restart without changing existing Execution provenance?
+- **Evidence:** ProjectStore persists identity/display metadata only; Attacher returns an existing Project for a second clone; WorkflowReader depends on a trusted location callback. The public Project resource requires a root and inspection metadata. No production persisted clone lookup is implemented.
+- **Proposal:** [ADR-0066](adr/0066-platform-owned-active-project-clone.md): one Platform-owned active local binding per compact Instance/Project; explicit authenticated reattachment selects it atomically; preserve shared state, validate identity at use and pin each Execution's location. Public inspection mapping remains a follow-up, not fabricated metadata.
+- **Owner:** Ricardo Lüders. **Status:** open, awaiting explicit approval. #191/#18/M3 remain open. Runtime implementation and validation are pending.
+
 ### Q64. Tool-native Skill discovery milestone and Project isolation acceptance
 
 - **Question:** should #191 pull actual tool-native Skill discovery into M3 despite FEAT-SKL-003 being scheduled for M7, or should its settings acceptance stop at isolated Platform persistence and product composition?
