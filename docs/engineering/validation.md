@@ -102,7 +102,7 @@ This is one coordinator serving multiple Worker sessions, not distributed schedu
 
 `make check` includes the compact auth/discovery Go tests, auth schema/fixture parity and SDK integration against a test-only Go loopback server. On Linux the discovery tests check native private modes and cross-process ownership. Real browser validation is separate: from `services/platform`, run `go test -tags browser -count=1 -run TestFirefoxLaunchSessionAndLogout -v ./internal/adapter/localauth`. It launches isolated native Firefox profiles, discards diagnostics that could include launch URLs and tests localhost/IPv4 loopback cookie, CSRF and WebSocket revocation. Evidence and unvalidated composition/platform items: [2026-11-12 IAM-001](../validation/m3/2026-11-12-linux-iam-001.md).
 
-OBS-001 operational logging adapter evidence and remaining composition gates: [Linux record](../validation/m3/2026-11-12-linux-obs-001.md). `make check` includes secret-fixture capture and command/auth composition tests; it does not validate a running composed Platform server.
+OBS-001 operational logging adapter evidence and remaining composition gates: [Linux record](../validation/m3/2026-11-12-linux-obs-001.md). `make check` includes secret-fixture capture, command/auth composition tests and [Worker Runner diagnostic tests](../validation/m3/2026-11-13-linux-obs-001-worker.md); it does not validate a running composed Platform server.
 
 ## Platform process lifecycle
 
