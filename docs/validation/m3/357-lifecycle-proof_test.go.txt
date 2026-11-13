@@ -1,0 +1,216 @@
+package lifecycleproof
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"io"
+	"log/slog"
+	"net"
+	"net/http"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/rluders/lane/v2"
+)
+
+type probe struct {
+	name  string
+	start func(context.Context) error
+	ready func(context.Context) error
+	stop  func(context.Context) error
+}
+
+func (p probe) Name() string { return p.name }
+func (p probe) Start(ctx context.Context) error {
+	if p.start != nil {
+		return p.start(ctx)
+	}
+	<-ctx.Done()
+	return nil
+}
+func (p probe) WaitReady(ctx context.Context) error {
+	if p.ready != nil {
+		return p.ready(ctx)
+	}
+	return nil
+}
+func (p probe) Stop(ctx context.Context) error {
+	if p.stop != nil {
+		return p.stop(ctx)
+	}
+	return nil
+}
+func silent() lane.Option { return lane.WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))) }
+func wait(t *testing.T, ch <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-ch:
+	case <-time.After(3 * time.Second):
+		t.Fatal("barrier timed out")
+	}
+}
+func result(t *testing.T, ch <-chan error) error {
+	t.Helper()
+	select {
+	case err := <-ch:
+		return err
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run timed out")
+		return nil
+	}
+}
+func TestDependenciesSurviveCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ready, cancelled, joined := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	var closed atomic.Bool
+	l := lane.New(silent(), lane.WithObserver(func(e lane.Event) {
+		if e.Kind == lane.EventLaneReady {
+			close(ready)
+		}
+	}))
+	l.AddStage(probe{name: "storage", stop: func(context.Context) error {
+		select {
+		case <-joined:
+		default:
+			return errors.New("storage closed before dependent join")
+		}
+		closed.Store(true)
+		return nil
+	}})
+	l.AddStage(probe{name: "worker", start: func(ctx context.Context) error { <-ctx.Done(); close(cancelled); return nil }, stop: func(ctx context.Context) error {
+		select {
+		case <-cancelled:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+		if closed.Load() {
+			return errors.New("dependency unavailable")
+		}
+		close(joined)
+		return nil
+	}})
+	done := make(chan error, 1)
+	go func() { done <- l.Run(ctx) }()
+	wait(t, ready)
+	cancel()
+	if err := result(t, done); err != nil {
+		t.Fatal(err)
+	}
+	if !closed.Load() {
+		t.Fatal("storage Stop not called")
+	}
+}
+func TestCompletionBarrierAndReadinessFailure(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	entered, release, later := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	l := lane.New(silent())
+	l.AddStage(probe{name: "reconcile", ready: func(ctx context.Context) error {
+		close(entered)
+		select {
+		case <-release:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}})
+	l.AddStage(probe{name: "admission", start: func(ctx context.Context) error { close(later); <-ctx.Done(); return nil }})
+	done := make(chan error, 1)
+	go func() { done <- l.Run(ctx) }()
+	wait(t, entered)
+	select {
+	case <-later:
+		t.Fatal("incomplete barrier passed")
+	default:
+	}
+	close(release)
+	wait(t, later)
+	cancel()
+	if err := result(t, done); err != nil {
+		t.Fatal(err)
+	}
+	var started, stopped atomic.Bool
+	want := errors.New("readiness failed")
+	fail := lane.New(silent())
+	fail.AddStage(probe{name: "schema", ready: func(context.Context) error { return want }, stop: func(context.Context) error { stopped.Store(true); return nil }})
+	fail.AddStage(probe{name: "never", start: func(context.Context) error { started.Store(true); return nil }})
+	if err := fail.Run(context.Background()); !errors.Is(err, want) {
+		t.Fatalf("Run: %v", err)
+	}
+	if started.Load() || !stopped.Load() {
+		t.Fatal("partial startup cleanup failed")
+	}
+}
+func TestOnePreboundHTTPListener(t *testing.T) {
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	actual := listener.Addr().String()
+	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }), ReadHeaderTimeout: time.Second}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	l := lane.New(silent())
+	l.AddStage(probe{name: "http", start: func(context.Context) error {
+		err := server.Serve(listener)
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
+	}, stop: func(ctx context.Context) error { return server.Shutdown(ctx) }})
+	done := make(chan error, 1)
+	go func() { done <- l.Run(ctx) }()
+	client := &http.Client{Timeout: time.Second}
+	response, err := client.Get("http://" + actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != 204 || listener.Addr().String() != actual {
+		t.Fatal("bound identity changed")
+	}
+	cancel()
+	if err := result(t, done); err != nil {
+		t.Fatal(err)
+	}
+	conn, err := net.DialTimeout("tcp4", actual, time.Second)
+	if err == nil {
+		conn.Close()
+		t.Fatal("listener open")
+	}
+}
+func TestSafeDiagnostics(t *testing.T) {
+	const canary = "LIFECYCLE_SECRET_CANARY"
+	var sink bytes.Buffer
+	logger := slog.New(safeHandler{slog.NewJSONHandler(&sink, nil)})
+	l := lane.New(lane.WithLogger(logger))
+	l.AddStage(probe{name: "service", start: func(context.Context) error { panic(canary) }})
+	var panicErr *lane.PanicError
+	if err := l.Run(context.Background()); !errors.As(err, &panicErr) {
+		t.Fatal("missing typed panic failure")
+	}
+	if strings.Contains(sink.String(), canary) || strings.Contains(sink.String(), "stack") {
+		t.Fatal("raw diagnostic leaked")
+	}
+	if !strings.Contains(sink.String(), "process lifecycle") {
+		t.Fatal("no safe diagnostic")
+	}
+	// Returned errors remain unsafe to print; production must classify them.
+}
+
+// Filter before handing the record to a formatting handler; do not resolve raw attributes.
+type safeHandler struct{ next slog.Handler }
+
+func (h safeHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.next.Enabled(ctx, level)
+}
+func (h safeHandler) Handle(ctx context.Context, record slog.Record) error {
+	return h.next.Handle(ctx, slog.NewRecord(record.Time, record.Level, "process lifecycle", 0))
+}
+func (h safeHandler) WithAttrs([]slog.Attr) slog.Handler { return h }
+func (h safeHandler) WithGroup(string) slog.Handler      { return h }

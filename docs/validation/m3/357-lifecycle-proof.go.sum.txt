@@ -1,0 +1,4 @@
+github.com/rluders/lane/v2 v2.1.0 h1:FuczwawiLFcBiiIFyUXMTH88H7lkBO2+eXzedRQPU34=
+github.com/rluders/lane/v2 v2.1.0/go.mod h1:mVk7qX9v1LbEAZly+R303e5H/Lp7ucx1cSVKmm+knhE=
+golang.org/x/sync v0.24.0 h1:iqiDrGoDgyuvAKrhLQthUEzU/R378N78gXbBjxed7oA=
+golang.org/x/sync v0.24.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=

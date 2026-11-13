@@ -134,6 +134,12 @@ Spikes no longer choose technologies; they validate accepted decisions. Each end
 
 ## Closed
 
+### Q67. Platform process readiness and shutdown ownership
+- **Question:** should Lane supervise the first production Platform process, and which owner keeps storage/messaging alive while HTTP, embedded Worker and background work stop?
+- **Owner answer:** “Proposal at PR #358 is approved.”
+- **Decision:** use one Lane v2.1.0 lifecycle owner at the Platform composition root with completion-based startup readiness, explicit storage/messaging/resource ownership, bounded cancellation and join, pre-bound HTTP/Auth/discovery ownership, and secret-safe diagnostics. Preserve Coordinator and Worker business lifecycle semantics. → [ADR-0068](adr/0068-platform-process-readiness-and-bounded-shutdown.md)
+- **Status:** closed by explicit owner approval on 2026-11-13; implementation and production failure-matrix validation remain pending under #18/M3. No milestone exit claim.
+
 ### Q1. Durable workflow technology
 - **Question:** Keep a hand-written durable state machine (the prototype's model), or adopt a durable execution engine (Temporal, Restate, DBOS, Hatchet, a database-backed queue)?
 - **Owner answer:** "Temporal is way too overpower, let's use Postgres."
