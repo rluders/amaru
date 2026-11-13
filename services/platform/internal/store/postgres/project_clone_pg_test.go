@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -131,14 +132,16 @@ func TestProjectCloneGitAndReopen(t *testing.T) {
 	db := migratedDB(t)
 	ctx := context.Background()
 	root := t.TempDir()
-	git := func(dir string, args ...string) {
+	git := func(dir string, args ...string) string {
 		t.Helper()
 		cmd := exec.Command("git", args...)
 		cmd.Dir = dir
 		cmd.Env = append(os.Environ(), "GIT_CONFIG_GLOBAL="+os.DevNull, "GIT_CONFIG_NOSYSTEM=1", "GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@example.com", "GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@example.com")
-		if out, err := cmd.CombinedOutput(); err != nil {
+		out, err := cmd.CombinedOutput()
+		if err != nil {
 			t.Fatalf("git: %v %s", err, out)
 		}
+		return strings.TrimSpace(string(out))
 	}
 	git(root, "init", "-q")
 	git(root, "commit", "--allow-empty", "-qm", "initial")
@@ -146,6 +149,16 @@ func TestProjectCloneGitAndReopen(t *testing.T) {
 	clone := filepath.Join(t.TempDir(), "clone")
 	git(root, "clone", "-q", root, clone)
 	git(clone, "remote", "set-url", "origin", "https://github.com/acme/app")
+	workflowDir := filepath.Join(clone, ".amaru", "workflows")
+	if err := os.MkdirAll(workflowDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(workflowDir, "flow.yaml"), []byte("schemaVersion: 1\nid: flow\nname: Selected clone\nstatus: active\nsteps:\n  - id: test\n    name: Test\n    type: tool\n    capability: code.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	git(clone, "add", ".")
+	git(clone, "commit", "-qm", "clone-only workflow")
+	revision := git(clone, "rev-parse", "HEAD")
 	s := NewProjectStore(db)
 	a := attach.Attacher{Runner: osproc.Runner{}, Resolver: osproc.Resolver{}, Projects: s, Now: func() time.Time { return time.Now().UTC() }}
 	first, created, err := a.Attach(ctx, root)
@@ -191,4 +204,10 @@ func TestProjectCloneGitAndReopen(t *testing.T) {
 	if rows, err := fresh.List(ctx); err != nil || len(rows) != 1 || rows[0].Key != first.Key || rows[0].Name != first.Name || !rows[0].CreatedAt.Equal(first.CreatedAt) {
 		t.Fatalf("Projects: %+v %v", rows, err)
 	}
+	a.Projects = fresh
+	reader := attach.WorkflowReader{Git: a}
+	if got, err := reader.Workflow(ctx, first.Key, "flow", revision); err != nil || got.Name != "Selected clone" {
+		t.Fatalf("persisted Workflow clone after pool reopen: %+v %v", got, err)
+	}
+
 }

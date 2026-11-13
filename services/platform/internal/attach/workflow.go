@@ -14,11 +14,10 @@ import (
 )
 
 // WorkflowReader reads committed definitions using Attacher's hardened, bounded Git process
-// path. Location is a trusted Instance-local Project-to-clone lookup; it never takes a path
-// from a public request. It must return the original attached root, not a shared workspace.
+// path. It captures one active clone from the same Instance store used for attach; public
+// callers must enter through ProjectAccess before lookup or Git IO.
 type WorkflowReader struct {
-	Git      Attacher
-	Location func(context.Context, domain.ProjectKey) (string, error)
+	Git Attacher
 }
 
 var _ ports.ProjectWorkflowSource = WorkflowReader{}
@@ -30,7 +29,7 @@ func (r WorkflowReader) Workflow(ctx context.Context, project domain.ProjectKey,
 	if err := ctx.Err(); err != nil {
 		return domain.Workflow{}, err
 	}
-	if r.Location == nil || r.Git.Projects == nil || r.Git.Runner == nil || r.Git.Resolver == nil {
+	if r.Git.Projects == nil || r.Git.Runner == nil || r.Git.Resolver == nil {
 		return domain.Workflow{}, fmt.Errorf("%w: Workflow reader needs Git, Projects and clone lookup", domain.ErrInvalid)
 	}
 	if !domain.ValidWorkflowID(id) || !domain.ValidDefinitionRevision(revision) {
@@ -46,10 +45,14 @@ func (r WorkflowReader) Workflow(ctx context.Context, project domain.ProjectKey,
 	if err != nil {
 		return domain.Workflow{}, err
 	}
-	dir, err := r.Location(ctx, project)
-	if err != nil || !filepath.IsAbs(dir) {
+	clone, err := r.Git.Projects.ActiveClone(ctx, project)
+	if ctx.Err() != nil {
+		return domain.Workflow{}, ctx.Err()
+	}
+	if err != nil || clone.ProjectKey != project || !filepath.IsAbs(clone.Root) {
 		return domain.Workflow{}, domain.ErrNotFound
 	}
+	dir := clone.Root
 	top, err := r.Git.one(ctx, dir, "rev-parse", "--show-toplevel")
 	if err != nil || filepath.Clean(top) != filepath.Clean(dir) {
 		return domain.Workflow{}, domain.ErrNotFound
