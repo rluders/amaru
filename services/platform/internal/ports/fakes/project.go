@@ -17,6 +17,7 @@ type ProjectStore struct {
 	mu       sync.Mutex
 	byID     map[domain.ProjectKey]domain.Project
 	settings map[domain.ProjectKey]domain.ProjectSettings
+	clones   map[domain.ProjectKey]string
 }
 
 var _ ports.ProjectStore = (*ProjectStore)(nil)

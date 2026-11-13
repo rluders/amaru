@@ -118,6 +118,9 @@ func TestAttachIsStableAcrossSpellingAndClones(t *testing.T) {
 	if all, _ := st.List(context.Background()); len(all) != 1 {
 		t.Errorf("%d projects stored, want 1", len(all))
 	}
+	if selected, err := st.ActiveClone(context.Background(), first.Key); err != nil || selected.Root != clone {
+		t.Fatalf("second clone not selected: %+v %v", selected, err)
+	}
 	// "restart": a new Attacher over the same store
 	b := attach.Attacher{Runner: osproc.Runner{}, Resolver: osproc.Resolver{}, Projects: st, Now: func() time.Time { return t0.Add(time.Hour) }}
 	if p, created, err := b.Attach(context.Background(), dir); err != nil || created || p.Key != first.Key || !p.CreatedAt.Equal(t0) {
@@ -328,5 +331,62 @@ func TestAttachWithoutGit(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	if _, _, err := a.Attach(context.Background(), t.TempDir()); err == nil || !strings.Contains(err.Error(), "git is required") {
 		t.Errorf("err = %v", err)
+	}
+}
+
+// A changed identity at an already selected root must not register a second Project.
+func TestAttachRejectsRootIdentityReassignment(t *testing.T) {
+	needGit(t)
+	dir := repo(t, "https://github.com/acme/a")
+	a, st := newAttacher()
+	ctx := context.Background()
+	first, _, err := a.Attach(ctx, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	git(t, dir, "remote", "set-url", "origin", "https://github.com/acme/b")
+	if _, _, err := a.Attach(ctx, dir); !errors.Is(err, domain.ErrExists) {
+		t.Fatalf("reassigned root: %v", err)
+	}
+	if all, err := st.List(ctx); err != nil || len(all) != 1 || all[0] != first {
+		t.Fatalf("partial registration: %+v %v", all, err)
+	}
+	if selected, err := st.ActiveClone(ctx, first.Key); err != nil || selected.Root != dir {
+		t.Fatalf("binding changed: %+v %v", selected, err)
+	}
+}
+
+func TestAttachCanonicalCloneAndValidationFailure(t *testing.T) {
+	needGit(t)
+	dir := repo(t, "https://github.com/acme/a")
+	canonical, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(t.TempDir(), "alias")
+	if err := os.Symlink(dir, link); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	a, st := newAttacher()
+	ctx := context.Background()
+	first, created, err := a.Attach(ctx, link)
+	if err != nil || !created {
+		t.Fatal(created, err)
+	}
+	if got, err := st.ActiveClone(ctx, first.Key); err != nil || got.Root != canonical {
+		t.Fatalf("canonical: %+v %v", got, err)
+	}
+	broken := repo(t, "https://github.com/acme/a")
+	git(t, broken, "checkout", "--orphan", "empty")
+	if _, _, err := a.Attach(ctx, broken); err == nil {
+		t.Fatal("invalid clone succeeded")
+	}
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, _, err := a.Attach(cancelled, dir); err == nil {
+		t.Fatal("cancelled attach succeeded")
+	}
+	if got, err := st.ActiveClone(ctx, first.Key); err != nil || got.Root != canonical {
+		t.Fatalf("failed validation changed binding: %+v %v", got, err)
 	}
 }

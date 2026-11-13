@@ -51,7 +51,8 @@ Never describe planned or prototype behavior as available in Amaru.
 - Go: `gofmt`, `go vet`. TypeScript (when introduced): `strict`, no `any`.
 
 ## Versioning
-- Contracts are versioned ([ADR-0004](../architecture/adr/0004-shared-versioned-contracts.md)). Within a major version, additive changes only.
+- **Until Amaru v1.0 is released:** follow [AGENTS.md hard rule 10](../../AGENTS.md#hard-rules). Evolve current schemas, contracts, code and fixtures directly, including breaking changes; do not add legacy compatibility shims, deprecated aliases, old-format readers, backfills or upgrade/downgrade paths for unreleased versions. Keep shared contract definitions and version identifiers, and update every current consumer together. Existing migration tooling may create and validate the current schema; fresh installations are the acceptance target. This is not permission to discard existing work or data.
+- **From the Amaru v1.0 release:** the compatibility obligations in [ADR-0004](../architecture/adr/0004-shared-versioned-contracts.md) and [ADR-0025](../architecture/adr/0025-api-and-protocol-versioning-policy.md) apply: within a major contract version, changes are additive. Their legacy compatibility requirements are waived during the pre-v1.0 period above.
 - No release versions or tags exist yet; release versioning is decided before the first release.
 
 ## Commits and changes
