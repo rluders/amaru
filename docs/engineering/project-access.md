@@ -12,20 +12,20 @@ Manual Submit derives Project, principal and trigger from the trusted boundary. 
 
 ## Operation inventory and remaining composition
 
-Inspected against `packages/contracts/openapi/amaru.yaml` and the [coordinator command inventory](command-idempotency.md). This is an application/source mapping, not a claim that these HTTP routes are served.
+Inspected against `packages/contracts/openapi/openapi.yaml` and the [coordinator command inventory](command-idempotency.md). This is an application/source mapping, not a claim that these HTTP routes are served.
 
 | Public operation family | This slice | Remaining delivery gate |
 |---|---|---|
 | Execution create; Workflow run | Authorized manual `Submit`; `RunWorkflow` loads a named committed Workflow through `ports.ProjectWorkflowSource`, then binds Project/actor before replay | Agent/Skill/Environment resolution and wire-to-domain mapping; do not pass client definitions directly into the internal Submit request |
 | Execution detail/cancel | Project-bound `Execution` and `Cancel` | HTTP handlers and shared contract/SDK acceptance |
-| Execution definition/Evidence | Ownership before pinned definition return or Evidence assembly | Public mapping; direct Artifact ID/content access still needs its own ownership boundary |
+| Execution definition/Evidence | Ownership before pinned definition return or Evidence assembly | Public mapping; direct Artifact version/content application access now checks ownership (below) |
 | Project and Execution Event replay | Project authorization plus ownership of any Execution filter before the existing journal read; trusted clock/window | Typed envelope mapping, WebSocket lifecycle and cursor wire mapping |
 | Approval detail/decision | Project-bound `Approval` and `DecideApproval` before replay | List/query adapters, HTTP handlers and contract/SDK acceptance |
 | Project list/detail/attach | Existing Project/attach components are unchanged | Authenticated product composition |
 | Execution lists, Work Packages/Items and dependencies | No new implementation | Project-selected authoritative query/mutation paths; reject cross-Project dependencies |
 | Workflow/Agent/Team CRUD/source | `Workflow` reads the selected Project's committed Workflow at an explicit revision | Other definition types, CRUD, versioned API/disk reconciliation (#219) |
 | Project settings | Authorized `Settings` / `UpdateSettings` and Platform persistence (ADR-0064) | Guarded settings HTTP adapter (below); settings SDK fixture composition below; full product composition remains pending; tool-native discovery/import is M7 (ADR-0065) |
-| Artifact list/detail/content; delivery-loop query | No new implementation | Project-bound access; delivery-loop implementation remains M4 |
+| Artifact list/detail/content; delivery-loop query | `ArtifactVersions` filters by producing Execution ownership; `ArtifactContent` opens only an exact owned version | Public list/detail mapping and HTTP/SDK composition remain; delivery-loop implementation remains M4 |
 | Health/auth, Provider/Capability discovery | Existing auth subset remains; identity now available to composition | Product startup, authenticated discovery and applicable protocol mapping |
 | Grant and trust mutations (internal command inventory) | Existing trusted commands unchanged | Any future public exposure must authorize the target Project/Grant before replay; never expose raw coordinator methods |
 
@@ -89,3 +89,11 @@ The [Linux SDK record](../validation/m3/2026-11-12-linux-prj-002-settings-sdk.md
 ## Discovery scheduling decision accepted
 
 After merged PR #343, Ricardo Lüders approved [ADR-0065](../architecture/adr/0065-tool-native-skill-discovery-remains-m7.md) in PR #344. Tool-native discovery/import remains FEAT-SKL-003/M7. ADR-0065 supersedes ADR-0064, retaining its implemented settings semantics and replacing only its M3 actual-discovery prerequisite. M3 still requires isolated settings through authenticated product composition and rejected/foreign writes that cannot mutate either Project or create trust. Setting the boolean currently discovers nothing and grants no trust. No scanner, importer or new file grammar is implemented; all other #191/#18 gates remain open.
+
+## Project-bound Artifact versions and content
+
+`ProjectAccess.ArtifactVersions` authorizes the selected attached Project before index access, then checks every version's producing Execution against the coordinator's authoritative store. Only owned versions are returned, including when two Projects use the same Artifact ID. Missing, foreign-only and orphaned histories return bare `ErrNotFound` with no metadata. Existing immutable, globally assigned Artifact version numbers are preserved; filtering does not renumber versions or promise hidden numbering gaps.
+
+`ArtifactContent` selects an exact owned version and opens its stored content hash through the trusted Instance BlobStore. Callers cannot use this operation to open a raw hash. Foreign or unknown versions never reach blob storage. Authorization is rechecked after index IO and after blob open; a revoked call receives no metadata or reader, and an already opened reader is closed. The authorized caller owns and closes a returned reader; continuous revocation of an ongoing stream is not implemented by this application operation. Storage errors return no partial result.
+
+The fake-backed regression covers matching names, mixed histories, owned content, foreign/missing/orphaned versions, rejected credentials, revocation during both reads, dependency failures and unchanged history. This slice adds no storage mutation, migration, runtime dependency or new public contract. The inherited public Artifact schema describes Project-relative note paths; mapping it to versioned runtime Artifacts remains a reviewed contract/composition gate. These application methods are not serving HTTP endpoints. See the [Linux Artifact access record](../validation/m3/2026-11-12-linux-prj-002-artifacts.md). #191/#18/M3 remain open for the operation inventory's remaining gates.
