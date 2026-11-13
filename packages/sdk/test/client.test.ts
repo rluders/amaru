@@ -127,3 +127,31 @@ test("Project settings keep false patches and selected Project identity on the w
   await client.GET("/projects/{projectId}/settings", { params: { path: { projectId: "project-b" } } });
   assert.equal(seen[1]!.url, "http://x.test/v1/projects/project-b/settings");
 });
+
+test("Project attach, detail and list preserve the current shared inspection fixture", async () => {
+  const { readFileSync } = await import("node:fs");
+  const project = JSON.parse(readFileSync(new URL("../../contracts/fixtures/api/v1/Project/valid.json", import.meta.url), "utf8"));
+  const { f, seen } = fakeFetch(req => Response.json(req.url.endsWith("/projects") && req.method === "GET" ? [project] : project));
+  const client = createClient({ baseUrl: "http://x.test/v1", token: "native-fixture", fetch: f });
+  const attached = await client.POST("/projects", { body: { root: project.root } });
+  assert.deepEqual(await seen[0]!.json(), { root: project.root });
+  assert.deepEqual(attached.data, project);
+  assert.equal(attached.data?.config.path, ".amaru/config.yaml");
+  assert.equal(attached.data?.git.present, true);
+  assert.equal(attached.data?.git.remote, undefined);
+  assert.equal(attached.data?.git.branch, undefined);
+  assert.equal(attached.data?.repositories, undefined);
+  assert.deepEqual((await client.GET("/projects/{projectId}", { params: { path: { projectId: project.id } } })).data, project);
+  assert.deepEqual((await client.GET("/projects")).data, [project]);
+});
+
+test("Project failures remain typed redacted errors", async () => {
+  for (const [status, code] of [[400, "invalid_request"], [409, "conflict"], [500, "internal"]] as const) {
+    const { f } = fakeFetch(() => Response.json({ error: { code, message: "Request rejected." } }, { status }));
+    const client = createClient({ baseUrl: "http://x.test/v1", token: "native-fixture", fetch: f });
+    const result = await client.POST("/projects", { body: { root: "/fixture/root" } });
+    assert.equal(result.response.status, status);
+    assert.equal(result.data, undefined);
+    assert.deepEqual(result.error, { error: { code, message: "Request rejected." } });
+  }
+});

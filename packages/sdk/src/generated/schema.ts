@@ -92,10 +92,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Projects attached to this Platform. */
+        /**
+         * Projects attached to this Platform.
+         * @description Requires the current human Instance administrator. Inspects one captured active clone per Project using bounded read-only Git. Returns all attached Projects ordered by stored name then id, or no results. 409 conflict when a known Project has an unavailable/mismatched clone or invalid config; other store/process failures are 500 internal. Errors are redacted. Reads never change clone selection.
+         */
         get: operations["listProjects"];
         put?: never;
-        /** Attach a project root (idempotent). 400 invalid_request when root is not an absolute existing directory. */
+        /**
+         * Attach a usable Git Project root (idempotent).
+         * @description Requires the current human Instance administrator. 400 invalid_request for an invalid body, non-absolute, missing or unusable root/repository/config; 409 conflict if another identity owns the root; other store/process failures are 500 internal. Errors are redacted. Inspection uses bounded read-only Git without network or hooks. Reattach preserves stored metadata/settings/history and selects this canonical clone. A committed attach remains committed if authorization is lost before the response; retry explicitly selects that clone again. Optional branch, remote and repositories fields are omitted. No execution authority is granted.
+         */
         post: operations["attachProject"];
         delete?: never;
         options?: never;
@@ -113,7 +119,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** @description `git.remote` is the origin URL read from `.git/config` with credentials removed. It is read from the file system only (no git process, no network) and is untrusted text. */
+        /** @description Requires the current human Instance administrator. Returns stored metadata and one captured active clone inspected through bounded read-only Git, without network or hooks. Unknown or malformed Project ids are 404 not_found; known unavailable/mismatched clones or invalid config are 409 conflict; other store/process failures are 500 internal. Errors are redacted; no other root is substituted. config.present refers to a regular committed .amaru/config.yaml blob at inspected HEAD; dirty working-tree edits are ignored. Successful inspection has git.present true. Optional branch, remote and repositories fields are omitted. */
         get: operations["getProject"];
         put?: never;
         post?: never;
@@ -695,7 +701,7 @@ export interface components {
             name: string;
             /** @description Absolute native path of the project root. Informational; identity is `id`. */
             root: string;
-            /** @description External Git repositories linked in .amaru/project.yaml. An entry with `error` is never used. */
+            /** @description External Git repositories linked in .amaru/repositories.yaml. An entry with `error` is never used. Omitted by the initial Project inspection implementation. */
             repositories?: {
                 id: string;
                 path: string;
@@ -703,13 +709,17 @@ export interface components {
                 error?: string;
             }[];
             config: {
+                /** @description Whether a regular .amaru/config.yaml blob exists at the inspected HEAD. Dirty working-tree edits are ignored; malformed or unsafe config fails inspection. */
                 present: boolean;
+                /** @description Relative committed config path, .amaru/config.yaml when present. */
                 path?: string;
             };
             git: {
+                /** @description True after successful bounded read-only Git inspection. Unavailable or unusable Git fails the operation. */
                 present: boolean;
+                /** @description Optional inspected branch; omitted by the initial implementation. */
                 branch?: string;
-                /** @description URL of the origin remote read from .git/config, credentials removed. Untrusted project text; never contacted. */
+                /** @description Optional sanitized origin URL, never contacted. Omitted by the initial implementation; raw remotes are never disclosed. */
                 remote?: string;
             };
         };
@@ -720,10 +730,10 @@ export interface components {
         ProjectList: components["schemas"]["Project"][];
         /**
          * AttachProject
-         * @description POST /projects body. Idempotent: the same canonical root always yields the same project.
+         * @description POST /projects body. Reattaching a usable clone preserves stored Project metadata and atomically selects that clone; last committed attach wins. A root owned by another identity is a conflict.
          */
         AttachProject: {
-            /** @description Absolute native path of an existing directory (the vault root). */
+            /** @description Absolute native path of an existing directory in a non-bare, non-shallow Git repository with a commit and valid Project identity/config. Canonical repository root is selected; no execution permission is granted. */
             root: string;
         };
         /**
@@ -1471,7 +1481,7 @@ export interface components {
             maxRepairs?: number;
             /** @description Open the pull request ready for review instead of as a draft (default). */
             readyForReview?: boolean;
-            /** @description Id of a repository linked in .amaru/project.yaml; exclusive with repo. Used only for a trusted project. */
+            /** @description Id of a repository linked in .amaru/repositories.yaml; exclusive with repo. Used only for a trusted project. */
             repository?: string;
             base?: string;
             /** @description Merge a moved base branch into an open pull request waiting for checks or a merge, and push the merge commit. Default false. */
@@ -2366,7 +2376,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description The attached project */
+            /** @description The attached Project with preserved stored metadata and captured clone inspection. */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -106,6 +106,11 @@ paths:
     get:
       operationId: listProjects
       summary: Projects attached to this Platform.
+      description: >-
+        Requires the current human Instance administrator. Inspects one captured active clone per Project using
+        bounded read-only Git. Returns all attached Projects ordered by stored name then id, or no results.
+        409 conflict when a known Project has an unavailable/mismatched clone or invalid config; other store/process
+        failures are 500 internal. Errors are redacted. Reads never change clone selection.
       responses:
         '200':
           description: OK
@@ -121,7 +126,14 @@ paths:
       - bearer: []
       - browserSession: []
         csrf: []
-      summary: Attach a project root (idempotent). 400 invalid_request when root is not an absolute existing directory.
+      summary: Attach a usable Git Project root (idempotent).
+      description: >-
+        Requires the current human Instance administrator. 400 invalid_request for an invalid body, non-absolute,
+        missing or unusable root/repository/config; 409 conflict if another identity owns the root; other store/process
+        failures are 500 internal. Errors are redacted. Inspection uses bounded read-only Git without network or hooks.
+        Reattach preserves stored metadata/settings/history and selects this canonical clone. A committed attach
+        remains committed if authorization is lost before the response; retry explicitly selects that clone again.
+        Optional branch, remote and repositories fields are omitted. No execution authority is granted.
       requestBody:
         required: true
         content:
@@ -130,8 +142,7 @@ paths:
               $ref: ../schemas/AttachProject.json
       responses:
         '200':
-          description: The attached project
-          freshly inspected.: null
+          description: The attached Project with preserved stored metadata and captured clone inspection.
           content:
             application/json:
               schema:
@@ -144,8 +155,12 @@ paths:
     get:
       operationId: getProject
       description: >-
-        `git.remote` is the origin URL read from `.git/config` with credentials removed. It is read from the file
-        system only (no git process, no network) and is untrusted text.
+        Requires the current human Instance administrator. Returns stored metadata and one captured active clone
+        inspected through bounded read-only Git, without network or hooks. Unknown or malformed Project ids are
+        404 not_found; known unavailable/mismatched clones or invalid config are 409 conflict; other store/process
+        failures are 500 internal. Errors are redacted; no other root is substituted. config.present refers to a regular
+        committed .amaru/config.yaml blob at inspected HEAD; dirty working-tree edits are ignored. Successful
+        inspection has git.present true. Optional branch, remote and repositories fields are omitted.
       responses:
         '200':
           description: OK

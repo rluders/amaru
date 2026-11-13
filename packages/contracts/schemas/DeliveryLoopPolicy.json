@@ -41,7 +41,7 @@
     "repository": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
-      "description": "Id of a repository linked in .amaru/project.yaml; exclusive with repo. Used only for a trusted project."
+      "description": "Id of a repository linked in .amaru/repositories.yaml; exclusive with repo. Used only for a trusted project."
     },
     "base": {
       "type": "string",

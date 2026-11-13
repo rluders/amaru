@@ -4,10 +4,9 @@
   "root": "/home/user/MyGame",
   "config": {
     "present": true,
-    "path": ".amaru/project.yaml"
+    "path": ".amaru/config.yaml"
   },
   "git": {
-    "present": true,
-    "branch": "main"
+    "present": true
   }
 }

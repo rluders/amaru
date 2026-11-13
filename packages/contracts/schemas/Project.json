@@ -28,7 +28,7 @@
     "repositories": {
       "type": "array",
       "maxItems": 16,
-      "description": "External Git repositories linked in .amaru/project.yaml. An entry with `error` is never used.",
+      "description": "External Git repositories linked in .amaru/repositories.yaml. An entry with `error` is never used. Omitted by the initial Project inspection implementation.",
       "items": {
         "type": "object",
         "required": [
@@ -62,10 +62,12 @@
       "additionalProperties": false,
       "properties": {
         "present": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether a regular .amaru/config.yaml blob exists at the inspected HEAD. Dirty working-tree edits are ignored; malformed or unsafe config fails inspection."
         },
         "path": {
-          "type": "string"
+          "type": "string",
+          "description": "Relative committed config path, .amaru/config.yaml when present."
         }
       }
     },
@@ -77,15 +79,17 @@
       "additionalProperties": false,
       "properties": {
         "present": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True after successful bounded read-only Git inspection. Unavailable or unusable Git fails the operation."
         },
         "branch": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional inspected branch; omitted by the initial implementation."
         },
         "remote": {
           "type": "string",
           "maxLength": 512,
-          "description": "URL of the origin remote read from .git/config, credentials removed. Untrusted project text; never contacted."
+          "description": "Optional sanitized origin URL, never contacted. Omitted by the initial implementation; raw remotes are never disclosed."
         }
       }
     }
