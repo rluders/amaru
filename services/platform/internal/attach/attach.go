@@ -50,51 +50,78 @@ type Attacher struct {
 // not a git repository, a bare or shallow clone, no commit, several remotes and none named
 // origin, or no remote and no committed Project id.
 func (a Attacher) Attach(ctx context.Context, path string) (p domain.Project, created bool, err error) {
-	if strings.TrimSpace(path) == "" {
-		return domain.Project{}, false, invalid("path is empty")
-	}
 	dir, err := filepath.Abs(path)
-	if err != nil {
-		return domain.Project{}, false, invalid("path %q: %v", path, err)
+	if strings.TrimSpace(path) == "" || err != nil {
+		return domain.Project{}, false, invalid("path is empty or unavailable")
 	}
-	top, err := a.one(ctx, dir, "rev-parse", "--show-toplevel")
+	inspected, err := a.Inspect(ctx, dir)
 	if err != nil {
-		return domain.Project{}, false, invalid("%s is not a usable git working tree: %v", dir, err)
+		return domain.Project{}, false, err
+	}
+	p = domain.Project{Key: inspected.Key, Name: inspected.Name, CreatedAt: a.Now()}
+	if err := p.Validate(); err != nil {
+		return domain.Project{}, false, err
+	}
+	return a.Projects.RegisterClone(ctx, p, domain.ProjectClone{ProjectKey: p.Key, Root: inspected.Root})
+}
+
+// Inspection captures local identity and committed config metadata without consulting or changing storage.
+// Name is the repository's suggested name; an existing Project keeps its stored name.
+// It grants no authorization and is not a public API response.
+type Inspection struct {
+	Key           domain.ProjectKey
+	Name          string
+	Root          string
+	ConfigPresent bool
+}
+
+// Inspect requires an absolute directory and inspects its canonical repository root through
+// the same hardened read-only Git path as Attach. The caller owns authorization and binding selection.
+func (a Attacher) Inspect(ctx context.Context, path string) (Inspection, error) {
+	if err := ctx.Err(); err != nil {
+		return Inspection{}, err
+	}
+	if !filepath.IsAbs(path) {
+		return Inspection{}, invalid("path must be absolute")
+	}
+	top, err := a.one(ctx, path, "rev-parse", "--show-toplevel")
+	if err != nil {
+		return Inspection{}, invalid("not a usable git working tree: %v", err)
 	}
 	top, err = filepath.EvalSymlinks(top)
 	if err != nil {
-		return domain.Project{}, false, invalid("repository root is unavailable")
+		return Inspection{}, invalid("repository root is unavailable")
 	}
 	top, err = filepath.Abs(top)
 	if err != nil {
-		return domain.Project{}, false, invalid("repository root is not absolute")
+		return Inspection{}, invalid("repository root is not absolute")
 	}
 	if shallow, err := a.one(ctx, top, "rev-parse", "--is-shallow-repository"); err != nil {
-		return domain.Project{}, false, err
-	} else if shallow == "true" {
-		return domain.Project{}, false, invalid("%s is a shallow clone: its root commit is not known, so its key would differ from a full clone's", top)
+		return Inspection{}, err
+	} else if shallow != "false" {
+		return Inspection{}, invalid("shallow repository has no reliable root commit")
 	}
 	cfg, err := a.committedConfig(ctx, top)
 	if err != nil {
-		return domain.Project{}, false, err
+		return Inspection{}, err
 	}
 	key, err := a.key(ctx, top, cfg)
 	if err != nil {
-		return domain.Project{}, false, err
+		return Inspection{}, err
 	}
 	name := cfg.Project.Name
 	if name == "" {
 		name = filepath.Base(top)
 	}
-	p = domain.Project{Key: key, Name: name, CreatedAt: a.Now()}
-	if err := p.Validate(); err != nil {
-		return domain.Project{}, false, err
+	if err := ctx.Err(); err != nil {
+		return Inspection{}, err
 	}
-	return a.Projects.RegisterClone(ctx, p, domain.ProjectClone{ProjectKey: key, Root: top})
+	return Inspection{Key: key, Name: name, Root: top, ConfigPresent: cfg.present}, nil
 }
 
 // projectConfig is the part of the committed .amaru/config.yaml that attach reads.
 type projectConfig struct {
+	present bool
 	Project struct {
 		ID   string `yaml:"id"`
 		Name string `yaml:"name"`
@@ -105,24 +132,34 @@ type projectConfig struct {
 // A missing file is an empty config.
 func (a Attacher) committedConfig(ctx context.Context, top string) (projectConfig, error) {
 	var cfg projectConfig
-	if _, err := a.run(ctx, top, "rev-parse", "--verify", "-q", "HEAD"); err != nil {
+	head, err := a.one(ctx, top, "rev-parse", "--verify", "-q", "HEAD")
+	if err != nil {
 		return cfg, invalid("%s has no commit to derive a key from", top)
 	}
-	listed, err := a.one(ctx, top, "ls-tree", "HEAD", "--", configPath)
+	listed, err := a.one(ctx, top, "ls-tree", head, "--", configPath)
 	if err != nil {
 		return cfg, err
+	}
+	if listed == "" {
+		return cfg, nil
 	}
 	// "<mode> blob <id>\t<path>": only a regular committed file is read, not a symlink or a tree.
 	if !strings.HasPrefix(listed, "100644 blob ") && !strings.HasPrefix(listed, "100755 blob ") {
-		return cfg, nil
+		return cfg, invalid("committed %s is not a regular file", configPath)
 	}
-	out, err := a.run(ctx, top, "cat-file", "blob", "HEAD:"+configPath)
+	out, err := a.run(ctx, top, "cat-file", "blob", head+":"+configPath)
 	if err != nil {
 		return cfg, err
 	}
-	if err := yaml.NewDecoder(bytes.NewReader(out)).Decode(&cfg); err != nil && !errors.Is(err, io.EOF) {
+	decoder := yaml.NewDecoder(bytes.NewReader(out))
+	if err := decoder.Decode(&cfg); err != nil && !errors.Is(err, io.EOF) {
 		return cfg, invalid("committed %s: %v", configPath, err)
 	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		return cfg, invalid("committed %s must contain one YAML document", configPath)
+	}
+	cfg.present = true
 	return cfg, nil
 }
 
@@ -230,7 +267,7 @@ func (a Attacher) run(ctx context.Context, dir string, args ...string) ([]byte, 
 		_, _ = io.Copy(io.Discard, proc.Stderr())
 		errc <- b
 	}()
-	out, rerr := io.ReadAll(io.LimitReader(proc.Stdout(), maxOutput))
+	out, rerr := io.ReadAll(io.LimitReader(proc.Stdout(), maxOutput+1))
 	_, _ = io.Copy(io.Discard, proc.Stdout())
 	stderr := <-errc
 	code, werr := proc.Wait()
@@ -239,6 +276,8 @@ func (a Attacher) run(ctx context.Context, dir string, args ...string) ([]byte, 
 		return nil, werr
 	case rerr != nil:
 		return nil, rerr
+	case len(out) > maxOutput:
+		return nil, invalid("git output exceeds inspection limit")
 	case code != 0:
 		return nil, exitError{code: code, stderr: strings.TrimSpace(string(stderr))}
 	}
