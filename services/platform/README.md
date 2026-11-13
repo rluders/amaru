@@ -68,6 +68,7 @@ Aliases that normalize differently (a renamed or transferred remote, a mirror on
 |---|---|---|---|---|
 | `github.com/pressly/goose/v3` | v3.29.0 | MIT | runs the goose-format migration files, one transaction per file with its version row | `internal/store/migrations` |
 | `github.com/jackc/pgx/v5` | v5.11.0 | MIT | PostgreSQL driver (database/sql adapter) | `internal/store/postgres`, tests tagged `pg` |
+| `github.com/rluders/lane/v2` | v2.1.0 | MIT | approved process lifecycle dependency ([ADR-0068](../../docs/architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md)); exercises real failure diagnostics against the operational handoff | operational tests only so far; product composition pending |
 | `go.yaml.in/yaml/v3` | v3.0.5 (2026-07-26) | MIT and Apache-2.0 (its LICENSE file) | reads Workflow definitions; the maintained successor of `gopkg.in/yaml.v3` (last release v3.0.1, 2022), same API, strict mode for unknown fields and duplicate keys | `internal/workflowdef` |
 | `github.com/mfridman/interpolate`, `github.com/sethvargo/go-retry`, `go.uber.org/multierr`, `golang.org/x/sync` and the pgx helpers (see `go.mod`) | as pinned | MIT, Apache-2.0, BSD-3-Clause (from each module's LICENSE file) | transitive | `internal/store/migrations` |
 
@@ -93,6 +94,8 @@ See [Linux IAM-001 evidence](../../docs/validation/m3/2026-11-12-linux-iam-001.m
 ## Operational JSON logging (#170)
 
 `internal/adapter/operational` emits selected operational records separately from domain/audit Events, with trusted Instance/Project/Execution/Step and correlation identity. It reuses the domain redactor plus literal known secret values before JSON encoding. `HTTP` wraps auth to capture successful/rejected requests while omitting raw targets, headers, bodies and Provider output; `IdentityFrom` lets composition correlate command completion. Use the safe error callback for sink failures and never retry a committed command because logging failed. The SDK auth fixture uses this wrapper. Full product command/Worker/server instrumentation remains a #18 gate; this adapter alone does not complete #170. See [Linux evidence and limitations](../../docs/validation/m3/2026-11-12-linux-obs-001.md).
+
+`LifecycleHandler` is the ADR-0068 slog boundary: it discards all messages, source locations, groups and attributes without resolving their values, then tries a non-blocking send of a fixed `process.lifecycle` record with severity (`debug`, `info`, `warning`, `error`). The caller owns a bounded channel; nil, unbuffered without a waiting consumer, or full channels drop diagnostics. Keep it open until producers join. Composition must drain records outside lifecycle callbacks using `Logger.Write` with trusted Instance/correlation identity, and own that consumer's shutdown without waiting indefinitely for a slow sink. No consumer or product lifecycle is composed yet. Never log Lane's returned error/panic, observer payload or raw runner name; the handler protects output, not upstream formatting inside Lane. See [Linux handoff evidence](../../docs/validation/m3/2026-11-13-linux-lifecycle-diagnostics.md).
 
 ## Project-bound Execution access (#191)
 
