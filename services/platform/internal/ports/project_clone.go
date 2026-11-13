@@ -16,6 +16,6 @@ type ProjectCloneStore interface {
 	// Last committed registration wins for the same Project. A root owned by another Project
 	// returns ErrExists; invalid inputs return ErrInvalid. Failures leave both records unchanged.
 	RegisterClone(context.Context, domain.Project, domain.ProjectClone) (domain.Project, bool, error)
-	// ActiveClone returns ErrNotFound for missing or legacy unbound Projects; never guesses a root.
+	// ActiveClone returns ErrNotFound for Projects without a binding; never guesses a root.
 	ActiveClone(context.Context, domain.ProjectKey) (domain.ProjectClone, error)
 }

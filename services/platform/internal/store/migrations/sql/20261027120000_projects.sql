@@ -6,3 +6,9 @@ CREATE TABLE projects (
     name       text        NOT NULL,
     created_at timestamptz NOT NULL
 );
+
+-- Instance-local location, never shared identity or a trust grant (ADR-0066).
+CREATE TABLE project_clones (
+    project_key text PRIMARY KEY REFERENCES projects(key),
+    root text NOT NULL UNIQUE CHECK (root <> '')
+);

@@ -17,7 +17,7 @@ func ProjectCloneStore(t *testing.T, create func(*testing.T) ports.ProjectCloneS
 	ctx := context.Background()
 	a := project(t, "https://github.com/acme/a", commitA, "same")
 	b := project(t, "https://github.com/acme/b", commitA, "same")
-	legacy := project(t, "https://github.com/acme/legacy", commitA, "same")
+	missing := project(t, "https://github.com/acme/missing", commitA, "same")
 	root1, root2, root3 := t.TempDir(), t.TempDir(), t.TempDir()
 	register := func(p domain.Project, root string) (domain.Project, bool, error) {
 		return s.RegisterClone(ctx, p, domain.ProjectClone{ProjectKey: p.Key, Root: root})
@@ -29,16 +29,10 @@ func ProjectCloneStore(t *testing.T, create func(*testing.T) ports.ProjectCloneS
 			t.Fatalf("active clone = %+v %v, want %s", got, err, root)
 		}
 	}
-	for _, key := range []domain.ProjectKey{a.Key, legacy.Key} {
+	for _, key := range []domain.ProjectKey{a.Key, missing.Key} {
 		if _, err := s.ActiveClone(ctx, key); !errors.Is(err, domain.ErrNotFound) {
 			t.Fatal(err)
 		}
-	}
-	if err := s.Create(ctx, legacy); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.ActiveClone(ctx, legacy.Key); !errors.Is(err, domain.ErrNotFound) {
-		t.Fatal("legacy root invented", err)
 	}
 	got, created, err := register(a, root1)
 	if err != nil || !created || got != a {
@@ -94,13 +88,13 @@ func ProjectCloneStore(t *testing.T, create func(*testing.T) ports.ProjectCloneS
 	}
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
-	if _, _, err := s.RegisterClone(cancelled, legacy, domain.ProjectClone{ProjectKey: legacy.Key, Root: root1}); !errors.Is(err, context.Canceled) {
+	if _, _, err := s.RegisterClone(cancelled, missing, domain.ProjectClone{ProjectKey: missing.Key, Root: root1}); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
 	}
 	if _, err := s.ActiveClone(cancelled, a.Key); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
 	}
-	if _, err := s.ActiveClone(ctx, legacy.Key); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := s.ActiveClone(ctx, missing.Key); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatal("cancelled selection persisted", err)
 	}
 	check(a.Key, root2)
@@ -142,8 +136,4 @@ func ProjectCloneStore(t *testing.T, create func(*testing.T) ports.ProjectCloneS
 	if got, err := s.Get(ctx, a.Key); err != nil || got.Key != a.Key || got.Name != a.Name || !got.CreatedAt.Equal(a.CreatedAt) {
 		t.Fatal("Project changed", got, err)
 	}
-	if _, _, err := register(legacy, root2); err != nil {
-		t.Fatal(err)
-	}
-	check(legacy.Key, root2)
 }

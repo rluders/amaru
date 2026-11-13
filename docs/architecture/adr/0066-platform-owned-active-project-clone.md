@@ -21,6 +21,8 @@ The immediate prerequisite is an authoritative clone selection rule, not a new p
 
 **Accepted by the product owner on 2026-11-12; implementation is pending.**
 
+**Pre-release scope clarification (PR #349):** the owner subsequently confirmed that legacy compatibility is unnecessary until Amaru v1.0 is released; see [the repository rule](../../engineering/CONVENTIONS.md#versioning). The upgrade/reversible-migration requirement in item 6 and old-unbound-row evidence below are waived for this implementation. Create the binding table in the initial schema; provide no legacy upgrade, backfill or downgrade path. Normal missing-binding failures, atomic registration and reattachment semantics still apply.
+
 1. **Keep one active local clone binding per Project in each compact Instance.** Store the binding in the Platform's existing PostgreSQL, separately from the shared Project identity and settings. A binding contains the Project key and the canonical absolute repository root. A root belongs to at most one Project in that Instance. It is operational metadata, never a committed Project file, credential, trust decision or authorization grant. Self-hosted/Cloud execution locations remain adapter-owned; do not use this local absolute path as a remote Worker instruction.
 2. **Select by explicit authenticated attach.** A successful attach of a second clone of the same Project selects that clone for subsequent operations. Repeating attach at the active root is idempotent. Preserve the existing Project name, creation time, settings and operational state. Concurrent attaches use the last committed transaction, rather than request arrival time. Reject binding a root already registered to a different Project; a changed repository identity requires a future explicit administrative reconciliation, not automatic reassignment.
 3. **Commit registration atomically.** The Project registration and active binding update share one transaction. Validation happens before that transaction; failed validation, cancellation before commit and store failures leave both records unchanged. A crash after commit can lose the response, but a retry has the same registration/selection outcome. No filesystem write, move, copy, Git mutation, trust grant or process execution beyond the existing bounded read-only Git inspection is authorized by attach. Public attach still requires an absolute existing root; internal normalization must not weaken that contract.
@@ -50,3 +52,8 @@ Required evidence before claiming this boundary complete: two real temporary Git
 ## Approval
 
 Accepted by Ricardo Lüders on 2026-11-12 in the delivery conversation for [PR #348](https://github.com/rluders/amaru/pull/348): “Proposal on PR #348 approved. Update, merge, sync, then next task.” This approval accepts the decision; runtime implementation and validation remain pending under #191/#18.
+
+
+Owner clarification for [PR #349](https://github.com/rluders/amaru/pull/349): “There is no need to worry about legacy. The project wasn't released yet. Adjust the PR #349 accordly.” This narrows pre-release compatibility scope without changing clone identity, selection, authorization or Execution provenance requirements.
+
+The owner made this repository-wide until the Amaru v1.0 release: “Make non-legacy rule, until we release v1.0”. [AGENTS.md hard rule 10](../../../AGENTS.md#hard-rules) and the engineering versioning convention record the rule.

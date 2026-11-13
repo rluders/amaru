@@ -9,10 +9,10 @@ Linux `7.2.11-100.fc43.x86_64`, x86_64; Git `2.56.0`; PostgreSQL `17.5`. Host Go
 ## Evidence
 
 - **Integration-tested:** `Attacher.Attach` canonicalizes a symlinked root, selects a second real temporary Git clone sharing one Project identity, preserves original Project metadata, and leaves selection unchanged after failed validation or cancelled attachment. A changed remote at an occupied root cannot register a second Project. Existing attach regressions still pass, including read-only repository behavior and refusing executable Project content.
-- **Unit-tested / integration-tested:** shared `porttest.ProjectCloneStore` runs against fake and PostgreSQL adapters. It covers first registration, same-root idempotence, explicit switching, preserving name/time/settings, foreign-root collision, rollback of new Project registration, existing Project binding preservation, invalid inputs, cancelled reads/writes, concurrent writers and legacy unbound Projects. Stores validate record shape (key match, nonempty/NUL-free root); trusted attach owns native path validation, canonicalization and filesystem/Git inspection.
+- **Unit-tested / integration-tested:** shared `porttest.ProjectCloneStore` runs against fake and PostgreSQL adapters. It covers first registration, same-root idempotence, explicit switching, preserving name/time/settings, foreign-root collision, rollback of new Project registration, existing Project binding preservation, invalid inputs, cancelled reads/writes, concurrent writers and missing bindings. Stores validate record shape (key match, nonempty/NUL-free root); trusted attach owns native path validation, canonicalization and filesystem/Git inspection.
 - **Integration-tested:** PostgreSQL trigger failures after INSERT/UPDATE leave both Project registration and active binding unchanged. A held Project row lock and observed `pg_stat_activity` lock wait establish writer serialization until commit; a blocked writer cancelled before commit cannot change selection. This is deterministic lock-based evidence, not an inference from request timing or a passing concurrency rerun alone.
 - **Integration-tested:** two real temporary Git clones attach through the PostgreSQL-backed adapter and share one Project/settings record. Closing the original database connection pool and constructing a fresh pool/store retrieves the selected second root and retained settings. The PostgreSQL server and test process are not restarted by this test.
-- **Integration-tested:** upgrade from the previous embedded migration preserves existing Project/settings rows, creates no guessed clone rows, and repeats safely. Inverse SQL drops only the binding table inside a transaction that is then rolled back. The migration runner remains forward-only; no automatic downgrade API is introduced.
+- **Pre-release schema scope:** per the owner’s PR #349 clarification, the clone table belongs to the initial Project schema. Upgrade/downgrade and legacy unbound-row tests were removed. PostgreSQL-backed adapter tests create fresh databases from the embedded schema. No existing development database is reset or migrated by this revision.
 
 Commands from the repository root unless a working directory is stated:
 
@@ -26,10 +26,29 @@ Commands from the repository root unless a working directory is stated:
 
 The full Platform PostgreSQL suite, `AMARU_TEST_PG` set and `go test -race -count=1 -tags pg ./...`, also passed (exit 0). `make docs-check`, `git diff --cached --check` and `trail check --base origin/feat/18-wp-m3-06-public-api-events` passed. All results are local Linux evidence, not CI.
 
-An initial PostgreSQL conformance run exposed a local-time/UTC structural mismatch. The new registration method now returns UTC; legacy Get/List comparisons verify equal instants without changing those existing APIs. All targeted tests above passed after correction. An interim `make check` caught this record's not-yet-created documentation link. The full architecture test also rejected `path/filepath` in storage packages; native path checks now stay in attach, preserving the existing storage import boundary without exceptions. Final full results are recorded below and with the review PR.
+An initial PostgreSQL conformance run exposed a local-time/UTC structural mismatch. The new registration method now returns UTC; existing Get/List comparisons verify equal instants without changing those existing APIs. All targeted tests above passed after correction. An interim `make check` caught this record's not-yet-created documentation link. The full architecture test also rejected `path/filepath` in storage packages; native path checks now stay in attach, preserving the existing storage import boundary without exceptions. Final full results are recorded below and with the review PR.
 
 ## Remaining acceptance
 
 **Not validated / not implemented here:** authenticated attach or trusted WorkflowReader lookup composition; identity and path revalidation at use; moved/replaced root behavior through that composition; revocation during lookup; immutable Execution clone provenance and recovery; full process/server restart; public Project config/Git inspection/error mapping; HTTP/SDK product startup; remote/Cloud placement; concurrent filesystem replacement immunity. Existing operational tables and execution definitions are unchanged, but that is not evidence of implemented clone provenance. Other OSes have no runtime evidence; Linux is the required M3 target and cross-platform remains best effort.
 
 The binding is metadata, never authorization or a trust grant. A root can become unavailable after selection; callers must fail safely without guessing another root. The complete ADR-0066 boundary requires the remaining tests named in the ADR and production composition. Tool-native Skill discovery remains M7 under ADR-0065. #191/#18 and M3 stay open.
+
+
+## PR #349 pre-release revision
+
+The owner made no legacy compatibility a repository-wide rule until Amaru v1.0 is released; see [AGENTS.md hard rule 10](../../../AGENTS.md#hard-rules) and [engineering versioning](../../engineering/CONVENTIONS.md#versioning). The clone table is now in `20261027120000_projects.sql`; the separate clone migration, inverse SQL and upgrade/downgrade test are removed. Conformance still checks ordinary missing-binding behavior and cancellation without creating an old-schema fixture. Existing Project-only callers remain because current coordinator tests and composition use them, not as a release compatibility guarantee.
+
+The earlier command results above describe the original PR revision. Updated schema and test results are recorded with the revised PR; no legacy upgrade or downgrade validation is claimed for this revision.
+
+
+Revised PR checks (local Linux):
+
+| Command | Result |
+| --- | --- |
+| `make check` | PASS, exit 0; `/tmp/amaru-349-prerelease-check.log` |
+| Platform: `go test -race -count=1 ./internal/ports/fakes ./internal/attach` | PASS, exit 0; `/tmp/amaru-349-prerelease-race.log` |
+| Platform, disposable `AMARU_TEST_PG` set: `go test -race -count=1 -tags pg ./...` | PASS, exit 0; `/tmp/amaru-349-prerelease-pg.log`; PostgreSQL adapter package 120.101s |
+| `make docs-check` | PASS, exit 0 after adding the repository-wide v1.0 rule |
+
+Fresh-schema creation, atomic selection, collision/rollback/cancellation and persisted clone reopen remain integration-tested. No legacy upgrade/downgrade or macOS/Windows runtime validation was attempted in this revision. Existing development databases were not changed.
