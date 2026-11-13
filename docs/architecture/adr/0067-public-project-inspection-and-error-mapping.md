@@ -1,0 +1,52 @@
+---
+title: Define public Project inspection and failure mapping
+status: proposed
+date: 2026-11-13
+deciders:
+---
+
+# 0067. Define public Project inspection and failure mapping
+
+## Context
+
+**Proposed, not implemented.** PR #351 merged into #18 at `7e303c8c632444a1fbd8df087bdb8cbb91660063`. Active clone selection, committed Workflow reads and immutable Execution provenance now exist internally. Public Project attach/list/detail composition remains a [#191](https://github.com/rluders/amaru/issues/191) gate.
+
+[ADR-0066 rule 7](0066-platform-owned-active-project-clone.md) explicitly requires public mapping review before those resources are served. Verified source differences:
+
+- [Project](../../../packages/contracts/schemas/Project.json) requires `id`, `name`, absolute informational `root`, `config.present` and `git.present`; its optional repositories description references `.amaru/project.yaml`. Fixtures use that config path too. [ADR-0043](0043-project-definitions-in-git-teams-and-operational-state-in-platform.md) and [ADR-0046](0046-project-key-is-the-normalized-remote-plus-root-commit.md) instead use committed `.amaru/config.yaml` and `.amaru/repositories.yaml`.
+- [OpenAPI](../../../packages/contracts/openapi/openapi.yaml) promises filesystem-only Git inspection for detail and origin remote disclosure with credentials removed. Its attach response also contains the stray YAML key `freshly inspected.`. [Attacher](../../../services/platform/internal/attach/attach.go) already uses hardened read-only Git through process ports, reads config at HEAD, derives identity and atomically registers a clone. It does not produce the public inspection metadata. Identity may use the only remote when origin is absent; this does not mean that remote is origin.
+- [ProjectAccess](../../../services/platform/internal/coordinator/project.go) authorizes existing attached Projects. Attach must also authorize an administrator before inspecting a not-yet-attached path. [SettingsHandler](../../../services/platform/internal/adapter/httpapi/settings.go) supplies the existing Host/Origin/session/CSRF and redacted error pattern. Neither that handler nor the Project record implements Project resource inspection.
+
+These are contract/architecture choices, not evidence that the product endpoints work. This ADR adds mapping detail to ADRs 0043/0046/0062/0066; it supersedes none and authorizes no predecessor import.
+
+## Decision
+
+**If approved:**
+
+1. **Use the existing compact authority.** Require the current authenticated human Instance administrator for attach/list/detail. Check before reading a body, store or filesystem, recheck after blocking inspection and before registration/return, and propagate cancellation to inspection and storage. Attach grants no trust, execution permission or secret access. Register Project metadata and the selected clone atomically in the existing store. A revocation observed before registration prevents it; a committed registration is not rolled back merely because the response is lost or authentication expires afterwards. As with existing mutations, do not claim that a separate live-auth check and database commit form one atomic transaction.
+2. **Inspect the selected Git clone with the existing adapter.** Public attach requires an absolute existing directory; accept a directory inside a usable working tree and return its canonical repository root, as internal attach does. Reject non-Git, bare, shallow, uncommitted or identity-invalid roots without registration. List/detail capture one persisted binding per Project, validate the current repository identity, and inspect that captured root. Reattachment affects later operations only. Reuse bounded hardened read-only Git invocation and regular committed blob checks; no hooks, filters, network, repository writes, shell or second inspection implementation. Native path/process access stays outside the pure domain. Resolve inspection metadata before registration so inspection failure cannot partially attach a Project.
+3. **Give required metadata a precise meaning.** Map `id` from the stored Project key and `name` from preserved Project metadata; `root` is the captured canonical local root, never identity or a remote Worker placement instruction. A successful inspection returns `git.present: true`. `config.present` means a regular `.amaru/config.yaml` blob exists at the inspected HEAD, and `config.path`, when present, is that relative path. Missing config is false; malformed config or an unsafe non-regular config entry fails inspection rather than pretending absence. Uncommitted working-tree edits do not affect these fields. Missing/unusable Git is an operation failure, not `git.present: false` on a fabricated Project.
+4. **Keep optional fields honest.** Omit optional `git.branch`, `git.remote` and `repositories` in the first implementation; do not invent empty arrays or placeholder values. This deliberately makes no promise to disclose a raw remote, whose userinfo, query, fragment or path might contain credentials. Identity derivation retains its existing normalization; optional remote display requires separate verified sanitization before exposure. Linked repository delivery remains governed by ADR-0046; omitting optional inspection metadata neither implements nor waives its acceptance criteria. Future branch/remote/repository output must have real inspected data, bounded parsing and redaction tests before it is exposed.
+5. **Fail clearly without cross-Project fallback.** Preserve authentication guard errors. Invalid public attach body/root/repository/config yields HTTP 400 `invalid_request`; an already-owned root bound to another identity yields HTTP 409 `conflict` without reassignment. Unknown or malformed Project IDs yield HTTP 404 `not_found`. For a known Project whose binding/root/identity/config cannot be inspected, detail and list yield HTTP 409 `conflict`, with no raw diagnostic, path, command output or partial Project list. Other store/process failures yield HTTP 500 `internal`. Never choose another clone, the daemon directory or a different Project. A list that succeeds includes all attached Projects ordered by name with Project key as deterministic tie-breaker. Explicit reattach is recovery for a moved clone; reading a list never changes selection.
+6. **Align current contracts in the implementation change.** Correct the stale config/repository path descriptions, replace the filesystem-only inspection promise with the bounded read-only Git model, document the metadata semantics and errors, remove the stray OpenAPI response key, and update fixtures/generated SDK output and parity checks. Keep existing resource routes and required shapes. Under the owner-approved no-legacy rule until Amaru v1.0, add no old-path reader, alias, format shim, upgrade/backfill or data reset. No wire-contract change is implemented by this proposed ADR.
+
+## Consequences
+
+One inspection path supports both identity and metadata, while Platform stores retain operational authority. The first public response has only required metadata; optional remote/branch/repository inspection is intentionally unavailable. A single unavailable attached clone makes list fail, which is less convenient than partial results but honest under the current all-or-error ProjectList shape. Revisit that shape through a reviewed contract change if partial availability becomes a product requirement.
+
+Implementation order after approval: return captured inspection data from the attach adapter without a second clone lookup; add authorized attach/list/detail application operations; compose fresh HTTP handlers with the same Auth instance and authoritative stores; align contracts/fixtures/SDK; exercise two real Git Projects and two authenticated clients over loopback. No new dependency, database, broker, service, directory scaffold or migration is needed. Linux is required for M3; other native OS runs remain best effort.
+
+Required tests: missing/relative/non-directory roots; non-Git/bare/shallow/no-commit roots; absent/valid/malformed/non-regular committed config and dirty working-tree edits; same-root retry and second-clone selection with preserved settings/history; foreign root ownership collision; authorization loss during body/inspection and before registration; failed inspection/store write with unchanged selection; moved/mismatched roots and no fallback; list ordering/ties/all-or-error behavior; redacted errors and no optional raw remote leakage; fixture and SDK parity. Existing PostgreSQL binding/provenance evidence remains required and is not replaced by HTTP fakes. A retry after a lost attach response may explicitly select that root again under ADR-0066's last-committed rule.
+
+Architecture review verdict: **needs human decision** for inspection semantics, optional-field omission and list failure behavior. Boundaries otherwise remain within accepted ADRs: clients use API, Platform owns identity/selection, Workers receive no local placement mandate, domain stays pure, and attach grants no Policy authority. Filesystem replacement races and full Provider recovery remain unvalidated; canonicalization is not a race-immunity claim. #191/#18/M3 remain open for their independent Work, definition, Provider, secret and product-composition gates.
+
+## Alternatives considered
+
+- **Implement a second filesystem-only inspector:** follows the stale OpenAPI sentence but duplicates Git/config parsing and diverges from the existing identity and committed-definition model.
+- **Return required flags as false when inspection fails:** keeps list available but invents a usable resource from an unavailable or replaced clone. The current shape has no per-Project inspection-error state.
+- **Expose optional raw remote/repositories immediately:** adds sanitization and linked-location scope before it is needed for the required Project shape. Omission is simpler and allowed by the schema.
+- **Read `.amaru/project.yaml` or support both paths:** contradicts accepted definition placement and the no-legacy rule. Correct current contracts instead.
+
+## Approval
+
+Proposed by: Codex on 2026-11-13. Awaiting explicit approval from Ricardo Lüders; implementation is not authorized by this proposal alone.

@@ -99,6 +99,8 @@ Amaru records significant decisions as Architecture Decision Records (ADRs) in [
 
 | [0066](adr/0066-platform-owned-active-project-clone.md) | Persist the active Project clone in Platform state | accepted | 2026-11-12 |
 
+| [0067](adr/0067-public-project-inspection-and-error-mapping.md) | Define public Project inspection and failure mapping | proposed | 2026-11-13 |
+
 ADRs 0002–0005 and 0008–0039 were accepted by the product owner on 2026-10-25 in the planning session that closed every question in [OPEN_QUESTIONS](OPEN_QUESTIONS.md). Where the owner delegated a question ("you can decide"), the ADR's Approval section says so. ADRs 0040–0043 were accepted the same day under the owner's delegation in a second planning pass that closed the residual questions Q23–Q54; they supersede 0020, 0019, 0014 and 0027 respectively, which stay in the log as `superseded`. ADRs 0044 and 0045 were drafted by an agent from the WP-M1-02 spike and accepted by the product owner on 2026-10-26.
 
 ## ADR backlog
