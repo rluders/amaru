@@ -80,6 +80,8 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 		}
 	}()
 	for {
+		// Subscribe before checking work so a concurrent enqueue cannot lose its wake.
+		wake := c.wake()
 		// Hand out work first: a Step may have been queued while no message arrived.
 		for credit > 0 {
 			attempt, err := c.assignOne(ctx, link, workerID)
@@ -102,7 +104,7 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 				return nil
 			}
 			return err
-		case <-c.wake():
+		case <-wake:
 		case m := <-cancelCh:
 			if err := send(ctx, link, m); err != nil {
 				return err

@@ -148,3 +148,50 @@ func TestServeShutdownDuringSend(t *testing.T) {
 		}
 	}
 }
+
+type queueSnapshotStore struct {
+	ports.ExecutionStore
+	afterEmpty func(context.Context) error
+}
+
+func (s *queueSnapshotStore) Queued(ctx context.Context, limit int) ([]ports.StepRef, error) {
+	refs, err := s.ExecutionStore.Queued(ctx, limit)
+	if err == nil && len(refs) == 0 && s.afterEmpty != nil {
+		f := s.afterEmpty
+		s.afterEmpty = nil
+		err = f(ctx)
+	}
+	return refs, err
+}
+
+func TestServeWakeDuringEmptyQueueRead(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	store := &queueSnapshotStore{ExecutionStore: fakes.NewExecutionStore()}
+	c := coordinator.New(store, time.Now, coordtest.Permissive)
+	var submitted coordinator.Submitted
+	store.afterEmpty = func(ctx context.Context) (err error) {
+		// Commit and wake after the empty snapshot, before Serve starts waiting.
+		submitted, _, err = c.Submit(ctx, coordinator.SubmitRequest{
+			Key: "during-empty-read", By: coordtest.Requester, ProjectID: "p1",
+			Steps: []coordinator.StepSpec{{Name: "test", Capability: "code.test"}},
+		})
+		return err
+	}
+	sent := false
+	link := &shutdownLink{message: ports.Offer{FreeSlots: 1}, send: func(context.Context) error {
+		sent = true
+		_, steps, err := store.Get(ctx, submitted.Execution.ID)
+		if err != nil || len(steps) != 1 || steps[0].State != domain.StepLeased {
+			t.Errorf("lease not committed before assignment: %v %v", steps, err)
+		}
+		cancel()
+		return nil
+	}}
+	if err := c.Serve(ctx, link, "w1"); err != nil {
+		t.Fatal(err)
+	}
+	if !sent {
+		t.Fatal("queued Step was not assigned after its wake; no second Offer or wake was sent")
+	}
+}

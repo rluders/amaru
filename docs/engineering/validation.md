@@ -90,6 +90,8 @@ These are fake-backed integration tests, not remote-worker or real-provider vali
 
 `make check` includes deterministic cancellation regressions for assignment, all Worker message handlers and sends. Session cancellation returns nil; unrelated store or transport failures remain observable. The Linux PostgreSQL reproduction, durability checks and limitations are recorded in the [Worker shutdown validation](../validation/m3/2026-11-12-linux-worker-shutdown.md).
 
+The coordinator also captures its wake subscription before inspecting queued work. A deterministic fake-store regression submits after an empty queue snapshot and verifies assignment without another Offer or wake. Linux evidence and the distinction from the earlier independent-Project timeout are recorded in the [coordinator wake validation](../validation/m3/2026-11-13-linux-coordinator-wake.md).
+
 ## Concurrency limits (EXE-006)
 
 The shared `LimitsSuite` runs over both in-process and JSON serialization links with the fake Execution store in `make check`, and against PostgreSQL in `make platform-test-pg`. It checks the default two slots per Project, independent Projects/Environments, global capacity, queued reasons and zero-as-uncapped configuration. For each scope, simultaneous Worker offers compete for one slot while the other two limits also apply. Success, failure and acknowledged cancellation free capacity once; a cancel request alone keeps the held slot. Duplicate results preserve Events and cannot admit an extra assignment. Startup reconciliation removes a lost running Lease; a repeated reconciliation does not release capacity again.
