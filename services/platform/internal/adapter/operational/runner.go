@@ -46,16 +46,16 @@ func ObserveRunner(instanceID string, next embedded.Runner, queue chan<- RunnerR
 			outcome := "panicked"
 			if returned {
 				switch {
-				case ctx.Err() == context.DeadlineExceeded && out.Result != ports.OutcomeSucceeded:
+				case out.Result == ports.OutcomeSucceeded:
+					outcome = "succeeded"
+				case out.Result == ports.OutcomeCancelled:
+					outcome = "cancelled"
+				case ctx.Err() == context.DeadlineExceeded:
 					outcome = "timed_out"
 				case ctx.Err() != nil:
 					outcome = "context_cancelled"
-				case out.Result == ports.OutcomeSucceeded:
-					outcome = "succeeded"
 				case out.Result == ports.OutcomeFailed:
 					outcome = "failed"
-				case out.Result == ports.OutcomeCancelled:
-					outcome = "cancelled"
 				default:
 					outcome = "unknown_outcome"
 				}

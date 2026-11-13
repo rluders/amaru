@@ -112,7 +112,7 @@ func TestRunnerDiagnosticsNeverWaitForConsumer(t *testing.T) {
 // Actual Worker and in-process transport, fake Provider. Process shutdown must
 // not become a synthetic Result; explicit Cancel retains its existing Result.
 func TestRunnerDiagnosticsWithWorker(t *testing.T) {
-	for _, mode := range []string{"success", "failure", "panic", "cancel", "shutdown", "deadline"} {
+	for _, mode := range []string{"success", "failure", "panic", "cancel", "explicit_cancel", "shutdown", "deadline", "success_deadline"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
@@ -126,6 +126,12 @@ func TestRunnerDiagnosticsWithWorker(t *testing.T) {
 				switch mode {
 				case "panic":
 					panic(secret)
+				case "explicit_cancel":
+					<-ctx.Done()
+					return embedded.Outcome{Result: ports.OutcomeCancelled}
+				case "success_deadline":
+					<-ctx.Done()
+					return embedded.Outcome{Result: ports.OutcomeSucceeded}
 				case "cancel", "shutdown", "deadline":
 					<-ctx.Done()
 					return embedded.Outcome{Result: ports.OutcomeFailed, ErrorDetail: secret}
@@ -149,7 +155,7 @@ func TestRunnerDiagnosticsWithWorker(t *testing.T) {
 				t.Fatal("missing Offer")
 			}
 			a := ports.Assignment{AttemptID: "a", ExecutionID: "e", StepID: "s", Lease: ports.Lease{FencingToken: 7}}
-			if mode == "deadline" {
+			if mode == "deadline" || mode == "success_deadline" {
 				a.Deadline = time.Now().Add(-time.Second)
 			}
 			if err := p.Send(ctx, a); err != nil {
@@ -163,7 +169,7 @@ func TestRunnerDiagnosticsWithWorker(t *testing.T) {
 			case <-ctx.Done():
 				t.Fatal("Runner did not enter")
 			}
-			if mode == "cancel" {
+			if mode == "cancel" || mode == "explicit_cancel" {
 				if err := p.Send(ctx, ports.Cancel{AttemptID: "a"}); err != nil {
 					t.Fatal(err)
 				}
@@ -179,7 +185,7 @@ func TestRunnerDiagnosticsWithWorker(t *testing.T) {
 				switch mode {
 				case "failure", "panic", "deadline":
 					want = ports.OutcomeFailed
-				case "cancel":
+				case "cancel", "explicit_cancel":
 					want = ports.OutcomeCancelled
 				}
 				if result.Outcome != want || result.AttemptID != "a" || result.FencingToken != 7 {
@@ -226,9 +232,9 @@ func TestRunnerDiagnosticsWithWorker(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			expected := map[string]string{"success": "succeeded", "failure": "failed", "panic": "panicked", "cancel": "context_cancelled", "shutdown": "context_cancelled", "deadline": "timed_out"}[mode]
+			expected := map[string]string{"success": "succeeded", "failure": "failed", "panic": "panicked", "cancel": "context_cancelled", "shutdown": "context_cancelled", "deadline": "timed_out", "success_deadline": "succeeded", "explicit_cancel": "cancelled"}[mode]
 			if last != expected {
-				t.Fatal("incorrect Runner classification")
+				t.Fatalf("Runner classification = %q, want %q", last, expected)
 			}
 			if strings.Contains(buf.String(), secret) || len(records(t, &buf)) != 2 {
 				t.Fatal("secret leaked or invalid JSON")
