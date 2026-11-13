@@ -62,6 +62,32 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     git(root, "commit", "-q", "-m", "initial");
     if (i === 0) git(root, "remote", "add", "origin", "https://github.com/acme/a.git");
   }
+  const rejectedAttach = async (client: typeof native, root: string, status: number) => {
+    const before = await native.GET("/projects");
+    assert.equal(before.response.status, 200);
+    const result = await client.POST("/projects", { body: { root } });
+    assert.equal(result.response.status, status);
+    assert.equal(result.data, undefined);
+    const after = await native.GET("/projects");
+    assert.equal(after.response.status, 200);
+    assert.deepEqual(after.data, before.data, "Rejected attach must preserve registration and active clone");
+  };
+  await t.test("rejected credentials and browser Origins cannot register Projects", async () => {
+    await rejectedAttach(createClient({ baseUrl, token: "invalid" }), roots[0]!, 401);
+    // Supplying CSRF satisfies the SDK preflight; the server must still refuse
+    // a request without authentication rather than register the inspected root.
+    await rejectedAttach(createClient({ baseUrl, csrfToken: () => csrf }), roots[0]!, 401);
+    for (const origin of [undefined, "https://foreign.example"]) {
+      const fetchOrigin: typeof fetch = async (input, init) => {
+        const req = new Request(input, init);
+        req.headers.set("Cookie", cookie);
+        if (origin && req.method !== "GET") req.headers.set("Origin", origin);
+        else req.headers.delete("Origin");
+        return fetch(req);
+      };
+      await rejectedAttach(createClient({ baseUrl, csrfToken: () => csrf, fetch: fetchOrigin }), roots[1]!, 403);
+    }
+  });
   assert.deepEqual((await native.GET("/projects")).data, []);
   const attached: components["schemas"]["Project"][] = [];
   for (const [i, client] of [native, browser].entries()) {
@@ -146,6 +172,10 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     await writeFile(join(clone, ".amaru/config.yaml"), "project:\n  name: changed suggestion\n");
     git(clone, "add", ".");
     git(clone, "commit", "-q", "-m", "different suggested name");
+    const wrongCSRF = createClient({ baseUrl, fetch: transport, csrfToken: () => "invalid" });
+    await rejectedAttach(wrongCSRF, clone, 403);
+    await read(native, projectA, false);
+    await read(browser, projectB, false);
     await patch(browser, projectA, true);
     for (const client of [native, browser]) {
       const result = await client.POST("/projects", { body: { root: clone } });
@@ -177,7 +207,7 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
   assert.equal((await browser.GET("/auth/session")).response.status, 401);
   assert.equal((await browser.GET("/projects/{projectId}/settings", { params: path(projectA) })).response.status, 401);
   assert.equal((await browser.PATCH("/projects/{projectId}/settings", { params: path(projectA), body: { importClaudeSkills: true } })).response.status, 401);
-  assert.equal((await browser.POST("/projects", { body: { root: roots[0]! } })).response.status, 401);
+  await rejectedAttach(browser, roots[0]!, 401);
   assert.equal((await browser.GET("/projects")).response.status, 401);
   assert.equal((await browser.GET("/projects/{projectId}", { params: path(projectA) })).response.status, 401);
   await read(native, projectA, false);
