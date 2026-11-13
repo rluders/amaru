@@ -15,6 +15,9 @@ import (
 // resume after a restart reads the snapshot, not the working tree.
 type DefinitionPin struct {
 	WorkflowID string `json:"workflowId"`
+	// CloneRoot records the trusted local source selected at creation (ADR-0066).
+	// Recovery uses durable inputs; this is never an instruction to a remote Worker.
+	CloneRoot string `json:"cloneRoot,omitempty"`
 	// Revision is the commit SHA the definition was read at. It is empty when the file was not
 	// committed; the Hash still identifies the content.
 	Revision string `json:"revision,omitempty"`

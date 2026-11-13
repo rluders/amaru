@@ -2,6 +2,7 @@ package coordinator
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -10,24 +11,29 @@ import (
 // Workflow authorizes the Project before selecting its committed definition. Source is a
 // trusted Instance dependency using the same attached Projects, never a request-supplied reader.
 func (a *ProjectAccess) Workflow(ctx context.Context, project domain.ProjectKey, id, revision string, source ports.ProjectWorkflowSource) (domain.Workflow, error) {
+	w, err := a.workflow(ctx, project, id, revision, source)
+	return w.Workflow, err
+}
+
+func (a *ProjectAccess) workflow(ctx context.Context, project domain.ProjectKey, id, revision string, source ports.ProjectWorkflowSource) (ports.ProjectWorkflow, error) {
 	if _, err := a.authorize(ctx, project); err != nil {
-		return domain.Workflow{}, err
+		return ports.ProjectWorkflow{}, err
 	}
 	if source == nil || !domain.ValidWorkflowID(id) || !domain.ValidDefinitionRevision(revision) {
-		return domain.Workflow{}, domain.ErrInvalid
+		return ports.ProjectWorkflow{}, domain.ErrInvalid
 	}
 	w, err := source.Workflow(ctx, project, id, revision)
 	if _, authErr := a.authorize(ctx, project); authErr != nil {
-		return domain.Workflow{}, authErr
+		return ports.ProjectWorkflow{}, authErr
 	}
 	if err != nil {
-		return domain.Workflow{}, err
+		return ports.ProjectWorkflow{}, err
 	}
-	if w.ID != id {
-		return domain.Workflow{}, domain.ErrInvalid
+	if w.ID != id || w.Clone.ProjectKey != project || w.Clone.Root == "" || strings.ContainsRune(w.Clone.Root, 0) {
+		return ports.ProjectWorkflow{}, domain.ErrInvalid
 	}
 	if err := w.Validate(); err != nil {
-		return domain.Workflow{}, domain.ErrInvalid
+		return ports.ProjectWorkflow{}, domain.ErrInvalid
 	}
 	return w, nil
 }
@@ -44,9 +50,9 @@ type RunWorkflowRequest struct {
 // RunWorkflow pins only the selected Project's definition and reuses Submit's Policy,
 // attribution and atomic command outcome. A changed revision with an old key conflicts.
 func (a *ProjectAccess) RunWorkflow(ctx context.Context, project domain.ProjectKey, req RunWorkflowRequest, source ports.ProjectWorkflowSource) (Submitted, bool, error) {
-	w, err := a.Workflow(ctx, project, req.WorkflowID, req.Revision, source)
+	w, err := a.workflow(ctx, project, req.WorkflowID, req.Revision, source)
 	if err != nil {
 		return Submitted{}, false, err
 	}
-	return a.Submit(ctx, project, SubmitRequest{Key: req.Key, Workflow: &w, Revision: req.Revision, Variables: req.Variables})
+	return a.Submit(ctx, project, SubmitRequest{Key: req.Key, Workflow: &w.Workflow, Revision: req.Revision, CloneRoot: w.Clone.Root, Variables: req.Variables})
 }

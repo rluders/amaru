@@ -9,13 +9,15 @@ import (
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
 	"github.com/rluders/amaru/services/platform/internal/domain"
+	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
 )
 
 type workflowSource func(context.Context, domain.ProjectKey, string, string) (domain.Workflow, error)
 
-func (f workflowSource) Workflow(ctx context.Context, project domain.ProjectKey, id, revision string) (domain.Workflow, error) {
-	return f(ctx, project, id, revision)
+func (f workflowSource) Workflow(ctx context.Context, project domain.ProjectKey, id, revision string) (ports.ProjectWorkflow, error) {
+	w, err := f(ctx, project, id, revision)
+	return ports.ProjectWorkflow{Workflow: w, Clone: domain.ProjectClone{ProjectKey: project, Root: "test-clone"}}, err
 }
 
 func TestProjectWorkflowAuthorization(t *testing.T) {
@@ -78,5 +80,33 @@ func TestProjectWorkflowAuthorization(t *testing.T) {
 	revoked = false
 	if _, _, err := api.RunWorkflow(ctx, project, req, source); err != domain.ErrNotPermitted {
 		t.Fatalf("session revoked during load reached Submit: %v", err)
+	}
+}
+
+type selectedWorkflowSource struct{ selected ports.ProjectWorkflow }
+
+func (s selectedWorkflowSource) Workflow(context.Context, domain.ProjectKey, string, string) (ports.ProjectWorkflow, error) {
+	return s.selected, nil
+}
+
+func TestWorkflowRejectsForeignCloneProvenance(t *testing.T) {
+	ctx := context.Background()
+	project := domain.ProjectKey("ssh://example.com/app#" + strings.Repeat("a", 40))
+	projects := fakes.NewProjectStore()
+	if err := projects.Create(ctx, domain.Project{Key: project, Name: "App", CreatedAt: time.Now()}); err != nil {
+		t.Fatal(err)
+	}
+	api, err := coordinator.NewProjectAccess(coordinator.New(fakes.NewExecutionStore(), time.Now), projects, func(context.Context) (domain.Principal, error) {
+		return domain.Principal{Kind: domain.PrincipalHuman, ID: "owner", Role: domain.RoleOwner}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := domain.Workflow{ID: "flow", Name: "Flow", Status: domain.WorkflowActive, Steps: []domain.WorkflowStep{{ID: "test", Name: "Test", Type: domain.StepTypeTool, Capability: "code.test"}}}
+	for _, clone := range []domain.ProjectClone{{}, {ProjectKey: project}, {ProjectKey: project, Root: "bad\x00root"}, {ProjectKey: "other", Root: t.TempDir()}} {
+		source := selectedWorkflowSource{ports.ProjectWorkflow{Workflow: w, Clone: clone}}
+		if got, err := api.Workflow(ctx, project, "flow", strings.Repeat("a", 40), source); err != domain.ErrInvalid || got.ID != "" {
+			t.Fatalf("foreign/invalid source provenance: %+v %v", got, err)
+		}
 	}
 }

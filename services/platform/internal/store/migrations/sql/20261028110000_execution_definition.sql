@@ -4,12 +4,14 @@
 -- these columns, and the trigger refuses an update that tries, so the pin is immutable.
 ALTER TABLE executions
     ADD COLUMN definition_workflow text,
+    ADD COLUMN definition_clone_root text,
     ADD COLUMN definition_revision text,
     ADD COLUMN definition_hash     text,
     ADD COLUMN definition_snapshot text,
     ADD CONSTRAINT executions_definition_whole CHECK (
-        (definition_workflow IS NULL AND definition_hash IS NULL AND definition_snapshot IS NULL AND definition_revision IS NULL)
-        OR (definition_workflow IS NOT NULL AND definition_hash IS NOT NULL AND definition_snapshot IS NOT NULL));
+        (definition_workflow IS NULL AND definition_hash IS NULL AND definition_snapshot IS NULL AND definition_revision IS NULL AND definition_clone_root IS NULL)
+        OR (definition_workflow IS NOT NULL AND definition_hash IS NOT NULL AND definition_snapshot IS NOT NULL)),
+    ADD CONSTRAINT executions_clone_revision CHECK (definition_clone_root IS NULL OR (definition_clone_root <> '' AND definition_revision IS NOT NULL));
 
 -- +goose StatementBegin
 CREATE FUNCTION executions_definition_is_immutable() RETURNS trigger AS $$
@@ -17,6 +19,7 @@ BEGIN
     IF NEW.definition_workflow IS DISTINCT FROM OLD.definition_workflow
        OR NEW.definition_revision IS DISTINCT FROM OLD.definition_revision
        OR NEW.definition_hash IS DISTINCT FROM OLD.definition_hash
+       OR NEW.definition_clone_root IS DISTINCT FROM OLD.definition_clone_root
        OR NEW.definition_snapshot IS DISTINCT FROM OLD.definition_snapshot THEN
         RAISE EXCEPTION 'execution % definition is pinned and cannot change', OLD.id;
     END IF;

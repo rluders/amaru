@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/rluders/amaru/services/platform/internal/attach"
+	"github.com/rluders/amaru/services/platform/internal/coordinator"
 	"github.com/rluders/amaru/services/platform/internal/worker/osproc"
 	"net/url"
 	"os"
@@ -208,6 +209,44 @@ func TestProjectCloneGitAndReopen(t *testing.T) {
 	reader := attach.WorkflowReader{Git: a}
 	if got, err := reader.Workflow(ctx, first.Key, "flow", revision); err != nil || got.Name != "Selected clone" {
 		t.Fatalf("persisted Workflow clone after pool reopen: %+v %v", got, err)
+	}
+
+	owner := domain.Principal{Kind: domain.PrincipalHuman, ID: "owner", Role: domain.RoleOwner}
+	c := coordinator.New(NewExecutionStore(reopened), time.Now)
+	access, err := coordinator.NewProjectAccess(c, fresh, func(context.Context) (domain.Principal, error) { return owner, nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, replayed, err := access.RunWorkflow(ctx, first.Key, coordinator.RunWorkflowRequest{Key: "clone-run", WorkflowID: "flow", Revision: revision}, reader)
+	if err != nil || replayed || out.Execution.Definition.CloneRoot != canonical {
+		t.Fatalf("pin: %+v %v %v", out, replayed, err)
+	}
+	// Reattach the other clone, which never contained this revision, and remove the source.
+	if _, _, err := a.Attach(ctx, root); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(clone); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := reader.Workflow(ctx, first.Key, "flow", revision); err != domain.ErrNotFound {
+		t.Fatalf("unavailable active revision: %v", err)
+	}
+	if err := reopened.Close(); err != nil {
+		t.Fatal(err)
+	}
+	recovered, err := sql.Open("pgx", dsn.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer recovered.Close()
+	store := NewExecutionStore(recovered)
+	e, steps, err := store.Get(ctx, out.Execution.ID)
+	if err != nil || e.Definition.CloneRoot != canonical || e.Definition.Revision != revision || e.Definition.Hash != out.Execution.Definition.Hash || len(steps) != 1 {
+		t.Fatalf("recovered pin: %+v %v", e, err)
+	}
+	w, err := coordinator.New(store, time.Now).Definition(ctx, out.Execution.ID)
+	if err != nil || w.Name != "Selected clone" {
+		t.Fatalf("durable definition after root deletion: %+v %v", w, err)
 	}
 
 }
