@@ -302,13 +302,22 @@ func projectGit(t *testing.T, dir string, args ...string) string {
 	return strings.TrimSpace(string(out))
 }
 
+type projectHTTPStore interface {
+	ports.ProjectCloneStore
+	ports.SettingsStore
+}
+
 func TestProjectsTwoClientsRealGitOverLoopback(t *testing.T) {
+	testProjectsTwoClients(t, fakes.NewProjectStore(), coordinator.New(fakes.NewExecutionStore(), time.Now))
+}
+
+// The same authenticated HTTP/Git cases run against fake and PostgreSQL storage.
+func testProjectsTwoClients(t *testing.T, store projectHTTPStore, c *coordinator.Coordinator) {
+	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git is not on PATH")
 	}
 	ctx := context.Background()
-	store := fakes.NewProjectStore()
-	c := coordinator.New(fakes.NewExecutionStore(), time.Now)
 	srv := httptest.NewUnstartedServer(nil)
 	auth, err := localauth.New(srv.Listener.Addr())
 	if err != nil {
@@ -490,6 +499,10 @@ func TestProjectsTwoClientsRealGitOverLoopback(t *testing.T) {
 	request(browser, "GET", projectPath(got), "", 200)
 	request(browser, "DELETE", "/v1/auth/session", "", 204)
 	request(browser, "POST", "/v1/projects", string(body), 401)
+	request(browser, "PATCH", projectPath(attached[0])+"/settings", `{"importClaudeSkills":false}`, 401)
+	if preference, err := store.Settings(ctx, before.Key); err != nil || !preference.ImportClaudeSkills {
+		t.Fatal("revoked write changed settings", err)
+	}
 }
 
 func TestProjectsAbsentConfigAndEmptyList(t *testing.T) {
