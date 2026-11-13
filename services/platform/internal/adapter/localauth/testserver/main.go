@@ -1,7 +1,7 @@
 //go:build authfixture
 
-// Test-only SDK fixture: real auth/discovery and settings HTTP adapters over
-// fake Project state. It is not product startup and uses no database or agent.
+// Test-only SDK fixture: real auth/discovery, Git inspection and Project HTTP
+// adapters over fake state. It is not product startup and uses no database or agent.
 package main
 
 import (
@@ -12,9 +12,10 @@ import (
 	"github.com/rluders/amaru/services/platform/internal/adapter/httpapi"
 	"github.com/rluders/amaru/services/platform/internal/adapter/localauth"
 	"github.com/rluders/amaru/services/platform/internal/adapter/operational"
+	"github.com/rluders/amaru/services/platform/internal/attach"
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
-	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
+	"github.com/rluders/amaru/services/platform/internal/worker/osproc"
 	"net"
 	"net/http"
 	"os"
@@ -44,15 +45,8 @@ func run() error {
 	}
 	defer publication.Close()
 	projects := fakes.NewProjectStore()
-	for _, key := range []domain.ProjectKey{
-		"ssh://github.com/acme/a#0123456789abcdef0123456789abcdef01234567",
-		"id:01ARZ3NDEKTSV4RRFFQ69G5FAV",
-	} {
-		if err := projects.Create(context.Background(), domain.Project{Key: key, Name: "same", CreatedAt: started}); err != nil {
-			return fmt.Errorf("fixture Project init failed")
-		}
-	}
-	access, err := coordinator.NewProjectAccess(coordinator.New(fakes.NewExecutionStore(), time.Now), projects, auth.Principal)
+	c := coordinator.New(fakes.NewExecutionStore(), time.Now)
+	access, err := coordinator.NewProjectAccess(c, projects, auth.Principal)
 	if err != nil {
 		return fmt.Errorf("fixture access init failed")
 	}
@@ -60,13 +54,19 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("fixture settings init failed")
 	}
+	projectHTTP, err := httpapi.ProjectsHandler(auth, c, projects, attach.Attacher{Runner: osproc.Runner{}, Resolver: osproc.Resolver{}})
+	if err != nil {
+		return fmt.Errorf("fixture Project HTTP init failed")
+	}
+
 	health := auth.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "ok", "platformVersion": "sdk-fixture", "protocolVersion": 1, "startedAt": started, "uptimeSec": int(time.Since(started).Seconds())})
 	}))
 	next := http.NewServeMux()
 	next.Handle("/v1/health", health)
-	next.Handle("/", settings)
+	next.Handle("/v1/projects/{projectId}/settings", settings)
+	next.Handle("/", projectHTTP)
 	logger, err := operational.New(os.Stdout)
 	if err != nil {
 		return err
