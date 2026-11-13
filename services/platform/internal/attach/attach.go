@@ -38,13 +38,13 @@ const configPath = ".amaru/config.yaml"
 type Attacher struct {
 	Runner   ports.ProcessRunner
 	Resolver ports.ExecutableResolver
-	Projects ports.ProjectStore
+	Projects ports.ProjectCloneStore
 	Now      func() time.Time
 }
 
 // Attach registers the repository that contains path and returns its Project. created is false
 // when the Project was already attached: attaching again, from any clone or any spelling of the
-// path, returns the stored Project unchanged.
+// path, preserves the stored Project metadata and explicitly selects that clone.
 //
 // It returns domain.ErrInvalid, with the reason, for a folder that is not a usable repository:
 // not a git repository, a bare or shallow clone, no commit, several remotes and none named
@@ -60,6 +60,14 @@ func (a Attacher) Attach(ctx context.Context, path string) (p domain.Project, cr
 	top, err := a.one(ctx, dir, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return domain.Project{}, false, invalid("%s is not a usable git working tree: %v", dir, err)
+	}
+	top, err = filepath.EvalSymlinks(top)
+	if err != nil {
+		return domain.Project{}, false, invalid("repository root is unavailable")
+	}
+	top, err = filepath.Abs(top)
+	if err != nil {
+		return domain.Project{}, false, invalid("repository root is not absolute")
 	}
 	if shallow, err := a.one(ctx, top, "rev-parse", "--is-shallow-repository"); err != nil {
 		return domain.Project{}, false, err
@@ -82,15 +90,7 @@ func (a Attacher) Attach(ctx context.Context, path string) (p domain.Project, cr
 	if err := p.Validate(); err != nil {
 		return domain.Project{}, false, err
 	}
-	switch err := a.Projects.Create(ctx, p); {
-	case err == nil:
-		return p, true, nil
-	case errors.Is(err, domain.ErrExists):
-		got, gerr := a.Projects.Get(ctx, key)
-		return got, false, gerr
-	default:
-		return domain.Project{}, false, err
-	}
+	return a.Projects.RegisterClone(ctx, p, domain.ProjectClone{ProjectKey: key, Root: top})
 }
 
 // projectConfig is the part of the committed .amaru/config.yaml that attach reads.
