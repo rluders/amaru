@@ -377,14 +377,10 @@ func TestDriverPanicFailsClosed(t *testing.T) {
 		}
 		s := newStorage(t, f)
 		schema, _ := NewSchema(s)
-		l := lane.New(lane.WithLogger(slog.New(operational.LifecycleHandler(nil))), lane.WithShutdownTimeout(50*time.Millisecond))
-		l.AddStage(s)
-		l.AddStage(schema)
+		l, _ := NewLifecycle(time.Now().Add(50*time.Millisecond), 50*time.Millisecond, nil)
 		var later atomic.Bool
-		l.AddStage(dependent{start: func(context.Context) error { later.Store(true); return nil }})
-		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-		defer cancel()
-		if err := l.Run(ctx); err == nil || later.Load() || !panicked.Load() {
+		if err := l.Run(context.Background(), []lane.Runner{s}, []lane.Runner{schema},
+			[]lane.Runner{dependent{start: func(context.Context) error { later.Store(true); return nil }}}); err == nil || later.Load() || !panicked.Load() || l.Ready() {
 			t.Fatal("driver panic did not fail closed")
 		}
 		if mode == "storage" {
