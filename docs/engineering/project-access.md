@@ -211,3 +211,10 @@ The [Linux Project SDK record](../validation/m3/2026-11-13-linux-prj-002-project
 This is integration-tested SDK/HTTP/Git composition, included in Linux `make sdk-ts` / `make check`. Node injects Cookie/Origin; no native browser, PostgreSQL SDK composition, production startup or server restart is established. The preceding PostgreSQL HTTP evidence uses Go clients, independently of this SDK fixture. Work/remaining definitions, secret/Provider integration, Execution/Event public transport and the inventory's other product gates remain open under #191/#18; #20 remains blocked by #16–#19. No runtime, contract, schema, dependency or architecture decision changes.
 
 The [SDK authority regression record](../validation/m3/2026-11-13-linux-prj-002-sdk-authority.md) extends this fixture with rejected registration and clone-reselection cases. Native readback verifies that rejected writes preserve registered Projects, active roots and settings. This adds test evidence only; the remaining acceptance gates above stay open.
+
+
+### Project SDK operational log capture
+
+The [Linux SDK log capture record](../validation/m3/2026-11-13-linux-obs-001-sdk-projects.md) extends the existing two-client real-Git fixture with stdout/stderr capture through clean shutdown. Every actual SDK HTTP response has one structured operational record with a fresh trusted correlation and matching status/outcome; concurrent response order is not assumed. Captured channels exclude the exercised administrator secret, launch code, session cookie/value, CSRF token, roots, Project keys and untrusted correlation/Origin input. Unexpected stderr and non-JSON stdout fail the regression without printing captured credentials.
+
+This is integration-tested test-fixture composition under #170, with fake storage and Node-injected Cookie/Origin. It does not add product startup, PostgreSQL SDK, Provider, Execution/Event transport or native non-Linux evidence. #170/#191/#18 and M3 remain open for their outstanding gates.
