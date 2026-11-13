@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sync/atomic"
@@ -182,5 +184,73 @@ func TestProjectsPostgresTwoClientsAndReopen(t *testing.T) {
 	final, err := fresh.List(ctx)
 	if err != nil || !reflect.DeepEqual(before, final) {
 		t.Fatal("failed reattach changed Project metadata")
+	}
+}
+
+// Opt-in SDK composition: pg tag plus AMARU_TEST_PG, Node and installed SDK dependencies.
+func TestProjectsPostgresSDKRecreation(t *testing.T) {
+	open := projectDatabase(t)
+	roots := []string{t.TempDir(), t.TempDir()}
+	for i, root := range roots {
+		projectGit(t, root, "init", "-q", "-b", "main")
+		projectGit(t, root, "commit", "-q", "--allow-empty", "-m", "initial")
+		projectGit(t, root, "remote", "add", "origin", fmt.Sprintf("https://github.com/acme/sdk-%d.git", i))
+	}
+	snapshot := filepath.Join(t.TempDir(), "projects.json")
+	for _, phase := range []string{"write", "read"} {
+		t.Run(phase, func(t *testing.T) {
+			db := open()
+			defer db.Close()
+			dir, err := migrations.OpenDir(migrations.Embedded())
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			if _, err := migrations.NewRunner(db, dir, 10*time.Second).Apply(ctx); err != nil {
+				t.Fatal("cannot migrate SDK test database")
+			}
+			srv := httptest.NewUnstartedServer(nil)
+			auth, err := localauth.New(srv.Listener.Addr())
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer auth.Close()
+			store := postgres.NewProjectStore(db)
+			c := coordinator.New(postgres.NewExecutionStore(db), time.Now)
+			projects, err := ProjectsHandler(auth, c, store, attach.Attacher{Runner: osproc.Runner{}, Resolver: osproc.Resolver{}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			access, err := coordinator.NewProjectAccess(c, store, auth.Principal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			settings, err := SettingsHandler(auth, access, store)
+			if err != nil {
+				t.Fatal(err)
+			}
+			mux := http.NewServeMux()
+			mux.Handle("/v1/projects/{projectId}/settings", settings)
+			mux.Handle("/", projects)
+			// Compatibility metadata only; this fixture is not product startup/readiness.
+			mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]any{"status": "ok", "platformVersion": "sdk-pg-fixture", "protocolVersion": 1, "startedAt": time.Now().UTC(), "uptimeSec": 0})
+			})
+			srv.Config.Handler = mux
+			srv.Start()
+			defer srv.Close()
+			cmd := exec.CommandContext(ctx, "node", "test/postgres.fixture.ts")
+			cmd.Dir = "../../../../../packages/sdk"
+			cmd.Env = append(os.Environ(), "AMARU_SDK_ENDPOINT="+srv.URL+"/v1", "AMARU_SDK_TOKEN="+auth.AdministratorSecret(), "AMARU_SDK_PHASE="+phase, "AMARU_SDK_SNAPSHOT="+snapshot, "AMARU_SDK_ROOT_A="+roots[0], "AMARU_SDK_ROOT_B="+roots[1])
+			// Assertion diagnostics could contain requests/credentials; never echo them.
+			if err := cmd.Run(); err != nil {
+				t.Fatal("SDK PostgreSQL acceptance failed in phase " + phase)
+			}
+		})
+		if t.Failed() {
+			return
+		}
 	}
 }
