@@ -49,11 +49,28 @@ func (c *Coordinator) Serve(ctx context.Context, link ports.PlatformLink, worker
 	msgs := make(chan ports.WorkerMessage)
 	errc := make(chan error, 1)
 	pumpCtx, stop := context.WithCancel(ctx)
-	defer stop()
+	pumpDone := make(chan struct{})
+	var pumpErr error // read only after pumpDone joins its writer
+	defer func() {
+		stop()
+		<-pumpDone
+		if err == nil && pumpErr != nil && !errors.Is(pumpErr, ports.ErrLinkClosed) &&
+			!(ctx.Err() != nil && errors.Is(pumpErr, ctx.Err())) {
+			err = pumpErr
+		}
+	}()
 	go func() {
+		defer close(pumpDone)
+		defer func() {
+			if recover() != nil {
+				pumpErr = errors.New("Worker receive pump panicked")
+				errc <- pumpErr
+			}
+		}()
 		for {
 			m, err := link.Receive(pumpCtx)
 			if err != nil {
+				pumpErr = err
 				errc <- err
 				return
 			}
