@@ -262,9 +262,13 @@ func TestDefinitionWithPostgres(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		pin.Revision, pin.CloneRoot = strings.Repeat("a", 40), t.TempDir()
 		e := domain.Execution{ID: "e1", State: domain.ExecQueued, CreatedAt: time.Now(), Definition: &pin}
 		if _, _, err := s.Create(context.Background(), e, nil); err != nil {
 			t.Fatal(err)
+		}
+		if _, err := db.Exec(`UPDATE executions SET definition_clone_root = '/changed' WHERE id = 'e1'`); err == nil || !strings.Contains(err.Error(), "pinned") {
+			t.Fatalf("clone provenance update: %v", err)
 		}
 		_, err = db.Exec(`UPDATE executions SET definition_hash = 'sha256:x' WHERE id = 'e1'`)
 		if err == nil || !strings.Contains(err.Error(), "pinned") {

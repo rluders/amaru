@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
@@ -61,6 +62,8 @@ type SubmitRequest struct {
 	// or empty if it was not committed.
 	Workflow *domain.Workflow
 	Revision string
+	// CloneRoot is supplied only by the trusted Workflow source, never a public request.
+	CloneRoot string
 	// Variables overrides the Workflow's declared variables for this Execution, for example the
 	// intent of a Work Item (FEAT-WFL-003). Each name must be declared by the Workflow and each
 	// value is at most domain.MaxVarValue characters; a value is refused, never cut. Placeholders
@@ -101,6 +104,13 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 	if err := policyRequest(req.By, req.Trigger, req.ProjectID, pin, specs[0].Capability).Validate(); err != nil {
 		return Submitted{}, false, err
 	}
+	// Clone selection is server state, not caller intent: a retry retains the first outcome.
+	var intentPin *domain.DefinitionPin
+	if pin != nil {
+		p := *pin
+		p.CloneRoot = ""
+		intentPin = &p
+	}
 	fp, err := fingerprint(struct {
 		Project, Environment string
 		By                   domain.Principal
@@ -108,7 +118,7 @@ func (c *Coordinator) Submit(ctx context.Context, req SubmitRequest) (Submitted,
 		Steps                []StepSpec
 		Definition           *domain.DefinitionPin
 		Variables            map[string]string
-	}{req.ProjectID, req.EnvironmentID, req.By, req.Trigger, specs, pin, req.Variables})
+	}{req.ProjectID, req.EnvironmentID, req.By, req.Trigger, specs, intentPin, req.Variables})
 	if err != nil {
 		return Submitted{}, false, err
 	}
@@ -211,6 +221,9 @@ func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
 	if req.ProjectID == "" {
 		return nil, nil, fmt.Errorf("%w: submit needs a project id", domain.ErrInvalid)
 	}
+	if req.CloneRoot != "" && (req.Workflow == nil || !domain.ValidDefinitionRevision(req.Revision) || strings.ContainsRune(req.CloneRoot, 0)) {
+		return nil, nil, domain.ErrInvalid
+	}
 	var pin *domain.DefinitionPin
 	specs := req.Steps
 	switch {
@@ -221,6 +234,7 @@ func plan(req SubmitRequest) (*domain.DefinitionPin, []StepSpec, error) {
 		if err != nil {
 			return nil, nil, err
 		}
+		p.CloneRoot = req.CloneRoot
 		pin = &p
 		if specs, err = workflowSpecs(*req.Workflow, req.Variables); err != nil {
 			return nil, nil, err

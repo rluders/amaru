@@ -4,7 +4,7 @@
 
 | Command | Key input | Normalized request identity |
 |---|---|---|
-| `Submit` (`execution.submit`) | `SubmitRequest.Key` | Project and Environment IDs; principal including sponsor and role; trigger (empty becomes `manual`); planned Step specs in order, including inputs, timeout and Skills; pinned Workflow snapshot and revision; variable overrides. Map keys use Go JSON's sorted encoding; Step inputs remain exact bytes. |
+| `Submit` (`execution.submit`) | `SubmitRequest.Key` | Project and Environment IDs; principal including sponsor and role; trigger (empty becomes `manual`); planned Step specs in order, including inputs, timeout and Skills; pinned Workflow snapshot and revision; variable overrides. The trusted selected clone root is excluded: replay preserves the first Execution's provenance after reattach. Map keys use Go JSON's sorted encoding; Step inputs remain exact bytes. |
 | `Cancel` (`execution.cancel`) | `CancelRequest.Key` | Execution ID, exact reason, Actor kind and Policy authority, authenticated human `ActorID`. |
 | `DecideApproval` (`approval.decide`) | `DecideRequest.Key` | Approval ID, principal including role, outcome, exact rationale and Evidence digest. |
 | `CreateGrant` (`grant.create`) | required `key` argument | Principal and Grant content after `NewGrant` normalization: ID, level, Project, subject, ordered Capabilities, resource, definition hash and expiry. Server-owned version, creation time, status and revocation fields are reset; creation time is excluded. |

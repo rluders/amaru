@@ -9,13 +9,15 @@ import (
 
 	"github.com/rluders/amaru/services/platform/internal/coordinator"
 	"github.com/rluders/amaru/services/platform/internal/domain"
+	"github.com/rluders/amaru/services/platform/internal/ports"
 	"github.com/rluders/amaru/services/platform/internal/ports/fakes"
 )
 
 type workflowSourceFunc func(context.Context, domain.ProjectKey, string, string) (domain.Workflow, error)
 
-func (f workflowSourceFunc) Workflow(ctx context.Context, project domain.ProjectKey, id, revision string) (domain.Workflow, error) {
-	return f(ctx, project, id, revision)
+func (f workflowSourceFunc) Workflow(ctx context.Context, project domain.ProjectKey, id, revision string) (ports.ProjectWorkflow, error) {
+	w, err := f(ctx, project, id, revision)
+	return ports.ProjectWorkflow{Workflow: w, Clone: domain.ProjectClone{ProjectKey: project, Root: "test-clone"}}, err
 }
 
 func TestWorkflowWithholdsContentAfterRevocation(t *testing.T) {

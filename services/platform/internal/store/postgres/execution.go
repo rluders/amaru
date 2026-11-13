@@ -123,10 +123,10 @@ func (s *ExecutionStore) create(ctx context.Context, rec *domain.CommandRecord, 
 	}
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO executions (id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind, definition_clone_root)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
 		e.ID, e.Version, string(e.State), e.CreatedAt.UTC(), nullTime(e.StartedAt), nullTime(e.EndedAt), code, msg, e.ProjectID, e.EnvironmentID,
-		def.workflow, def.revision, def.hash, def.snapshot, by, e.Trigger)
+		def.workflow, def.revision, def.hash, def.snapshot, by, e.Trigger, def.cloneRoot)
 	if err != nil {
 		return domain.Execution{}, nil, mapCreateErr(err, "execution", e.ID)
 	}
@@ -371,13 +371,13 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	var e domain.Execution
 	var state string
 	var started, ended sql.NullTime
-	var code, msg, defWorkflow, defRevision, defHash, defSnapshot sql.NullString
+	var code, msg, defWorkflow, defRevision, defHash, defSnapshot, defCloneRoot sql.NullString
 	var requestedBy []byte
 	err = tx.QueryRowContext(ctx,
 		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
-		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind FROM executions WHERE id = $1`, id).
+		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind, definition_clone_root FROM executions WHERE id = $1`, id).
 		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg, &e.ProjectID, &e.EnvironmentID,
-			&defWorkflow, &defRevision, &defHash, &defSnapshot, &requestedBy, &e.Trigger)
+			&defWorkflow, &defRevision, &defHash, &defSnapshot, &requestedBy, &e.Trigger, &defCloneRoot)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Execution{}, nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	}
@@ -386,7 +386,7 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 	}
 	e.State, e.StartedAt, e.EndedAt = domain.ExecState(state), timePtr(started), timePtr(ended)
 	if defWorkflow.Valid {
-		e.Definition = &domain.DefinitionPin{WorkflowID: defWorkflow.String, Revision: defRevision.String, Hash: defHash.String, Snapshot: []byte(defSnapshot.String)}
+		e.Definition = &domain.DefinitionPin{WorkflowID: defWorkflow.String, Revision: defRevision.String, Hash: defHash.String, Snapshot: []byte(defSnapshot.String), CloneRoot: defCloneRoot.String}
 	}
 	if err := json.Unmarshal(requestedBy, &e.RequestedBy); err != nil {
 		return domain.Execution{}, nil, fmt.Errorf("postgres: decode requester of execution %s: %w", id, err)
@@ -564,11 +564,11 @@ func (s *ExecutionStore) ByAttempt(ctx context.Context, attemptID string) (ports
 }
 
 // pinned holds the columns of a DefinitionPin; all are NULL for an Execution without one.
-type pinned struct{ workflow, revision, hash, snapshot sql.NullString }
+type pinned struct{ workflow, revision, hash, snapshot, cloneRoot sql.NullString }
 
 func pinArgs(p *domain.DefinitionPin) pinned {
 	if p == nil {
 		return pinned{}
 	}
-	return pinned{nullString(p.WorkflowID), nullString(p.Revision), nullString(p.Hash), nullString(string(p.Snapshot))}
+	return pinned{nullString(p.WorkflowID), nullString(p.Revision), nullString(p.Hash), nullString(string(p.Snapshot)), nullString(p.CloneRoot)}
 }

@@ -63,6 +63,53 @@ func DefinitionSuite(t *testing.T, newStore func(t *testing.T) ports.ExecutionSt
 		}
 	})
 
+	t.Run("clone provenance survives recovery and cannot move with commits or replay", func(t *testing.T) {
+		s := newStore(t)
+		w := flow()
+		root := t.TempDir()
+		req := coordinator.SubmitRequest{By: Requester, ProjectID: "p1", Key: "clone", Workflow: &w, Revision: sha, CloneRoot: root}
+		first, replayed, err := build(s).Submit(ctx, req)
+		if err != nil || replayed || first.Execution.Definition.CloneRoot != root {
+			t.Fatalf("create: %+v %v %v", first, replayed, err)
+		}
+		s = reopen(t, s)
+		e, _, err := s.Get(ctx, first.Execution.ID)
+		if err != nil || e.Definition.CloneRoot != root {
+			t.Fatalf("recovered provenance: %+v %v", e, err)
+		}
+		e.Definition.CloneRoot = t.TempDir()
+		if _, err := s.Commit(ctx, ports.ExecutionChange{Execution: &e}); err != nil {
+			t.Fatal(err)
+		}
+		e, _, err = s.Get(ctx, first.Execution.ID)
+		if err != nil || e.Definition.CloneRoot != root {
+			t.Fatalf("mutated provenance: %+v %v", e, err)
+		}
+		req.CloneRoot = t.TempDir()
+		again, replayed, err := build(s).Submit(ctx, req)
+		if err != nil || !replayed || again.Execution.ID != first.Execution.ID || again.Execution.Definition.CloneRoot != root {
+			t.Fatalf("reattach replay changed provenance: %+v %v %v", again, replayed, err)
+		}
+		req.Key = "later"
+		later, replayed, err := coordinator.New(s, clock, Permissive).Submit(ctx, req)
+		if err != nil || replayed || later.Execution.Definition.CloneRoot != req.CloneRoot {
+			t.Fatalf("later selection: %+v %v %v", later, replayed, err)
+		}
+	})
+
+	t.Run("clone provenance requires a committed Workflow", func(t *testing.T) {
+		w := flow()
+		for _, req := range []coordinator.SubmitRequest{
+			{By: Requester, ProjectID: "p1", Key: "bad", Workflow: &w, CloneRoot: t.TempDir()},
+			{By: Requester, ProjectID: "p1", Key: "bad", Steps: []coordinator.StepSpec{{Name: "a", Capability: "code.test"}}, CloneRoot: t.TempDir()},
+			{By: Requester, ProjectID: "p1", Key: "bad", Workflow: &w, Revision: sha, CloneRoot: "bad\x00root"},
+		} {
+			if _, _, err := build(newStore(t)).Submit(ctx, req); !errors.Is(err, domain.ErrInvalid) {
+				t.Fatalf("invalid provenance: %v", err)
+			}
+		}
+	})
+
 	t.Run("Steps are created in Workflow order with their inputs", func(t *testing.T) {
 		s := newStore(t)
 		got := submit(t, build(s), "k1", flow())

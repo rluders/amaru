@@ -90,7 +90,7 @@ func TestProjectWorkflowSelection(t *testing.T) {
 			t.Fatalf("wrong definition: %+v %v", w, err)
 		}
 		out, replay, err := run(p, "run-"+p.name)
-		if err != nil || replay || out.Execution.ProjectID != string(p.key) || out.Execution.Definition.Revision != p.revision || out.Execution.RequestedBy != owner {
+		if err != nil || replay || out.Execution.ProjectID != string(p.key) || out.Execution.Definition.CloneRoot != p.dir || out.Execution.Definition.Revision != p.revision || out.Execution.RequestedBy != owner {
 			t.Fatalf("run: %+v %v %v", out, replay, err)
 		}
 		pinned, err := api.Definition(ctx, p.key, out.Execution.ID)
@@ -304,8 +304,9 @@ func TestWorkflowUsesOnePersistedClone(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if w, err := load(firstRevision); err != nil || w.Name != "Captured first clone" || calls != 1 {
-		t.Fatalf("captured root: %+v %v calls=%d", w, err, calls)
+	out, replayed, err := access.RunWorkflow(ctx, p.Key, coordinator.RunWorkflowRequest{Key: "captured", WorkflowID: "same-flow", Revision: firstRevision}, reader)
+	if err != nil || replayed || out.Execution.Definition.CloneRoot != first || calls != 1 {
+		t.Fatalf("captured provenance: %+v %v calls=%d", out, err, calls)
 	}
 	if w, err := load(firstRevision); err != domain.ErrNotFound || w.ID != "" || calls != 2 {
 		t.Fatalf("fell back to old root: %+v %v calls=%d", w, err, calls)
@@ -313,6 +314,27 @@ func TestWorkflowUsesOnePersistedClone(t *testing.T) {
 	if w, err := load(revision); err != nil || w.Name != "First clone" {
 		t.Fatalf("second clone: %+v %v", w, err)
 	}
+	req := coordinator.RunWorkflowRequest{Key: "shared", WorkflowID: "same-flow", Revision: revision}
+	shared, replayed, err := access.RunWorkflow(ctx, p.Key, req, reader)
+	if err != nil || replayed || shared.Execution.Definition.CloneRoot != second {
+		t.Fatalf("selected second clone: %+v %v", shared, err)
+	}
+	if _, _, err := a.Attach(ctx, first); err != nil {
+		t.Fatal(err)
+	}
+	again, replayed, err := access.RunWorkflow(ctx, p.Key, req, reader)
+	if err != nil || !replayed || again.Execution.ID != shared.Execution.ID || again.Execution.Definition.CloneRoot != second {
+		t.Fatalf("reattach replay: %+v %v %v", again, replayed, err)
+	}
+	req.Key = "new-clone"
+	later, replayed, err := access.RunWorkflow(ctx, p.Key, req, reader)
+	if err != nil || replayed || later.Execution.Definition.CloneRoot != first {
+		t.Fatalf("new run clone: %+v %v", later, err)
+	}
+	if _, _, err := a.Attach(ctx, second); err != nil {
+		t.Fatal(err)
+	}
+
 	// Moving the selected clone must fail even while the old clone is still usable.
 	moved := second + "-moved"
 	if err := os.Rename(second, moved); err != nil {
