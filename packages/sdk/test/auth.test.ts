@@ -14,15 +14,34 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
   const binary = join(dir, "authfixture");
   execFileSync("go", ["build", "-tags", "authfixture", "-o", binary, "./internal/adapter/localauth/testserver"], { cwd: new URL("../../../services/platform", import.meta.url), stdio: "pipe", timeout: 45_000 });
   const state = join(dir, "state");
-  const server = spawn(binary, [state], { stdio: "ignore" });
-  t.after(async () => { if (server.exitCode === null) { const exit = once(server, "exit"); server.kill("SIGTERM"); await exit; } });
+  const server = spawn(binary, [state], { stdio: ["ignore", "pipe", "pipe"] });
+  const stdout: Buffer[] = [];
+  const stderr: Buffer[] = [];
+  server.stdout.on("data", chunk => stdout.push(Buffer.from(chunk)));
+  server.stderr.on("data", chunk => stderr.push(Buffer.from(chunk)));
+  // Await close, rather than exit, so both diagnostic streams are fully drained.
+  const closed = once(server, "close");
+  const stop = async () => {
+    if (server.exitCode === null && server.signalCode === null) server.kill("SIGTERM");
+    await closed;
+  };
+  t.after(stop);
   let info: { endpoint: string; administratorSecret: string } | undefined;
   for (let i = 0; i < 100; i++) {
     try { info = JSON.parse(await readFile(join(state, "instance.json"), "utf8")); break; } catch { await new Promise(resolve => setTimeout(resolve, 20)); }
   }
   if (!info) throw new Error("Auth fixture did not publish discovery.");
   const baseUrl = `${info.endpoint}/v1`;
-  const native = createClient({ baseUrl, token: info.administratorSecret });
+  const statuses: number[] = [];
+  const untrustedCorrelation = "sdk-untrusted-correlation-marker";
+  const trackedFetch: typeof fetch = async (input, init) => {
+    const request = new Request(input, init);
+    request.headers.set("X-Correlation-ID", untrustedCorrelation);
+    const response = await fetch(request);
+    statuses.push(response.status);
+    return response;
+  };
+  const native = createClient({ baseUrl, fetch: trackedFetch, token: info.administratorSecret });
   const issued = await native.POST("/auth/launch-codes");
   assert.equal(issued.response.status, 201);
   if (!issued.data) throw new Error("Missing launch response.");
@@ -37,7 +56,7 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     const req = new Request(input, init);
     if (req.credentials !== "omit") req.headers.set("Cookie", cookie);
     if (req.method !== "GET") req.headers.set("Origin", info!.endpoint);
-    return fetch(req);
+    return trackedFetch(req);
   };
   let csrf: string | undefined;
   const browser = createClient({ baseUrl, csrfToken: () => csrf, fetch: transport });
@@ -73,17 +92,17 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     assert.deepEqual(after.data, before.data, "Rejected attach must preserve registration and active clone");
   };
   await t.test("rejected credentials and browser Origins cannot register Projects", async () => {
-    await rejectedAttach(createClient({ baseUrl, token: "invalid" }), roots[0]!, 401);
+    await rejectedAttach(createClient({ baseUrl, fetch: trackedFetch, token: "invalid" }), roots[0]!, 401);
     // Supplying CSRF satisfies the SDK preflight; the server must still refuse
     // a request without authentication rather than register the inspected root.
-    await rejectedAttach(createClient({ baseUrl, csrfToken: () => csrf }), roots[0]!, 401);
+    await rejectedAttach(createClient({ baseUrl, fetch: trackedFetch, csrfToken: () => csrf }), roots[0]!, 401);
     for (const origin of [undefined, "https://foreign.example"]) {
       const fetchOrigin: typeof fetch = async (input, init) => {
         const req = new Request(input, init);
         req.headers.set("Cookie", cookie);
         if (origin && req.method !== "GET") req.headers.set("Origin", origin);
         else req.headers.delete("Origin");
-        return fetch(req);
+        return trackedFetch(req);
       };
       await rejectedAttach(createClient({ baseUrl, csrfToken: () => csrf, fetch: fetchOrigin }), roots[1]!, 403);
     }
@@ -143,7 +162,7 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     const invalidRoot = await native.POST("/projects", { body: { root: "relative" } });
     assert.equal(invalidRoot.response.status, 400);
     assert.deepEqual(invalidRoot.error, { error: { code: "invalid_request", message: "Request rejected." } });
-    const anonymous = createClient({ baseUrl });
+    const anonymous = createClient({ baseUrl, fetch: trackedFetch });
     assert.equal((await anonymous.GET("/projects/{projectId}/settings", { params: path(projectA) })).response.status, 401);
     await assert.rejects(anonymous.PATCH("/projects/{projectId}/settings", { params: path(projectA), body: { importClaudeSkills: true } }), /requires a session CSRF token/);
     const wrongCSRF = createClient({ baseUrl, fetch: transport, csrfToken: () => "invalid" });
@@ -213,4 +232,42 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
   await read(native, projectA, false);
   assert.deepEqual((await native.GET("/projects")).data, [...attached].sort((a, b) => a.id < b.id ? -1 : 1));
   assert.equal((await native.GET("/auth/launch", { params: { query: { code: issued.data.code } } })).response.status, 401);
+  await t.test("Project SDK diagnostics correlate every request without exposing credentials or input", async () => {
+    await stop();
+    assert.equal(server.exitCode, 0, "Fixture must shut down successfully");
+    const output = Buffer.concat(stdout).toString("utf8");
+    const errors = Buffer.concat(stderr).toString("utf8");
+    for (const sensitive of [info.administratorSecret, issued.data!.code, cookie, cookie.split("=").slice(1).join("="), csrf!,
+      untrustedCorrelation, dir, ...roots, projectA, projectB, "https://foreign.example", "relative", "changed suggestion"]) {
+      assert.ok(sensitive.length > 0);
+      // Do not include captured output or secret values in assertion diagnostics.
+      assert.ok(!output.includes(sensitive) && !errors.includes(sensitive), "Captured diagnostics contain sensitive input");
+    }
+    assert.equal(errors.length, 0, "Unexpected fixture stderr diagnostics");
+    const lines = output.trim().split("\n");
+    const correlations = new Set<string>();
+    const loggedStatuses: number[] = [];
+    for (const line of lines) {
+      let record: Record<string, unknown>;
+      try { record = JSON.parse(line); } catch { throw new Error("Fixture emitted non-JSON operational output"); }
+      assert.deepEqual(Object.keys(record).sort(), ["correlationId", "instanceId", "operation", "outcome", "status", "time"]);
+      assert.equal(record.instanceId, "sdk-fixture");
+      assert.equal(record.operation, "http.request");
+      assert.equal(typeof record.time, "string");
+      assert.ok(Number.isFinite(Date.parse(record.time as string)));
+      assert.equal(typeof record.correlationId, "string");
+      const id = record.correlationId as string;
+      assert.ok(id.length > 0 && !correlations.has(id), "Each HTTP request needs a fresh trusted correlation");
+      correlations.add(id);
+      assert.equal(typeof record.status, "number");
+      const status = record.status as number;
+      assert.equal(record.outcome, status >= 400 ? "rejected" : "succeeded");
+      loggedStatuses.push(status);
+    }
+    // Compare multisets: concurrent settings writes need not log in response order.
+    assert.deepEqual(loggedStatuses.sort((a, b) => a - b), [...statuses].sort((a, b) => a - b));
+    for (const status of [200, 201, 204, 303, 400, 401, 403, 404, 409]) {
+      assert.ok(loggedStatuses.includes(status), "Missing successful or rejected request coverage");
+    }
+  });
 });
