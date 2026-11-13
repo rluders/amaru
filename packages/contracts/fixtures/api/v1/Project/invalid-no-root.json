@@ -3,7 +3,7 @@
   "name": "MyGame",
   "config": {
     "present": true,
-    "path": ".amaru/project.yaml"
+    "path": ".amaru/config.yaml"
   },
   "git": {
     "present": true,
