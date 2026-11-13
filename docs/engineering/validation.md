@@ -104,6 +104,8 @@ This is one coordinator serving multiple Worker sessions, not distributed schedu
 
 OBS-001 operational logging adapter evidence and remaining composition gates: [Linux record](../validation/m3/2026-11-12-linux-obs-001.md). `make check` includes secret-fixture capture, command/auth composition tests and [Worker Runner diagnostic tests](../validation/m3/2026-11-13-linux-obs-001-worker.md); it does not validate a running composed Platform server.
 
+Project HTTP/settings composition has a PostgreSQL-tagged two-client test and pool-reopen/rollback checks: [#191 Linux evidence](../validation/m3/2026-11-13-linux-prj-002-http-postgres.md). Run `go test -race -count=1 -tags pg ./internal/adapter/httpapi` from `services/platform` with a disposable `AMARU_TEST_PG` server. Default checks run the shared fake-backed cases and only compile/vet the tagged test. This is adapter integration evidence, not product startup or database/process restart.
+
 ## Platform process lifecycle
 
 The #357 [accepted ADR-0068](../architecture/adr/0068-platform-process-readiness-and-bounded-shutdown.md) has [isolated Lane compatibility evidence and a production failure matrix](../validation/m3/2026-11-13-platform-lifecycle-proposal.md). This is not production bootstrap, PostgreSQL process restart or NATS/outbox validation. Lane v2.1.0 is pinned and used in operational diagnostic tests; the [bounded safe handoff](../validation/m3/2026-11-13-linux-lifecycle-diagnostics.md) is implemented, with product consumer/composition still pending. Implementation must retain existing embedded Worker cancel-and-join/no-result and durable reconciliation tests.
