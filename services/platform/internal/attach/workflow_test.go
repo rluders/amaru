@@ -38,7 +38,6 @@ func TestProjectWorkflowSelection(t *testing.T) {
 	needGit(t)
 	ctx := context.Background()
 	a, projects := newAttacher()
-	locations := map[domain.ProjectKey]string{}
 	type attached struct {
 		key                 domain.ProjectKey
 		dir, revision, name string
@@ -58,12 +57,9 @@ func TestProjectWorkflowSelection(t *testing.T) {
 		if err != nil || !created {
 			t.Fatalf("attach: %+v %v %v", p, created, err)
 		}
-		locations[p.Key] = dir
 		both = append(both, attached{p.Key, dir, git(t, dir, "rev-parse", "HEAD"), name})
 	}
-	reader := attach.WorkflowReader{Git: a, Location: func(_ context.Context, p domain.ProjectKey) (string, error) {
-		return locations[p], nil
-	}}
+	reader := attach.WorkflowReader{Git: a}
 	store := fakes.NewExecutionStore()
 	trust := fakes.NewTrustStore(projects)
 	fakes.LinkTrustAudit(store, trust)
@@ -148,9 +144,9 @@ func TestProjectWorkflowSelection(t *testing.T) {
 	git(t, alpha.dir, "fetch", "-q", "--no-tags", beta.dir, "HEAD")
 	assertRejected(alpha, "same-flow", beta.revision, domain.ErrNotFound)
 	assertRejected(alpha, "same-flow", git(t, alpha.dir, "rev-parse", "HEAD^{tree}"), domain.ErrNotFound)
-	locations[alpha.key] = beta.dir
-	assertRejected(alpha, "same-flow", beta.revision, domain.ErrNotFound)
-	locations[alpha.key] = alpha.dir
+	git(t, alpha.dir, "remote", "set-url", "origin", "https://example.com/Beta.git")
+	assertRejected(alpha, "same-flow", alpha.revision, domain.ErrNotFound)
+	git(t, alpha.dir, "remote", "set-url", "origin", "https://example.com/Alpha.git")
 	if _, _, err := run(beta, "run-Alpha"); !errors.Is(err, domain.ErrKeyReused) {
 		t.Fatalf("cross-Project key: %v", err)
 	}
@@ -208,7 +204,7 @@ func TestWorkflowReaderRefusesUnsafeContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reader := attach.WorkflowReader{Git: a, Location: func(context.Context, domain.ProjectKey) (string, error) { return dir, nil }}
+	reader := attach.WorkflowReader{Git: a}
 	for _, tc := range []struct{ name, content string }{
 		{"different id", strings.Replace(workflowFile("Good"), "id: same-flow", "id: other-flow", 1)},
 		{"future version", strings.Replace(workflowFile("Good"), "schemaVersion: 1", "schemaVersion: 2", 1)},
@@ -243,5 +239,114 @@ func TestWorkflowReaderRefusesUnsafeContent(t *testing.T) {
 	cancel()
 	if _, err := reader.Workflow(cancelled, p.Key, "same-flow", strings.Repeat("a", 40)); err != context.Canceled {
 		t.Fatalf("cancelled lookup: %v", err)
+	}
+}
+
+// The hook runs after the binding is captured, before any Git process starts.
+type workflowCloneStore struct {
+	*fakes.ProjectStore
+	lookup func(context.Context, domain.ProjectKey) (domain.ProjectClone, error)
+}
+
+func (s workflowCloneStore) ActiveClone(ctx context.Context, key domain.ProjectKey) (domain.ProjectClone, error) {
+	return s.lookup(ctx, key)
+}
+
+func TestWorkflowUsesOnePersistedClone(t *testing.T) {
+	needGit(t)
+	ctx := context.Background()
+	a, projects := newAttacher()
+	first := repo(t, "https://example.com/app.git")
+	writeWorkflow(t, first, workflowFile("First clone"))
+	git(t, first, "add", ".")
+	git(t, first, "commit", "-qm", "workflow")
+	revision := git(t, first, "rev-parse", "HEAD")
+	p, _, err := a.Attach(ctx, first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second := filepath.Join(t.TempDir(), "second")
+	git(t, filepath.Dir(second), "clone", "-q", first, second)
+	git(t, second, "remote", "set-url", "origin", "https://example.com/app.git")
+	// Only the first clone contains this requested commit after the switch.
+	writeWorkflow(t, first, workflowFile("Captured first clone"))
+	git(t, first, "add", ".")
+	git(t, first, "commit", "-qm", "first only")
+	firstRevision := git(t, first, "rev-parse", "HEAD")
+	var calls int
+	var duringLookup func()
+	a.Projects = workflowCloneStore{projects, func(ctx context.Context, key domain.ProjectKey) (domain.ProjectClone, error) {
+		calls++
+		clone, err := projects.ActiveClone(ctx, key)
+		if duringLookup != nil {
+			f := duringLookup
+			duringLookup = nil
+			f()
+		}
+		return clone, err
+	}}
+	reader := attach.WorkflowReader{Git: a}
+	var revoked bool
+	access, err := coordinator.NewProjectAccess(coordinator.New(fakes.NewExecutionStore(), time.Now), projects, func(context.Context) (domain.Principal, error) {
+		if revoked {
+			return domain.Principal{}, domain.ErrNotPermitted
+		}
+		return domain.Principal{Kind: domain.PrincipalHuman, ID: "owner", Role: domain.RoleOwner}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	load := func(rev string) (domain.Workflow, error) {
+		return access.Workflow(ctx, p.Key, "same-flow", rev, reader)
+	}
+	duringLookup = func() {
+		if _, _, err := a.Attach(ctx, second); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if w, err := load(firstRevision); err != nil || w.Name != "Captured first clone" || calls != 1 {
+		t.Fatalf("captured root: %+v %v calls=%d", w, err, calls)
+	}
+	if w, err := load(firstRevision); err != domain.ErrNotFound || w.ID != "" || calls != 2 {
+		t.Fatalf("fell back to old root: %+v %v calls=%d", w, err, calls)
+	}
+	if w, err := load(revision); err != nil || w.Name != "First clone" {
+		t.Fatalf("second clone: %+v %v", w, err)
+	}
+	// Moving the selected clone must fail even while the old clone is still usable.
+	moved := second + "-moved"
+	if err := os.Rename(second, moved); err != nil {
+		t.Fatal(err)
+	}
+	if w, err := load(revision); err != domain.ErrNotFound || w.ID != "" {
+		t.Fatalf("moved root fallback: %+v %v", w, err)
+	}
+	if err := os.Rename(moved, second); err != nil {
+		t.Fatal(err)
+	}
+	git(t, second, "remote", "set-url", "origin", "https://example.com/foreign.git")
+	if w, err := load(revision); err != domain.ErrNotFound || w.ID != "" {
+		t.Fatalf("replaced identity: %+v %v", w, err)
+	}
+	git(t, second, "remote", "set-url", "origin", "https://example.com/app.git")
+	duringLookup = func() { revoked = true }
+	if w, err := load(revision); err != domain.ErrNotPermitted || w.ID != "" {
+		t.Fatalf("revoked read leaked content: %+v %v", w, err)
+	}
+	before := calls
+	if _, err := load(revision); err != domain.ErrNotPermitted || calls != before {
+		t.Fatalf("revoked lookup: %v calls=%d", err, calls)
+	}
+	revoked = false
+	missing := domain.ProjectKey("ssh://example.com/missing#" + strings.Repeat("a", 40))
+	if _, err := access.Workflow(ctx, missing, "same-flow", revision, reader); err != domain.ErrNotFound || calls != before {
+		t.Fatalf("unattached lookup: %v calls=%d", err, calls)
+	}
+	// A missing binding is a runtime error, with no path inference or Git IO.
+	a.Projects = workflowCloneStore{projects, func(context.Context, domain.ProjectKey) (domain.ProjectClone, error) {
+		return domain.ProjectClone{}, domain.ErrNotFound
+	}}
+	if w, err := access.Workflow(ctx, p.Key, "same-flow", revision, attach.WorkflowReader{Git: a}); err != domain.ErrNotFound || w.ID != "" {
+		t.Fatalf("missing binding: %+v %v", w, err)
 	}
 }

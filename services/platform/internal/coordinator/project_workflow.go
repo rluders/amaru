@@ -17,6 +17,9 @@ func (a *ProjectAccess) Workflow(ctx context.Context, project domain.ProjectKey,
 		return domain.Workflow{}, domain.ErrInvalid
 	}
 	w, err := source.Workflow(ctx, project, id, revision)
+	if _, authErr := a.authorize(ctx, project); authErr != nil {
+		return domain.Workflow{}, authErr
+	}
 	if err != nil {
 		return domain.Workflow{}, err
 	}

@@ -72,6 +72,10 @@ func TestProjectWorkflowAuthorization(t *testing.T) {
 		revoked = true
 		return w, nil
 	})
+	if got, err := api.Workflow(ctx, project, req.WorkflowID, req.Revision, source); err != domain.ErrNotPermitted || got.ID != "" {
+		t.Fatalf("session revoked during load leaked Workflow: %+v %v", got, err)
+	}
+	revoked = false
 	if _, _, err := api.RunWorkflow(ctx, project, req, source); err != domain.ErrNotPermitted {
 		t.Fatalf("session revoked during load reached Submit: %v", err)
 	}
