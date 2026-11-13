@@ -222,6 +222,38 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     await read(native, projectA, true);
     await patch(native, projectA, false);
   });
+  const rejectedSecrets = {
+    bearer: "rejected-bearer-sensitive-marker",
+    launch: "rejected-launch-sensitive/marker+value",
+    csrf: "rejected-csrf-sensitive-marker",
+    cookie: "rejected-cookie-sensitive-marker",
+  };
+  await t.test("rejected auth credentials never enter response bodies or diagnostic channels", async () => {
+    const invalidBearer = createClient({ baseUrl, fetch: trackedFetch, token: rejectedSecrets.bearer });
+    const invalidCSRF = createClient({ baseUrl, fetch: transport, csrfToken: () => rejectedSecrets.csrf });
+    const cookieFetch: typeof fetch = async (input, init) => {
+      const req = new Request(input, init);
+      req.headers.set("Cookie", `${cookie.split("=")[0]}=${rejectedSecrets.cookie}`);
+      return trackedFetch(req);
+    };
+    const invalidCookie = createClient({ baseUrl, fetch: cookieFetch });
+    const results = [
+      [await invalidBearer.GET("/auth/session"), 401],
+      [await native.GET("/auth/launch", { params: { query: { code: rejectedSecrets.launch } } }), 401],
+      [await invalidCSRF.DELETE("/auth/session"), 403],
+      [await invalidCookie.GET("/auth/session"), 401],
+    ] as const;
+    for (const [result, status] of results) {
+      assert.equal(result.response.status, status);
+      assert.equal(result.data, undefined);
+      const body = JSON.stringify(result.error);
+      for (const sensitive of Object.values(rejectedSecrets)) {
+        assert.ok(!body.includes(sensitive), "Rejected credential echoed in response body");
+      }
+    }
+    // A rejected logout must leave the legitimate session live.
+    assert.equal((await browser.GET("/auth/session")).response.status, 200);
+  });
   assert.equal((await browser.DELETE("/auth/session")).response.status, 204);
   assert.equal((await browser.GET("/auth/session")).response.status, 401);
   assert.equal((await browser.GET("/projects/{projectId}/settings", { params: path(projectA) })).response.status, 401);
@@ -238,6 +270,7 @@ test("SDK attaches real Git Projects and isolates settings against the Go loopba
     const output = Buffer.concat(stdout).toString("utf8");
     const errors = Buffer.concat(stderr).toString("utf8");
     for (const sensitive of [info.administratorSecret, issued.data!.code, cookie, cookie.split("=").slice(1).join("="), csrf!,
+      ...Object.values(rejectedSecrets), encodeURIComponent(rejectedSecrets.launch),
       untrustedCorrelation, dir, ...roots, projectA, projectB, "https://foreign.example", "relative", "changed suggestion"]) {
       assert.ok(sensitive.length > 0);
       // Do not include captured output or secret values in assertion diagnostics.
