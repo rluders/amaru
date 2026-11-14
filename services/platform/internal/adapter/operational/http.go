@@ -18,12 +18,13 @@ func (l *Logger) HTTP(instanceID string, next http.Handler, onError func(error))
 		ctx := WithIdentity(r.Context(), Identity{InstanceID: instanceID, CorrelationID: rand.Text()})
 		rw := &response{ResponseWriter: w, status: http.StatusOK}
 		outcome := "panicked"
+		cause := ""
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
 				rw.status = 0
 			}
-			if err := l.Write(ctx, Record{Operation: "http.request", Outcome: outcome, Status: rw.status}); err != nil {
+			if err := l.Write(ctx, Record{Operation: "http.request", Outcome: outcome, Cause: cause, Status: rw.status}); err != nil {
 				onError(err)
 			}
 			// Prevent net/http from printing a raw panic value or stack to ErrorLog.
@@ -36,13 +37,18 @@ func (l *Logger) HTTP(instanceID string, next http.Handler, onError func(error))
 		if rw.status >= 400 {
 			outcome = "rejected"
 		}
+		if rw.ioFailed {
+			outcome = "failed"
+			cause = "response_io_failed"
+		}
 	})
 }
 
 type response struct {
 	http.ResponseWriter
-	status int
-	wrote  bool
+	status   int
+	wrote    bool
+	ioFailed bool
 }
 
 func (w *response) Unwrap() http.ResponseWriter { return w.ResponseWriter }
@@ -61,7 +67,13 @@ func (w *response) Write(p []byte) (int, error) {
 	if !w.wrote {
 		w.WriteHeader(http.StatusOK)
 	}
-	return w.ResponseWriter.Write(p)
+	n, err := w.ResponseWriter.Write(p)
+	// Record only failure presence, never the error or response body. Preserve
+	// the writer's result for the handler; diagnostics must not retry delivery.
+	if err != nil || n != len(p) {
+		w.ioFailed = true
+	}
+	return n, err
 }
 
 // Preserve WebSocket hijacking and report the upgrade separately from HTTP 200.
@@ -70,6 +82,8 @@ func (w *response) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if err == nil {
 		w.status = http.StatusSwitchingProtocols
 		w.wrote = true
+	} else {
+		w.ioFailed = true
 	}
 	return conn, rw, err
 }
@@ -77,5 +91,9 @@ func (w *response) FlushError() error {
 	if !w.wrote {
 		w.WriteHeader(http.StatusOK)
 	}
-	return http.NewResponseController(w.ResponseWriter).Flush()
+	err := http.NewResponseController(w.ResponseWriter).Flush()
+	if err != nil {
+		w.ioFailed = true
+	}
+	return err
 }
