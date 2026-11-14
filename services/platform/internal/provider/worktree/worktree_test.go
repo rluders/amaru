@@ -183,6 +183,39 @@ func tree(t *testing.T, dir string) string {
 	return b.String()
 }
 
+func TestWorktreeDirectoryCannotAliasAnotherWorkItem(t *testing.T) {
+	e := newPrepared(t)
+	alias := filepath.Join(e.root, "WI-002")
+	if err := os.Symlink(e.wt, alias); err != nil {
+		t.Skipf("directory symlink unavailable: %v", err)
+	}
+	ws := domain.Workspace{Key: "WI-002", Branch: e.ws.Branch, Base: e.ws.Base}
+	before := tree(t, e.wt)
+	head := git(t, e.wt, "rev-parse", "HEAD")
+	commands := len(e.rec.argv)
+	for name, run := range map[string]func() error{
+		"Dir":         func() error { _, err := e.r.Dir(ws); return err },
+		"Confinement": func() error { _, err := e.r.Confinement(ws); return err },
+		"Prepare":     func() error { _, err := e.r.Prepare(context.Background(), ws.Key, ws.Branch); return err },
+		"Head":        func() error { _, err := e.r.Head(context.Background(), ws); return err },
+		"Changed":     func() error { _, err := e.r.Changed(context.Background(), ws); return err },
+		"Sync":        func() error { _, err := e.r.Sync(context.Background(), ws, true); return err },
+		"Remove":      func() error { _, err := e.r.Remove(context.Background(), ws, true); return err },
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := run(); !errors.Is(err, domain.ErrInvalid) {
+				t.Errorf("got %v, want ErrInvalid for an aliased Work Item directory", err)
+			}
+		})
+	}
+	if len(e.rec.argv) != commands {
+		t.Error("aliased Work Item reached git")
+	}
+	if tree(t, e.wt) != before || git(t, e.wt, "rev-parse", "HEAD") != head {
+		t.Error("the other Work Item changed")
+	}
+}
+
 func TestPrepareCreatesOneWorktreePerWorkItemOutsideTheCheckout(t *testing.T) {
 	e := newEnv(t)
 	ctx := context.Background()
