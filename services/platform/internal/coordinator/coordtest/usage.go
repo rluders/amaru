@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ import (
 func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 	ctx := context.Background()
 	for _, outcome := range []ports.ResultOutcome{ports.OutcomeSucceeded, ports.OutcomeFailed, ports.OutcomeCancelled} {
-		for _, faultAt := range []string{"none", "before", "after", "empty", "stale", "concurrent", "invalid"} {
+		for _, faultAt := range []string{"none", "before", "after", "empty", "stale", "concurrent", "invalid", "multiple", "multiple_before", "multiple_after"} {
 			t.Run(map[ports.ResultOutcome]string{1: "success", 2: "failure", 3: "cancel"}[outcome]+"/"+faultAt, func(t *testing.T) {
 				s := factory(t)
 				e := domain.Execution{ID: "e1", ProjectID: "p1", EnvironmentID: "env1", State: domain.ExecQueued, CreatedAt: t0, RequestedBy: Requester, Trigger: domain.TriggerManual}
@@ -42,6 +43,17 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 				}
 				zero := uint64(0)
 				m := ports.Result{AttemptID: "att-1", FencingToken: 1, Outcome: outcome, ErrorCode: "runner_failed", ErrorDetail: "token=abcdefghijk", Usage: []ports.UsageReport{{Provider: "fake", Model: "token=abcdefghijk", InputTokens: &ports.IntMeasurement{Source: ports.UsageReported, Value: &zero}, OutputTokens: &ports.IntMeasurement{Source: ports.UsageUnknown}, Cost: &ports.Cost{Source: ports.UsageEstimated, Amount: "0.001230", Currency: "USD", PriceTableVersion: "v1"}}}}
+				multiple := strings.HasPrefix(faultAt, "multiple")
+				boundary := strings.TrimPrefix(faultAt, "multiple_")
+				if multiple {
+					seven := uint64(7)
+					m.Usage = append(m.Usage, ports.UsageReport{
+						Provider: "second", Model: "second-model",
+						InputTokens:  &ports.IntMeasurement{Source: ports.UsageUnknown},
+						OutputTokens: &ports.IntMeasurement{Source: ports.UsageReported, Value: &seven},
+						Cost:         &ports.Cost{Source: ports.UsageReported, Amount: "2.3400", Currency: "EUR"},
+					})
+				}
 				deliver := func(store ports.ExecutionStore, m ports.Result, want ports.ResultDisposition, wantErr error) {
 					t.Helper()
 					run, cancel := context.WithTimeout(ctx, wait)
@@ -90,10 +102,10 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 				if faultAt == "empty" {
 					m.Usage = nil
 				}
-				if faultAt == "before" || faultAt == "after" {
+				if boundary == "before" || boundary == "after" {
 					fault := &boundaryStore{ExecutionStore: s}
 					inject := func(int) error { return errCrash }
-					if faultAt == "before" {
+					if boundary == "before" {
 						fault.before = inject
 					} else {
 						fault.after = inject
@@ -103,7 +115,7 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					if faultAt == "before" {
+					if boundary == "before" {
 						if len(cs) != 0 || readStep(t, s).State != domain.StepRunning {
 							t.Fatal("partial write")
 						}
@@ -122,7 +134,7 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 					wg.Wait()
 				}
 				want := ports.ResultAccepted
-				if faultAt == "after" || faultAt == "concurrent" {
+				if boundary == "after" || faultAt == "concurrent" {
 					want = ports.ResultDuplicate
 				}
 				deliver(s, m, want, nil)
@@ -140,6 +152,26 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 						t.Fatal("redaction/precision/presence lost")
 					}
 				}
+				if multiple {
+					if len(c.Reports) != 2 {
+						t.Fatalf("reports=%d want=2", len(c.Reports))
+					}
+					second := c.Reports[1]
+					if c.Reports[0].Provider != "fake" || second.Provider != "second" || second.Model != "second-model" ||
+						second.InputTokens == nil || second.InputTokens.Source != domain.UsageUnknown || second.InputTokens.Value != nil ||
+						second.OutputTokens == nil || second.OutputTokens.Source != domain.UsageReported || second.OutputTokens.Value == nil || *second.OutputTokens.Value != 7 ||
+						second.Cost == nil || second.Cost.Source != domain.UsageReported || second.Cost.Amount != "2.3400" || second.Cost.Currency != "EUR" {
+						t.Fatal("multiple reports lost producer order, provenance or precision")
+					}
+					if c.UsageID(0) == c.UsageID(1) {
+						t.Fatal("report ordinals share a Usage identity")
+					}
+				}
+				reader := evidence.Reader{Executions: s, Contexts: fakes.NewContextStore(), Artifacts: fakes.NewArtifactIndex()}
+				before, err := reader.Bundle(ctx, "e1")
+				if err != nil {
+					t.Fatal(err)
+				}
 				events := readEvents(t, s)
 				deliver(s, m, ports.ResultDuplicate, nil)
 				next, _ := s.UsageCaptures(ctx, "e1")
@@ -155,9 +187,21 @@ func UsageSuite(t *testing.T, factory func(*testing.T) ports.ExecutionStore) {
 					conflict.Outcome = ports.OutcomeSucceeded
 				}
 				deliver(s, conflict, 0, domain.ErrInvalid)
-				b, err := (evidence.Reader{Executions: s, Contexts: fakes.NewContextStore(), Artifacts: fakes.NewArtifactIndex()}).Bundle(ctx, "e1")
+				if multiple {
+					// Reordering the same reports is a conflicting result, not an exact replay.
+					reordered := m
+					reordered.Usage = []ports.UsageReport{m.Usage[1], m.Usage[0]}
+					deliver(s, reordered, 0, domain.ErrInvalid)
+				}
+				b, err := reader.Bundle(ctx, "e1")
 				if err != nil || len(b.Steps) != 1 || len(b.Steps[0].Usage) != 1 {
 					t.Fatalf("bundle usage: %v", err)
+				}
+				if b.Digest != before.Digest || !reflect.DeepEqual(b.Steps[0].Usage, cs) || !reflect.DeepEqual(events, readEvents(t, s)) {
+					t.Fatal("duplicate or conflicting replay changed the bundle or its ordered Usage")
+				}
+				if faultAt != "empty" && b.Steps[0].UsageGap != "" {
+					t.Fatal("captured reports have a missing-capture gap")
 				}
 				if faultAt == "empty" && b.Steps[0].UsageGap == "" {
 					t.Fatal("unknown became zero")
