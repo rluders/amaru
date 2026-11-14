@@ -132,3 +132,9 @@ Execution lifecycle owners are covered by `go test -race -count=1 ./internal/pla
 Operational sink panic containment has [Linux evidence](../validation/m3/2026-11-13-linux-log-sink-panic.md): repeated safe errors and loopback HTTP success/rejection/panic without raw server diagnostics. This covers the writer boundary, not complete product channel capture or recovery of partial log records.
 
 HTTP response I/O failure diagnostics have [Linux evidence](../validation/m3/2026-11-14-linux-obs-001-response-io.md): injected write, short-write, flush and hijack failures retain their handler results and emit a static safe failure cause. Selected HTTP status does not prove delivery; buffered failures after handler return and direct hijacked-connection I/O remain outside this capture.
+
+The actual Platform `Lifecycle` diagnostic queue/logger composition has
+[fake-stage Linux evidence](../validation/m3/2026-11-14-linux-obs-001-lifecycle.md):
+trusted drain identity, omitted raw failure data, preserved failure/admission
+behavior and post-join queue drain, including nil/full queues. This test-only
+coverage does not establish a running product bootstrap or complete OBS-001.
