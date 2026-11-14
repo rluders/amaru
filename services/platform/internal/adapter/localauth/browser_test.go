@@ -25,9 +25,13 @@ func TestFirefoxLaunchSessionAndLogout(t *testing.T) {
 	if err != nil {
 		t.Fatal("Firefox not installed")
 	}
-	for _, host := range []string{"localhost", "127.0.0.1"} {
+	for _, host := range []string{"localhost", "127.0.0.1", "::1"} {
 		t.Run(host, func(t *testing.T) {
-			l, err := net.Listen("tcp", "127.0.0.1:0")
+			address := "127.0.0.1:0"
+			if host == "::1" {
+				address = "[::1]:0"
+			}
+			l, err := net.Listen("tcp", address)
 			if err != nil {
 				t.Fatal(err)
 			}
