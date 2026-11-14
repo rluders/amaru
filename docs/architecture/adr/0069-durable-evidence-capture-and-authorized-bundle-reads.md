@@ -17,7 +17,7 @@ Approvals, usage and workspace snapshots. Evidence should compose authoritative
 records, not duplicate every entity. Missing, expired and not-yet-produced
 content must remain visible.
 
-This is an **accepted** decision. The [bounded Usage capture implementation](../../../services/platform/README.md#bounded-usage-capture-art-002) has local Linux evidence; the complete decision remains unimplemented. Source review used #19 head
+This is an **accepted** decision. The [bounded Usage capture implementation](../../../services/platform/README.md#bounded-usage-capture-art-002) has local Linux evidence, as does the [bounded internal metadata read scope](../../../services/platform/README.md#internal-evidence-read-scope-art-002); the complete decision remains unimplemented. Source review used #19 head
 `0ff1ef010f258edca005ebb373b785c588ebc326`. It neither implements recorders nor
 adds a public contract. The owner approved how reports become durable
 Evidence and the authorization and consistency boundary for one bundle query.
@@ -213,9 +213,11 @@ remains a separate owner choice and must never rewrite a decided Approval.
   database transaction open while a human reviews or a client fetches later
   pages; cross-request pagination would require a separately reviewed snapshot
   token/materialization contract, not ordinary cursors over changing data. This
-  is an accepted adapter requirement, **not verified behavior**
-  of the current ports. Existing separate adapter calls need transaction-aware
-  composition; rereading only the Execution version is insufficient because
+  is an accepted adapter requirement. The [bounded internal PostgreSQL reader](../../../services/platform/README.md#internal-evidence-read-scope-art-002)
+  now supplies transaction-aware metadata composition with local Linux evidence;
+  authorization-relevant scope and public composition remain unimplemented.
+  Existing separate adapter calls do not share that scope; rereading only the
+  Execution version is insufficient because
   context, Artifacts and audit may change independently.
 - Blob bytes sit outside the metadata transaction. Return immutable hashed
   references and honest availability at read time; expiry/deletion during later

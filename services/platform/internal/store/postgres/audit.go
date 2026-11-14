@@ -33,7 +33,7 @@ func (s *GrantStore) Audit(ctx context.Context, after int64, limit int) ([]domai
 	return readAudit(ctx, s.db, after, limit)
 }
 
-func readAudit(ctx context.Context, db *sql.DB, after int64, limit int) ([]domain.AuditEvent, error) {
+func readAudit(ctx context.Context, db metadataQuery, after int64, limit int) ([]domain.AuditEvent, error) {
 	if limit <= 0 {
 		limit = defaultAuditLimit
 	}

@@ -39,14 +39,18 @@ func (s *ExecutionStore) ResultCapture(ctx context.Context, attempt string) (dom
 	return c, err
 }
 func (s *ExecutionStore) UsageCaptures(ctx context.Context, execution string) ([]domain.ResultCapture, error) {
+	return usageCaptures(ctx, s.db, execution)
+}
+
+func usageCaptures(ctx context.Context, db metadataQuery, execution string) ([]domain.ResultCapture, error) {
 	var exists bool
-	if err := s.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM executions WHERE id=$1)`, execution).Scan(&exists); err != nil {
+	if err := db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM executions WHERE id=$1)`, execution).Scan(&exists); err != nil {
 		return nil, err
 	}
 	if !exists {
 		return nil, domain.ErrNotFound
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT c.receipt FROM result_captures c JOIN step_executions st ON st.id=c.step_id WHERE c.execution_id=$1 ORDER BY st.ord,c.captured_at,c.attempt_id COLLATE "C"`, execution)
+	rows, err := db.QueryContext(ctx, `SELECT c.receipt FROM result_captures c JOIN step_executions st ON st.id=c.step_id WHERE c.execution_id=$1 ORDER BY st.ord,c.captured_at,c.attempt_id COLLATE "C"`, execution)
 	if err != nil {
 		return nil, err
 	}

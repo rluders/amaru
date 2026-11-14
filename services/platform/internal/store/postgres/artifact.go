@@ -65,12 +65,20 @@ func (s *ArtifactIndex) Versions(ctx context.Context, id string) ([]domain.Artif
 }
 
 func (s *ArtifactIndex) ByExecution(ctx context.Context, exec string) ([]domain.ArtifactVersion, error) {
-	return s.query(ctx, `SELECT `+artifactColumns+` FROM artifact_versions WHERE execution_id = $1
+	return artifactsByExecution(ctx, s.db, exec)
+}
+
+func artifactsByExecution(ctx context.Context, db metadataQuery, exec string) ([]domain.ArtifactVersion, error) {
+	return queryArtifacts(ctx, db, `SELECT `+artifactColumns+` FROM artifact_versions WHERE execution_id = $1
 		ORDER BY step_id COLLATE "C", artifact_id COLLATE "C", version`, exec)
 }
 
 func (s *ArtifactIndex) query(ctx context.Context, q string, arg string) ([]domain.ArtifactVersion, error) {
-	rows, err := s.db.QueryContext(ctx, q, arg)
+	return queryArtifacts(ctx, s.db, q, arg)
+}
+
+func queryArtifacts(ctx context.Context, db metadataQuery, q string, arg string) ([]domain.ArtifactVersion, error) {
+	rows, err := db.QueryContext(ctx, q, arg)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: list artifact versions: %w", err)
 	}

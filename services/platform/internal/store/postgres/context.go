@@ -47,9 +47,13 @@ func (s *ContextStore) Record(ctx context.Context, c domain.StepContext) (domain
 }
 
 func (s *ContextStore) Get(ctx context.Context, executionID, stepID string) (domain.StepContext, error) {
+	return getContext(ctx, s.db, executionID, stepID)
+}
+
+func getContext(ctx context.Context, db metadataQuery, executionID, stepID string) (domain.StepContext, error) {
 	var c domain.StepContext
 	var items []byte
-	err := s.db.QueryRowContext(ctx, `SELECT `+contextColumns+` FROM step_contexts WHERE execution_id = $1 AND step_id = $2`, executionID, stepID).
+	err := db.QueryRowContext(ctx, `SELECT `+contextColumns+` FROM step_contexts WHERE execution_id = $1 AND step_id = $2`, executionID, stepID).
 		Scan(&c.ExecutionID, &c.StepID, &c.Format, &c.Hash, &c.Document, &items, &c.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.StepContext{}, fmt.Errorf("%w: context of step %s", domain.ErrNotFound, stepID)
