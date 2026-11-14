@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
 	"github.com/rluders/amaru/services/platform/internal/ports"
@@ -15,6 +16,8 @@ import (
 // Embed unused methods so an unexpected store call fails the test instead of returning data.
 type executionRead struct {
 	ports.ExecutionStore
+	usage      []domain.ResultCapture
+	attempt    string
 	id         string
 	fail       string
 	err        error
@@ -26,7 +29,7 @@ func (s *executionRead) Get(context.Context, string) (domain.Execution, []domain
 	if s.fail == "execution" {
 		return domain.Execution{}, nil, s.err
 	}
-	return domain.Execution{ID: s.id, State: domain.ExecRunning}, []domain.StepExecution{{ID: "s1", ExecutionID: s.id}, {ID: "s2", ExecutionID: s.id}}, nil
+	return domain.Execution{ID: s.id, State: domain.ExecRunning}, []domain.StepExecution{{ID: "s1", ExecutionID: s.id, AttemptID: s.attempt}, {ID: "s2", ExecutionID: s.id}}, nil
 }
 func (s *executionRead) Events(context.Context, string) ([]domain.ExecutionEvent, error) {
 	if s.fail == "events" {
@@ -180,5 +183,33 @@ func (s *executionRead) UsageCaptures(context.Context, string) ([]domain.ResultC
 	if s.fail == "usage" {
 		return nil, s.err
 	}
-	return nil, nil
+	return s.usage, nil
+}
+
+func TestBundlePreservesHistoricalUsageWithoutCoveringCurrentAttempt(t *testing.T) {
+	for _, captured := range []bool{false, true} {
+		t.Run(fmt.Sprint(captured), func(t *testing.T) {
+			r, s := readerFixture()
+			s.attempt = "current"
+			s.usage = []domain.ResultCapture{{ExecutionID: "e1", StepID: "s1", AttemptID: "historical", CapturedAt: time.Date(2026, 11, 14, 0, 0, 0, 0, time.UTC), Reports: []domain.UsageReport{{Provider: "fake"}}}}
+			if captured {
+				c := s.usage[0]
+				c.AttemptID = "current"
+				s.usage = append(s.usage, c)
+			}
+			b, err := r.Bundle(context.Background(), "e1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if (b.Steps[0].UsageGap != "") == captured {
+				t.Fatalf("captured=%v gap=%q", captured, b.Steps[0].UsageGap)
+			}
+			if len(b.Steps[0].Usage) != len(s.usage) || b.Steps[0].Usage[0].AttemptID != "historical" {
+				t.Fatal("lost historical receipt")
+			}
+			if b.Steps[1].UsageGap == "" {
+				t.Fatal("another Step's missing Usage hidden")
+			}
+		})
+	}
 }

@@ -69,3 +69,69 @@ func TestUsageEvidenceAttribution(t *testing.T) {
 		})
 	}
 }
+
+// A retained historical receipt cannot establish coverage for a newer attempt.
+func TestUsageEvidenceCurrentAttemptCoverage(t *testing.T) {
+	for _, state := range []StepState{StepRunning, StepSucceeded, StepFailed, StepCancelled, StepTimedOut} {
+		for _, current := range []string{"missing", "empty", "reported"} {
+			t.Run(string(state)+"/"+current, func(t *testing.T) {
+				at := time.Date(2026, 11, 14, 0, 0, 0, 0, time.UTC)
+				old := ResultCapture{ExecutionID: "e", StepID: "s", ProjectID: "p", AttemptID: "old", CapturedAt: at, Reports: []UsageReport{{Provider: "historical"}}}
+				in := ExecutionEvidenceInput{Execution: Execution{ID: "e", ProjectID: "p"}, Steps: []StepExecution{{ID: "s", ExecutionID: "e", AttemptID: "current", State: state}}, Usage: []ResultCapture{old}}
+				if current != "missing" {
+					receipt := old
+					receipt.AttemptID = "current"
+					if current == "empty" {
+						receipt.Reports = nil
+					}
+					in.Usage = append(in.Usage, receipt)
+				}
+				b, err := BuildExecutionEvidence(in)
+				if err != nil {
+					t.Fatal(err)
+				}
+				wantGap := current != "reported"
+				if (b.Steps[0].UsageGap != "") != wantGap {
+					t.Fatalf("current attempt %s: gap=%q", current, b.Steps[0].UsageGap)
+				}
+				gap := false
+				for _, g := range b.Gaps {
+					if g.Kind == GapUsage {
+						gap = true
+					}
+				}
+				if gap != wantGap {
+					t.Fatalf("global usage gap=%v want=%v", gap, wantGap)
+				}
+				if len(b.Steps[0].Usage) != len(in.Usage) || b.Steps[0].Usage[0].AttemptID != "old" {
+					t.Fatal("historical receipt lost")
+				}
+				again, err := BuildExecutionEvidence(in)
+				if err != nil || again.Digest != b.Digest {
+					t.Fatal("unstable bundle")
+				}
+			})
+		}
+	}
+}
+
+func TestUsageEvidenceAttemptCoverageStaysWithinStep(t *testing.T) {
+	at := time.Date(2026, 11, 14, 0, 0, 0, 0, time.UTC)
+	in := ExecutionEvidenceInput{
+		Execution: Execution{ID: "e"},
+		Steps:     []StepExecution{{ID: "s1", ExecutionID: "e", AttemptID: "current"}, {ID: "s2", ExecutionID: "e", AttemptID: "other"}},
+		Usage: []ResultCapture{
+			{ExecutionID: "e", StepID: "s1", AttemptID: "old", CapturedAt: at, Reports: []UsageReport{{}}},
+			{ExecutionID: "e", StepID: "s2", AttemptID: "current", CapturedAt: at, Reports: []UsageReport{{}}},
+		},
+	}
+	b, err := BuildExecutionEvidence(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, st := range b.Steps {
+		if st.UsageGap == "" {
+			t.Fatalf("Step %s covered by another Step's attempt", st.ID)
+		}
+	}
+}
