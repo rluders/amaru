@@ -23,9 +23,10 @@ type Reader struct {
 // auditPage is how many audit entries one read asks for.
 const auditPage = 1000
 
-// Bundle returns the Evidence of the Execution, or domain.ErrNotFound. The parts are read one
-// after another, not in one snapshot: for an Execution still running, Final is false and a later
-// call may return more. For a finished one, nothing changes any more and the Digest is stable.
+// Bundle returns the Evidence of the requested Execution, or domain.ErrNotFound. Store identity
+// mismatches return domain.ErrInvalid; any read failure returns no bundle. The parts are read
+// sequentially, not in one snapshot. Final reflects the Execution state read by Get; it does not
+// certify snapshot consistency or prevent later Artifact versions from changing the Digest.
 func (r Reader) Bundle(ctx context.Context, executionID string) (domain.ExecutionEvidence, error) {
 	if r.Executions == nil || r.Contexts == nil || r.Artifacts == nil {
 		return domain.ExecutionEvidence{}, fmt.Errorf("%w: evidence reader needs the execution, context and artifact stores", domain.ErrInvalid)
@@ -33,6 +34,9 @@ func (r Reader) Bundle(ctx context.Context, executionID string) (domain.Executio
 	e, steps, err := r.Executions.Get(ctx, executionID)
 	if err != nil {
 		return domain.ExecutionEvidence{}, err
+	}
+	if e.ID != executionID {
+		return domain.ExecutionEvidence{}, fmt.Errorf("%w: evidence store returned a different execution", domain.ErrInvalid)
 	}
 	in := domain.ExecutionEvidenceInput{Execution: e, Steps: steps}
 	if in.Events, err = r.Executions.Events(ctx, executionID); err != nil {
@@ -48,6 +52,9 @@ func (r Reader) Bundle(ctx context.Context, executionID string) (domain.Executio
 		c, err := r.Contexts.Get(ctx, executionID, st.ID)
 		switch {
 		case err == nil:
+			if c.ExecutionID != executionID || c.StepID != st.ID {
+				return domain.ExecutionEvidence{}, fmt.Errorf("%w: evidence store returned context for a different step", domain.ErrInvalid)
+			}
 			in.Contexts = append(in.Contexts, c)
 		case errors.Is(err, domain.ErrNotFound): // no context was assembled for this Step
 		default:
