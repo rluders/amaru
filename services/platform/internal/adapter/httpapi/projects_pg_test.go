@@ -196,8 +196,15 @@ func TestProjectsPostgresSDKRecreation(t *testing.T) {
 		projectGit(t, root, "commit", "-q", "--allow-empty", "-m", "initial")
 		projectGit(t, root, "remote", "add", "origin", fmt.Sprintf("https://github.com/acme/sdk-%d.git", i))
 	}
+	replacement := filepath.Join(t.TempDir(), "replacement")
+	projectGit(t, "", "clone", "-q", roots[0], replacement)
+	projectGit(t, replacement, "remote", "set-url", "origin", "https://github.com/acme/sdk-0.git")
+	newRoot := t.TempDir()
+	projectGit(t, newRoot, "init", "-q", "-b", "main")
+	projectGit(t, newRoot, "commit", "-q", "--allow-empty", "-m", "rejected Project")
+	projectGit(t, newRoot, "remote", "add", "origin", "https://github.com/acme/sdk-rejected.git")
 	snapshot := filepath.Join(t.TempDir(), "projects.json")
-	for _, phase := range []string{"write", "read"} {
+	for _, phase := range []string{"write", "reject", "read"} {
 		t.Run(phase, func(t *testing.T) {
 			db := open()
 			defer db.Close()
@@ -209,6 +216,13 @@ func TestProjectsPostgresSDKRecreation(t *testing.T) {
 			defer cancel()
 			if _, err := migrations.NewRunner(db, dir, 10*time.Second).Apply(ctx); err != nil {
 				t.Fatal("cannot migrate SDK test database")
+			}
+			if phase == "reject" {
+				// Fail after registration has written the Project and clone. Both must roll back.
+				if _, err := db.ExecContext(ctx, `CREATE FUNCTION refuse_sdk_clone() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'private SDK database diagnostic'; END $$;
+ CREATE TRIGGER refuse_sdk_clone AFTER INSERT OR UPDATE ON project_clones FOR EACH ROW EXECUTE FUNCTION refuse_sdk_clone()`); err != nil {
+					t.Fatal("cannot install SDK rollback fixture")
+				}
 			}
 			srv := httptest.NewUnstartedServer(nil)
 			auth, err := localauth.New(srv.Listener.Addr())
@@ -243,7 +257,7 @@ func TestProjectsPostgresSDKRecreation(t *testing.T) {
 			defer srv.Close()
 			cmd := exec.CommandContext(ctx, "node", "test/postgres.fixture.ts")
 			cmd.Dir = "../../../../../packages/sdk"
-			cmd.Env = append(os.Environ(), "AMARU_SDK_ENDPOINT="+srv.URL+"/v1", "AMARU_SDK_TOKEN="+auth.AdministratorSecret(), "AMARU_SDK_PHASE="+phase, "AMARU_SDK_SNAPSHOT="+snapshot, "AMARU_SDK_ROOT_A="+roots[0], "AMARU_SDK_ROOT_B="+roots[1])
+			cmd.Env = append(os.Environ(), "AMARU_SDK_ENDPOINT="+srv.URL+"/v1", "AMARU_SDK_TOKEN="+auth.AdministratorSecret(), "AMARU_SDK_PHASE="+phase, "AMARU_SDK_SNAPSHOT="+snapshot, "AMARU_SDK_ROOT_A="+roots[0], "AMARU_SDK_ROOT_B="+roots[1], "AMARU_SDK_REPLACEMENT="+replacement, "AMARU_SDK_NEW_ROOT="+newRoot)
 			// Assertion diagnostics could contain requests/credentials; never echo them.
 			if err := cmd.Run(); err != nil {
 				t.Fatal("SDK PostgreSQL acceptance failed in phase " + phase)
