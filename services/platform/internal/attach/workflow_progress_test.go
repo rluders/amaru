@@ -56,13 +56,25 @@ func TestCommittedWorkflowsProgressIndependently(t *testing.T) {
 	affected, healthy := both[0], both[1]
 	reader := attach.WorkflowReader{Git: attacher}
 	var ids, goodRuns, badRuns atomic.Int64
-	runner := embedded.RunnerFunc(func(_ context.Context, a ports.Assignment) embedded.Outcome {
+	occupied := make(chan struct{})
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+	t.Cleanup(unblock)
+	runner := embedded.RunnerFunc(func(ctx context.Context, a ports.Assignment) embedded.Outcome {
 		switch a.Capability {
 		case "code.test":
 			goodRuns.Add(1)
 			return embedded.Outcome{Result: ports.OutcomeSucceeded}
 		case "check.run":
-			badRuns.Add(1)
+			if badRuns.Add(1) == 1 {
+				close(occupied)
+				select {
+				case <-release:
+				case <-ctx.Done():
+					return embedded.Outcome{Result: ports.OutcomeCancelled}
+				}
+			}
 			return embedded.Outcome{Result: ports.OutcomeFailed, ErrorCode: "provider_unavailable", ErrorDetail: "fake unavailable Provider"}
 		default:
 			t.Errorf("unexpected assignment capability %s", a.Capability)
@@ -71,7 +83,7 @@ func TestCommittedWorkflowsProgressIndependently(t *testing.T) {
 	})
 	start := func() (*coordinator.Coordinator, *coordinator.ProjectAccess, func()) {
 		t.Helper()
-		c := coordinator.New(store, time.Now, coordinator.WithTrust(trust), coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("workflow-progress-%d", ids.Add(1)) }))
+		c := coordinator.New(store, time.Now, coordinator.WithTrust(trust), coordinator.WithLimits(coordinator.Limits{PerProject: 1}), coordinator.WithExecutionIDs(func() string { return fmt.Sprintf("workflow-progress-%d", ids.Add(1)) }))
 		if _, err := c.Reconcile(ctx); err != nil {
 			t.Fatal(err)
 		}
@@ -91,7 +103,7 @@ func TestCommittedWorkflowsProgressIndependently(t *testing.T) {
 		}()
 		go func() {
 			defer wg.Done()
-			if err := (&embedded.Worker{Slots: 1, HeartbeatPeriod: time.Hour, Runner: runner}).Run(runCtx, wl); err != nil {
+			if err := (&embedded.Worker{Slots: 2, HeartbeatPeriod: time.Hour, Runner: runner}).Run(runCtx, wl); err != nil {
 				t.Errorf("Worker: %v", err)
 			}
 		}()
@@ -176,11 +188,25 @@ func TestCommittedWorkflowsProgressIndependently(t *testing.T) {
 	}
 	affected.revision = commit(affected.root, strings.Replace(workflowFile("affected failure"), "code.test", "check.run", 1))
 	failed := run(access, affected, "failure")
+	select {
+	case <-occupied:
+	case <-time.After(5 * time.Second):
+		t.Fatal("affected Project did not occupy its slot")
+	}
+	queued := run(access, affected, "queued-behind-limit")
 	good := run(access, healthy, "healthy")
-	wait(failed.Execution.ID, domain.ExecFailed)
 	wait(good.Execution.ID, domain.ExecSucceeded)
+	// Healthy completion proves spare Worker capacity and a scan past the limited
+	// Project while its first Runner is held. No absence-by-sleep assertion is used.
+	_, steps, err := store.Get(ctx, queued.Execution.ID)
+	if err != nil || len(steps) != 1 || steps[0].State != domain.StepQueued || steps[0].Reason != domain.ReasonLimitProject || badRuns.Load() != 1 {
+		t.Fatalf("Project limit not retained: %+v runs=%d err=%v", steps, badRuns.Load(), err)
+	}
+	unblock()
+	wait(failed.Execution.ID, domain.ExecFailed)
+	wait(queued.Execution.ID, domain.ExecFailed)
 	stop()
-	snapshots := map[string]string{waiting.Execution.ID: waitBefore, failed.Execution.ID: snapshot(failed.Execution.ID), good.Execution.ID: snapshot(good.Execution.ID)}
+	snapshots := map[string]string{waiting.Execution.ID: waitBefore, failed.Execution.ID: snapshot(failed.Execution.ID), good.Execution.ID: snapshot(good.Execution.ID), queued.Execution.ID: snapshot(queued.Execution.ID)}
 	if snapshot(waiting.Execution.ID) != waitBefore {
 		t.Fatal("unrelated work changed waiting Execution")
 	}
@@ -210,7 +236,7 @@ func TestCommittedWorkflowsProgressIndependently(t *testing.T) {
 			t.Fatalf("foreign Execution leaked: %+v %v", got, err)
 		}
 	}
-	if goodRuns.Load() != 2 || badRuns.Load() != 1 {
+	if goodRuns.Load() != 2 || badRuns.Load() != 2 {
 		t.Fatalf("Runner calls: healthy=%d failed=%d", goodRuns.Load(), badRuns.Load())
 	}
 }
