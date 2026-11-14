@@ -130,11 +130,21 @@ func within(dir, path string) bool {
 func (r *Repo) Base() string { return r.base }
 
 // Dir is the directory of a Work Item's worktree: the one writable root to give the agent.
+// An existing entry must be a directory, never a symlink to another Work Item or checkout.
+// This check does not protect against concurrent filesystem replacement after it returns.
 func (r *Repo) Dir(ws domain.Workspace) (string, error) {
 	if !domain.ValidWorktreeKey(ws.Key) {
 		return "", fmt.Errorf("%w: worktree key %q is not valid", domain.ErrInvalid, ws.Key)
 	}
-	return filepath.Join(r.root, ws.Key), nil
+	dir := filepath.Join(r.root, ws.Key)
+	fi, err := os.Lstat(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return "", fmt.Errorf("worktree: directory %s: %w", ws.Key, err)
+	}
+	if err == nil && !fi.IsDir() {
+		return "", fmt.Errorf("%w: worktree %s must be a directory, not a symlink or file", domain.ErrInvalid, ws.Key)
+	}
+	return dir, nil
 }
 
 // Checkout is the Project checkout. A process runner is told to keep it out of every writable
@@ -222,7 +232,10 @@ func (r *Repo) Prepare(ctx context.Context, key, branch string) (domain.Workspac
 	if err := ws.Validate(); err != nil {
 		return domain.Workspace{}, err
 	}
-	dir, _ := r.Dir(ws)
+	dir, err := r.Dir(ws)
+	if err != nil {
+		return domain.Workspace{}, err
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, err := os.Lstat(dir); err == nil {
@@ -239,7 +252,7 @@ func (r *Repo) Prepare(ctx context.Context, key, branch string) (domain.Workspac
 		return domain.Workspace{}, err
 	}
 	_, _ = r.git(ctx, r.dir, "worktree", "prune")
-	_, err := r.git(ctx, r.dir, "rev-parse", "--verify", "-q", "refs/heads/"+branch)
+	_, err = r.git(ctx, r.dir, "rev-parse", "--verify", "-q", "refs/heads/"+branch)
 	switch code, isExit := exitCode(err); {
 	case err == nil:
 		_, err = r.git(ctx, r.dir, "worktree", "add", "--", dir, branch)
@@ -257,7 +270,10 @@ func (r *Repo) existing(ws domain.Workspace) (string, error) {
 	if err := ws.Validate(); err != nil {
 		return "", err
 	}
-	dir, _ := r.Dir(ws)
+	dir, err := r.Dir(ws)
+	if err != nil {
+		return "", err
+	}
 	if _, err := os.Lstat(filepath.Join(dir, ".git")); err != nil {
 		return "", fmt.Errorf("%w: worktree %s", domain.ErrNotFound, ws.Key)
 	}
@@ -354,7 +370,10 @@ func (r *Repo) Remove(ctx context.Context, ws domain.Workspace, discard bool) (d
 	if err := ws.Validate(); err != nil {
 		return domain.Removal{}, err
 	}
-	dir, _ := r.Dir(ws)
+	dir, err := r.Dir(ws)
+	if err != nil {
+		return domain.Removal{}, err
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, err := os.Lstat(dir); err != nil {
