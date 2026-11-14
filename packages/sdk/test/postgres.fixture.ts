@@ -23,8 +23,10 @@ const settings = async (projectId: string, expected: boolean) => {
   assert.equal(result.response.status, 200);
   assert.deepEqual(result.data, { importClaudeSkills: expected });
 };
+const phase = env("AMARU_SDK_PHASE");
 let projects: Project[];
-if (env("AMARU_SDK_PHASE") === "write") {
+let listed: Project[];
+if (phase === "write") {
   assert.deepEqual(await list(), []);
   projects = [];
   for (const name of ["AMARU_SDK_ROOT_A", "AMARU_SDK_ROOT_B"]) {
@@ -37,6 +39,7 @@ if (env("AMARU_SDK_PHASE") === "write") {
   await settings(projects[0]!.id, false);
   await settings(projects[1]!.id, false);
   const before = await list();
+  listed = before;
   const result = await client.PATCH("/projects/{projectId}/settings", {
     params: { path: { projectId: projects[0]!.id } }, body: { importClaudeSkills: true },
   });
@@ -47,7 +50,20 @@ if (env("AMARU_SDK_PHASE") === "write") {
 } else {
   const saved: { projects: Project[]; listed: Project[] } = JSON.parse(await readFile(snapshot, "utf8"));
   projects = saved.projects;
+  listed = saved.listed;
   assert.deepEqual(await list(), saved.listed, "Project metadata and clone bindings must survive fixture recreation");
+}
+if (phase === "reject") {
+  for (const name of ["AMARU_SDK_REPLACEMENT", "AMARU_SDK_NEW_ROOT"]) {
+    const result = await client.POST("/projects", { body: { root: env(name) } });
+    assert.equal(result.response.status, 500);
+    assert.equal(result.data, undefined);
+    assert.deepEqual(result.error, { error: { code: "internal", message: "Request rejected." } });
+    assert.deepEqual(await list(), listed,
+      "Failed registration must preserve metadata, clone bindings and Project count");
+    await settings(projects[0]!.id, true);
+    await settings(projects[1]!.id, false);
+  }
 }
 for (const project of projects) {
   const detail = await client.GET("/projects/{projectId}", { params: { path: { projectId: project.id } } });
