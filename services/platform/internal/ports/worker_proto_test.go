@@ -55,8 +55,12 @@ func TestMirroredMessagesMatchWorkerProto(t *testing.T) {
 		{RemoteJob{}, "RemoteJob", nil},
 		{StepEvents{}, "StepEvents", nil},
 		{StepEvent{}, "StepEvent", nil},
-		{Result{}, "Result", []string{"outputs", "usage"}},
+		{Result{}, "Result", []string{"outputs"}},
 		{ResultAck{}, "ResultAck", nil},
+		{UsageReport{}, "UsageReport", nil},
+		{IntMeasurement{}, "IntMeasurement", nil},
+		{DoubleMeasurement{}, "DoubleMeasurement", nil},
+		{Cost{}, "Cost", nil},
 	}
 	for _, m := range mirrored {
 		t.Run(m.message, func(t *testing.T) {

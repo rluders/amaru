@@ -110,7 +110,7 @@ func TestBundleRejectsMismatchedStoreIdentity(t *testing.T) {
 }
 
 func TestBundleStoreFailureReturnsNoPartialEvidence(t *testing.T) {
-	for _, stage := range []string{"execution", "events", "approvals", "audit", "context", "artifacts"} {
+	for _, stage := range []string{"execution", "events", "approvals", "audit", "context", "artifacts", "usage"} {
 		for _, cause := range []error{errors.New("store unavailable"), context.Canceled} {
 			t.Run(stage+"/"+cause.Error(), func(t *testing.T) {
 				r, s := readerFixture()
@@ -174,4 +174,11 @@ func TestBundleAuditPaginationFiltersEveryPage(t *testing.T) {
 	}
 	b, err = r.Bundle(context.Background(), "e1")
 	assertNoBundle(t, b, err, cause)
+}
+
+func (s *executionRead) UsageCaptures(context.Context, string) ([]domain.ResultCapture, error) {
+	if s.fail == "usage" {
+		return nil, s.err
+	}
+	return nil, nil
 }

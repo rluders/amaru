@@ -11,6 +11,7 @@ import (
 // nothing is. The Version of each Execution and Step is the version it was read at; the store
 // refuses the whole change when any of them is stale.
 type ExecutionChange struct {
+	Capture   *domain.ResultCapture   // result receipt + reports + pending publication references, atomic with Steps/Events
 	Execution *domain.Execution       // optional
 	Steps     []domain.StepExecution  // optional
 	Events    []domain.ExecutionEvent // appended in order; Seq and ExecutionID are set by the store
@@ -58,6 +59,10 @@ type ExecutionStore interface {
 	// AuditLog is the log that records every Approval change made through this store.
 	AuditLog
 	ExecutionQueue
+	// ResultCapture returns the committed receipt, including an empty report list.
+	ResultCapture(ctx context.Context, attemptID string) (domain.ResultCapture, error)
+	// UsageCaptures returns receipts in Step creation order, then capture order.
+	UsageCaptures(ctx context.Context, executionID string) ([]domain.ResultCapture, error)
 }
 
 // ExecutionID is the one Execution the change belongs to: the Execution's, or its Steps'.
@@ -103,4 +108,27 @@ type ExecutionQueue interface {
 // CommandReader reads durable outcomes in the authoritative store's (name, key) namespace.
 type CommandReader interface {
 	Command(ctx context.Context, name, key string) (domain.CommandRecord, error)
+}
+
+// ValidateCapture refuses standalone/late enrichment writes: the receipt must
+// accompany exactly one accepted completion Event and its Step transition.
+func (c ExecutionChange) ValidateCapture(e domain.Execution) error {
+	if c.Capture == nil {
+		return nil
+	}
+	if err := c.Capture.Validate(e, c.Steps); err != nil {
+		return err
+	}
+	if len(c.Events) != 1 || c.Events[0].StepID != c.Capture.StepID || !c.Events[0].At.Equal(c.Capture.CapturedAt) {
+		return fmt.Errorf("%w: capture needs completion event", domain.ErrInvalid)
+	}
+	kind := c.Events[0].Kind
+	expected := map[domain.StepState]string{domain.StepSucceeded: domain.EventStepSucceeded, domain.StepFailed: domain.EventStepFailed, domain.StepCancelled: domain.EventStepCancelled, domain.StepTimedOut: domain.EventStepTimedOut}
+	if expected[c.Steps[0].State] != kind {
+		return fmt.Errorf("%w: capture event/state mismatch", domain.ErrInvalid)
+	}
+	if kind != domain.EventStepSucceeded && kind != domain.EventStepFailed && kind != domain.EventStepCancelled && kind != domain.EventStepTimedOut {
+		return fmt.Errorf("%w: capture needs accepted result", domain.ErrInvalid)
+	}
+	return nil
 }

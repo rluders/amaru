@@ -258,6 +258,24 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 		}
 	}
 
+	if c.Capture != nil {
+		var state, attempt string
+		var fence uint64
+		var version int64
+		err := tx.QueryRowContext(ctx, `SELECT state,attempt_id,fence_token,version FROM step_executions WHERE id=$1 AND execution_id=$2 FOR UPDATE`, c.Capture.StepID, execID).Scan(&state, &attempt, &fence, &version)
+		if err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		if len(c.Steps) != 1 || c.Steps[0].ID != c.Capture.StepID {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: capture requires one step", domain.ErrInvalid)
+		}
+		if c.Steps[0].Version != version {
+			return ports.ExecutionChange{}, domain.ErrConflict
+		}
+		if state != "running" || attempt != c.Capture.AttemptID || fence != c.Capture.FenceToken {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: capture requires running lease", domain.ErrInvalid)
+		}
+	}
 	// Steps are written in id order (a stable lock order); the result keeps the caller's order.
 	order := make([]int, len(c.Steps))
 	for i := range order {
@@ -300,6 +318,20 @@ func (s *ExecutionStore) Commit(ctx context.Context, c ports.ExecutionChange) (p
 		}
 	}
 
+	if c.Capture != nil {
+		var project, environment string
+		if err := tx.QueryRowContext(ctx, `SELECT project_id, environment_id FROM executions WHERE id=$1`, execID).Scan(&project, &environment); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		e := domain.Execution{ID: execID, ProjectID: project, EnvironmentID: environment}
+		if err := c.ValidateCapture(e); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		if err := insertCapture(ctx, tx, *c.Capture); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		out.Capture = c.Capture
+	}
 	first := lastSeq - int64(len(c.Events))
 	for i, ev := range c.Events {
 		ev.ExecutionID, ev.Seq = execID, first+int64(i)+1

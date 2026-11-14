@@ -14,14 +14,15 @@ import (
 // ExecutionStore is an in-memory ports.ExecutionStore. Rows are copied on the way in and out, so
 // a caller never shares memory with the store.
 type ExecutionStore struct {
-	mu     sync.Mutex
-	execs  map[string]domain.Execution
-	steps  map[string][]domain.StepExecution // by Execution id, creation order
-	events map[string][]domain.ExecutionEvent
-	cmds   map[[2]string]domain.CommandRecord
-	apprs  map[string]domain.Approval // by id
-	byExec map[string][]string        // Approval ids by Execution id, request order
-	log    *AuditLog
+	mu       sync.Mutex
+	execs    map[string]domain.Execution
+	steps    map[string][]domain.StepExecution // by Execution id, creation order
+	events   map[string][]domain.ExecutionEvent
+	cmds     map[[2]string]domain.CommandRecord
+	apprs    map[string]domain.Approval // by id
+	byExec   map[string][]string        // Approval ids by Execution id, request order
+	captures map[string]domain.ResultCapture
+	log      *AuditLog
 }
 
 var (
@@ -31,13 +32,14 @@ var (
 
 func NewExecutionStore() *ExecutionStore {
 	return &ExecutionStore{
-		execs:  map[string]domain.Execution{},
-		steps:  map[string][]domain.StepExecution{},
-		events: map[string][]domain.ExecutionEvent{},
-		cmds:   map[[2]string]domain.CommandRecord{},
-		apprs:  map[string]domain.Approval{},
-		byExec: map[string][]string{},
-		log:    &AuditLog{},
+		execs:    map[string]domain.Execution{},
+		steps:    map[string][]domain.StepExecution{},
+		events:   map[string][]domain.ExecutionEvent{},
+		cmds:     map[[2]string]domain.CommandRecord{},
+		apprs:    map[string]domain.Approval{},
+		byExec:   map[string][]string{},
+		log:      &AuditLog{},
+		captures: map[string]domain.ResultCapture{},
 	}
 }
 
@@ -233,7 +235,29 @@ func (s *ExecutionStore) Commit(_ context.Context, c ports.ExecutionChange) (por
 		}
 	}
 
+	if c.Capture != nil {
+		live := false
+		for _, old := range s.steps[evExec] {
+			if old.ID == c.Capture.StepID && old.State == domain.StepRunning && old.HoldsLease(c.Capture.AttemptID, c.Capture.FenceToken) {
+				live = true
+			}
+		}
+		if !live {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: capture requires running lease", domain.ErrInvalid)
+		}
+		if err := c.ValidateCapture(s.execs[evExec]); err != nil {
+			return ports.ExecutionChange{}, err
+		}
+		if _, ok := s.captures[c.Capture.AttemptID]; ok {
+			return ports.ExecutionChange{}, fmt.Errorf("%w: result receipt exists", domain.ErrInvalid)
+		}
+	}
 	out := ports.ExecutionChange{}
+	if c.Capture != nil {
+		cp := clone(*c.Capture)
+		s.captures[cp.AttemptID] = cp
+		out.Capture = &cp
+	}
 	if c.Execution != nil {
 		e := clone(*c.Execution)
 		e.ProjectID, e.EnvironmentID = s.execs[e.ID].ProjectID, s.execs[e.ID].EnvironmentID // scopes never change
@@ -389,4 +413,38 @@ func (s *ExecutionStore) Approvals(_ context.Context, executionID string) ([]dom
 // Audit implements ports.AuditLog.
 func (s *ExecutionStore) Audit(ctx context.Context, after int64, limit int) ([]domain.AuditEvent, error) {
 	return s.log.Audit(ctx, after, limit)
+}
+
+func (s *ExecutionStore) ResultCapture(_ context.Context, attempt string) (domain.ResultCapture, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c, ok := s.captures[attempt]
+	if !ok {
+		return domain.ResultCapture{}, domain.ErrNotFound
+	}
+	return clone(c), nil
+}
+func (s *ExecutionStore) UsageCaptures(_ context.Context, execution string) ([]domain.ResultCapture, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.execs[execution]; !ok {
+		return nil, domain.ErrNotFound
+	}
+	var out []domain.ResultCapture
+	for _, st := range s.steps[execution] {
+		var captures []domain.ResultCapture
+		for _, c := range s.captures {
+			if c.ExecutionID == execution && c.StepID == st.ID {
+				captures = append(captures, clone(c))
+			}
+		}
+		sort.Slice(captures, func(i, j int) bool {
+			if captures[i].CapturedAt.Equal(captures[j].CapturedAt) {
+				return captures[i].AttemptID < captures[j].AttemptID
+			}
+			return captures[i].CapturedAt.Before(captures[j].CapturedAt)
+		})
+		out = append(out, captures...)
+	}
+	return out, nil
 }

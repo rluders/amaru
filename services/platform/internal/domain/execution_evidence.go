@@ -34,7 +34,6 @@ func evidenceGaps() []EvidenceGap {
 		{GapCheck, fmt.Sprintf(no, "check results")},
 		{GapDiff, fmt.Sprintf(no, "diffs")},
 		{GapLog, fmt.Sprintf(no, "Step logs")},
-		{GapUsage, fmt.Sprintf(no, "usage")},
 		{GapWorkspace, fmt.Sprintf(no, "workspace snapshots")},
 	}
 }
@@ -43,15 +42,17 @@ func evidenceGaps() []EvidenceGap {
 // not copied, because they may hold values the Evidence reader should not see; InputsHash lets a
 // reader check a copy of them.
 type StepEvidence struct {
-	ID         string     `json:"id"`
-	State      StepState  `json:"state"`
-	Reason     string     `json:"reason,omitempty"`
-	Capability string     `json:"capability,omitempty"`
-	AttemptID  string     `json:"attemptId,omitempty"`
-	StartedAt  *time.Time `json:"startedAt,omitempty"`
-	EndedAt    *time.Time `json:"endedAt,omitempty"`
-	Error      *ExecError `json:"error,omitempty"`
-	InputsHash string     `json:"inputsHash,omitempty"`
+	Usage      []ResultCapture `json:"usage,omitempty"`
+	UsageGap   string          `json:"usageGap,omitempty"`
+	ID         string          `json:"id"`
+	State      StepState       `json:"state"`
+	Reason     string          `json:"reason,omitempty"`
+	Capability string          `json:"capability,omitempty"`
+	AttemptID  string          `json:"attemptId,omitempty"`
+	StartedAt  *time.Time      `json:"startedAt,omitempty"`
+	EndedAt    *time.Time      `json:"endedAt,omitempty"`
+	Error      *ExecError      `json:"error,omitempty"`
+	InputsHash string          `json:"inputsHash,omitempty"`
 	// Skills are the Skills the Step pinned; Agent is the Agent definition it ran as, resolved
 	// when the Step was planned.
 	Skills []SkillRef     `json:"skills,omitempty"`
@@ -93,6 +94,7 @@ type ExecutionEvidenceInput struct {
 	Audit     []AuditEvent
 	Contexts  []StepContext
 	Artifacts []ArtifactVersion
+	Usage     []ResultCapture
 }
 
 // BuildExecutionEvidence assembles the bundle. It returns ErrInvalid when a part belongs to
@@ -129,6 +131,39 @@ func BuildExecutionEvidence(in ExecutionEvidenceInput) (ExecutionEvidence, error
 			se.InputsHash = "sha256:" + hex.EncodeToString(sum[:])
 		}
 		out.Steps[i] = se
+	}
+	seenUsage := map[string]bool{}
+	for _, c := range in.Usage {
+		i, ok := steps[c.StepID]
+		if !ok || seenUsage[c.AttemptID] {
+			return ExecutionEvidence{}, invalid("evidence: usage references unknown step")
+		}
+		seenUsage[c.AttemptID] = true
+		// Historical attempts remain attributable to the Step; do not bind to latest.
+		if c.ExecutionID != id || c.ProjectID != in.Execution.ProjectID || c.EnvironmentID != in.Execution.EnvironmentID || c.AttemptID == "" || c.CapturedAt.IsZero() {
+			return ExecutionEvidence{}, invalid("evidence: usage scope mismatch")
+		}
+		if err := ValidateUsage(c.Reports); err != nil {
+			return ExecutionEvidence{}, err
+		}
+		out.Steps[i].Usage = append(out.Steps[i].Usage, c)
+	}
+	missingUsage := false
+	for i := range out.Steps {
+		if len(out.Steps[i].Usage) == 0 {
+			out.Steps[i].UsageGap = "no accepted Worker result captured; usage unknown"
+			missingUsage = true
+		} else {
+			for _, c := range out.Steps[i].Usage {
+				if len(c.Reports) == 0 {
+					out.Steps[i].UsageGap = "accepted Worker result contains no usage reports; usage unknown"
+					missingUsage = true
+				}
+			}
+		}
+	}
+	if missingUsage {
+		out.Gaps = append(out.Gaps, EvidenceGap{GapUsage, "one or more Steps have unknown usage; see usageGap"})
 	}
 	for _, c := range in.Contexts {
 		i, ok := steps[c.StepID]

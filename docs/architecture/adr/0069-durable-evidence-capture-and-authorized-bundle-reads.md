@@ -17,7 +17,7 @@ Approvals, usage and workspace snapshots. Evidence should compose authoritative
 records, not duplicate every entity. Missing, expired and not-yet-produced
 content must remain visible.
 
-This is an **accepted, not implemented** decision. Source review used #19 head
+This is an **accepted** decision. The [bounded Usage capture implementation](../../../services/platform/README.md#bounded-usage-capture-art-002) has local Linux evidence; the complete decision remains unimplemented. Source review used #19 head
 `0ff1ef010f258edca005ebb373b785c588ebc326`. It neither implements recorders nor
 adds a public contract. The owner approved how reports become durable
 Evidence and the authorization and consistency boundary for one bundle query.
