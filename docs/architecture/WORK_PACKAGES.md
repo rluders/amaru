@@ -327,11 +327,12 @@ Decisions are made; these Work Packages validate them and put them into effect.
   - Signed per-OS archives (no Docker, no admin rights); native installers come with Desktop (M8).
   - Install documentation.
   - Recorded supervised runs on Linux, macOS and Windows.
+  - At least one recorded run uses Amaru as its own Project and delivers an accepted change to the Amaru repository through the supervised flow; a human reviews, approves and merges the PR.
   - Audit walkthrough.
   - Efficiency check (≤1 implementation and ≤1 review per accepted change).
 - **Features:** OPS-001.
 - **Depends on:** WP-M4-01 … 06.
-- **Done when:** the [M4 exit criteria](ROADMAP.md#m4-local-mvp) are met and recorded in `docs/` validation records, including the WRK-004 recorded supervised run per OS (the first point where the loop, checks, review and forge delivery all exist).
+- **Done when:** the [M4 exit criteria](ROADMAP.md#m4-local-mvp) are met and recorded in `docs/` validation records, including the WRK-004 recorded supervised run per OS and one run that develops Amaru itself (the first point where the loop, checks, review and forge delivery all exist).
 - **Validation:** the recorded runs, per the [cross-platform validation](../engineering/validation.md#cross-platform-validation-m3-and-m4) rules.
 
 ## Cross-package feature dependencies

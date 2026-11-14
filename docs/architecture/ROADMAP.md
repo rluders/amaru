@@ -145,6 +145,7 @@ flowchart LR
 - **Exit criteria:**
   - PRD §12 criteria met.
   - Recorded supervised runs on Linux, macOS and Windows against a real Go repository.
+  - At least one recorded run uses Amaru itself as the Project and delivers an accepted change to this repository through the supervised flow; a human reviews, approves and merges the resulting PR. This is the first milestone where using Amaru to develop Amaru is an exit target. M3 provides headless Platform foundations, not this Local MVP delivery flow.
   - Each accepted change uses at most one implementation and one review run, with cost recorded.
   - An audit walkthrough reconstructs one change end to end.
   - Accessibility checks pass on core flows.
