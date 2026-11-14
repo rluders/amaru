@@ -94,8 +94,24 @@ func (s usageCheckedStore) ResultCapture(ctx context.Context, attempt string) (d
 	if err != nil {
 		return c, err
 	}
-	var n int
-	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM usage_publication_intents WHERE attempt_id=$1`, attempt).Scan(&n); err != nil {
+	rows, err := s.db.QueryContext(ctx, `SELECT usage_id, ordinal FROM usage_publication_intents WHERE attempt_id=$1 ORDER BY ordinal`, attempt)
+	if err != nil {
+		return c, err
+	}
+	defer rows.Close()
+	n := 0
+	for rows.Next() {
+		var id string
+		var ordinal int
+		if err := rows.Scan(&id, &ordinal); err != nil {
+			return c, err
+		}
+		if ordinal != n || id != c.UsageID(n) {
+			return c, fmt.Errorf("publication intent identity/order mismatch at ordinal %d", n)
+		}
+		n++
+	}
+	if err := rows.Err(); err != nil {
 		return c, err
 	}
 	if n != len(c.Reports) {
