@@ -1,8 +1,8 @@
 ---
 title: Durable Evidence capture and authorized bundle reads
-status: proposed
+status: accepted
 date: 2026-11-13
-deciders:
+deciders: Ricardo Lüders
 ---
 
 # 0069. Durable Evidence capture and authorized bundle reads
@@ -17,12 +17,12 @@ Approvals, usage and workspace snapshots. Evidence should compose authoritative
 records, not duplicate every entity. Missing, expired and not-yet-produced
 content must remain visible.
 
-This is a **proposed** decision based on #19 head
+This is an **accepted, not implemented** decision. Source review used #19 head
 `0ff1ef010f258edca005ebb373b785c588ebc326`. It neither implements recorders nor
-adds a public contract. The unresolved choice is how reports become durable
-Evidence and what authorization and consistency one bundle query promises.
-Owner decision is still required; earlier domain delegation does not approve
-this integration surface. See [Q61](../OPEN_QUESTIONS.md#q61-durable-evidence-capture-and-authorized-bundle-reads).
+adds a public contract. The owner approved how reports become durable
+Evidence and the authorization and consistency boundary for one bundle query.
+The explicit approval below resolves this integration decision; earlier domain
+delegation was not its authority. See [Q61](../OPEN_QUESTIONS.md#q61-durable-evidence-capture-and-authorized-bundle-reads).
 
 ### Verified source facts at the reviewed head
 
@@ -74,14 +74,14 @@ those refs. Absence of 0059–0068 on this base is intentional; do not reuse the
 
 ## Decision
 
-**Recommendation for owner approval, not an accepted decision:** use
+**Accepted direction, not implemented:** use
 Platform-owned capture with a transactionally consistent metadata view composed
 by a Project/Organization-authorized application service. Start with a complete
-Usage result-to-persistence slice after approval; defer public exposure until
+Usage result-to-persistence slice; defer public exposure until
 its contract and access/consistency tests are reviewed as part of M3. Do not
 reinterpret raw StepEvents or lifecycle Events as durable checks, diffs or logs.
 
-### Product direction and milestone sequence (proposed)
+### Product direction and milestone sequence (accepted)
 
 Choose the transactional metadata view as the long-term audit foundation, with
 Usage as the first delivery slice, not the final product boundary. Best-effort
@@ -95,7 +95,7 @@ API execution and ART-002 to M3 and the visible diff/Evidence/cost and end-to-en
 audit walkthrough to M4. [WORK_PACKAGES](../WORK_PACKAGES.md), lines 235–247,
 requires a full test-Execution audit query in WP-M3-07; lines 286–336 assign
 checks/review, the inbox/Evidence view and recorded product walkthrough to M4.
-This proposal does not move those criteria or declare them met.
+This acceptance does not move those criteria or declare them met.
 
 The owner-supplied `docs/architecture/architecture.png` was visually inspected
 from the shared checkout on 2026-11-13. It is untracked and absent from this PR's
@@ -110,7 +110,7 @@ not accepted M3 infrastructure or implemented behavior. Canonical authority
 remains [ARCHITECTURE §4](../ARCHITECTURE.md#4-platform-and-worker-boundary)
 and its public-API-only client rule (lines 154–158), not this illustration.
 
-After explicit owner approval, sequence the work as follows:
+The owner approved the following sequence:
 
 1. **M3 capture:** complete Usage end to end, including identity, failed/cancelled
    outcomes, redaction, transaction/outbox and replay tests. Then define and
@@ -130,7 +130,7 @@ After explicit owner approval, sequence the work as follows:
    bytes. WP-M4-07 records reconstruction of one change end to end and native
    three-OS supervised runs; M3's Linux-first exception does not waive M4 exit.
 
-### Evidence identity and completeness (proposed)
+### Evidence identity and completeness (accepted direction)
 
 A capture identity identifies a durable fact; a content hash identifies bytes;
 a bundle digest identifies an assembled representation. Keep these distinct.
@@ -143,7 +143,7 @@ content. Existing accepted Approval bindings remain the review identity.
 
 Completeness must be assessed per expected Evidence kind and applicable attempt
 at the metadata read boundary: captured, pending, unavailable/expired, or
-explicitly not applicable with reason. These are proposed semantic distinctions,
+explicitly not applicable with reason. These are accepted semantic distinctions,
 not agreed wire enum names. Recorder-not-implemented and producer-failed gaps
 must stay distinguishable; an empty list is not proof that nothing was needed.
 Terminal Execution state, complete metadata and currently retrievable bytes are
@@ -152,7 +152,7 @@ store failure is an unsuccessful query, not a fabricated completeness gap.
 Do not seal Evidence solely because the Execution terminated; late enrichment
 remains a separate owner choice and must never rewrite a decided Approval.
 
-### Capture and publication boundary (proposed)
+### Capture and publication boundary (accepted direction)
 
 1. Providers report through Workers; the Platform validates assignment identity,
    Execution, Step, attempt and fencing token and derives Project/Organization
@@ -178,7 +178,7 @@ remains a separate owner choice and must never rewrite a decided Approval.
    configuration revision, result and output hash); diffs from version-control
    capture (base/head and diff content hash); ordered redacted logs from the
    Worker stream (attempt and ordinal); workspace snapshots from workspace
-   capture (revision/manifest and hashes). These are proposed attribution
+   capture (revision/manifest and hashes). These are accepted attribution
    requirements, not available producers or agreed record shapes. Logs require
    durable incremental capture rather than an unbounded terminal Result.
 5. Store large content through the accepted Artifact/blob boundary, computing
@@ -188,7 +188,7 @@ remains a separate owner choice and must never rewrite a decided Approval.
    references and Approval bindings; do not invent retention periods. Preserve
    compact/self-hosted/Cloud semantics with storage adapters only.
 
-### Bundle access and read boundary (proposed)
+### Bundle access and read boundary (accepted direction)
 
 - Expose one logical bundle query through the public API application layer only
   after a versioned contract review. No route, schema, CLI flag or exported port
@@ -213,7 +213,7 @@ remains a separate owner choice and must never rewrite a decided Approval.
   database transaction open while a human reviews or a client fetches later
   pages; cross-request pagination would require a separately reviewed snapshot
   token/materialization contract, not ordinary cursors over changing data. This
-  is a proposed adapter guarantee, **not verified behavior**
+  is an accepted adapter requirement, **not verified behavior**
   of the current ports. Existing separate adapter calls need transaction-aware
   composition; rereading only the Execution version is insufficient because
   context, Artifacts and audit may change independently.
@@ -274,11 +274,11 @@ or remote Workers are not added to M3 scope by this proposal.
 
 ## Consequences
 
-The proposal makes ownership and missing integration work explicit and keeps
+The decision makes ownership and missing integration work explicit and keeps
 Evidence a view over durable facts. The recommended first slice is larger than
 a new store: it spans Worker result mapping, coordinator persistence,
 acknowledgement, publication and Reader composition. Future recorder and public
-contract changes remain separate reviewed work after an owner decision.
+contract changes remain separate reviewed work within the approved boundaries.
 
 Read transactions and bounded pagination need implementation design and tests;
 there is no latency or scale claim. Revisit the recommendation if streaming
@@ -288,7 +288,11 @@ is superseded; retention durations and Approval semantics remain as decided.
 
 ### Architecture review
 
-**Verdict: needs human decision.** The proposed Platform service composes durable
+**Historical pre-approval verdict: needs human decision.** The owner approval
+below resolves finding 1 and the choice requested by finding 3; implementation
+and verification obligations in all findings remain open.
+
+The proposed Platform service composes durable
 capture records behind public authorization; Workers report facts and clients
 consume the API. This preserves domain purity, vendor-neutral Capabilities and
 deployment parity without new infrastructure.
@@ -312,14 +316,49 @@ Findings, most severe first:
 
 Proposed by: Codex, 2026-11-13, for ART-002 #124 on #19.
 
-**Owner decision required: Ricardo Lüders.** Approve or amend (1) Platform-owned
-capture with atomic completion/Usage persistence and durable-before-ack behavior,
-(2) scoped API service authorization for every referenced record, and (3) a
-transactionally consistent metadata view with separately reported blob
-availability. Confirm Usage as the first implementation slice and whether the
-remaining capture semantics can be designed under these constraints. A narrower
-approval must state which alternatives and follow-ups remain open.
+Approved by: **Ricardo Lüders, product owner**, on **2026-11-13
+(America/Sao_Paulo)**, explicitly in the repository task conversation:
+“You need to change the proposal to approved. Update, merge, and continue the orchestration.”
+Codex records the owner's decision; this is not agent self-approval. The ADR
+status vocabulary records that approval as **accepted**.
 
-Approved by: —. No approval has been recorded. Status stays **proposed**;
-#124 and #19 remain open. This document and its PR do not authorize a new public
-contract or implementation and do not satisfy their acceptance criteria.
+Approval scope: Platform-owned durable capture; atomic accepted completion,
+Usage persistence and applicable outbox intent before acknowledgement; scoped
+Project/Organization authorization for every referenced record; transactionally
+consistent metadata reads with blob availability reported separately; and Usage
+as the first end-to-end M3 slice. Remaining recorder design proceeds within these
+constraints. M3 retains the authorized public read foundation and full
+test-Execution query; M4 retains real producer/UI/audit-walkthrough integration.
+
+This acceptance does not approve a new public wire contract, route or schema,
+late enrichment, new infrastructure, retention periods, unrelated proposals or
+changes to milestone criteria. Implementation and contract review remain
+follow-up work. #124 and #19 and every unmet acceptance criterion stay open.
+This PR records acceptance only and implements no Evidence behavior.
+
+### Owner article context
+
+Both local owner PDFs under `docs/articles/` were read as product context; they
+are ignored/untracked inputs, intentionally neither modified nor committed.
+Page numbers below refer to PDF pages (including cover and contents), not web
+pagination. These articles inform the decision, not implementation evidence or
+blanket approval of their broader architecture.
+
+- Ricardo Lüders, *Amaru, Part 2: From Vision to Architecture — Designing a
+  Distributed AI-Native Production Platform* (2026-11-12), local file
+  `amaru-part-2-from-vision-to-architecture-designing-a-distributed-ai-native-production-platform.pdf`:
+  pp. 6–10 separate clients, intelligence and authoritative control/data;
+  pp. 10–11 require durable reconstruction linking intent, process and outputs.
+  This supports Platform capture and authorized reads with distinct metadata
+  and Artifact bytes. pp. 17–18 explicitly frame the architecture as direction
+  to validate incrementally; Brain, vector storage and distributed environments
+  do not become M3 implementation requirements through this acceptance.
+- Ricardo Lüders, *Amaru: Why I’m Building an Engineering Execution Platform in
+  the Age of AI Agents* (2026-10-29), local file
+  `amaru-why-i-m-building-an-engineering-execution-platform-in-the-age-of-ai-agents.pdf`:
+  pp. 6–8 separate reasoning from enforced state, permissions and human approval;
+  pp. 13–14 distinguish a final agent message from attributable execution history;
+  pp. 21–23 connect Evidence and cost to accepted outcomes and call for a smaller,
+  validated core. Therefore Usage is a bounded first slice, not full ART-002
+  acceptance; the later public/UI audit path must preserve gaps and Approval
+  identity rather than equating activity or terminal state with success.
