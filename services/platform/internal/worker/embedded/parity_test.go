@@ -85,7 +85,7 @@ func TestWorkerInterfaceParity(t *testing.T) {
 						if outcome == ports.OutcomeCancelled {
 							outcome = ports.OutcomeSucceeded
 						}
-						return embedded.Outcome{Result: outcome, ErrorCode: "fake_failure", ErrorDetail: "fake detail"}
+						return embedded.Outcome{Usage: []ports.UsageReport{{Provider: "fake", OutputTokens: &ports.IntMeasurement{Source: ports.UsageUnknown}}}, Result: outcome, ErrorCode: "fake_failure", ErrorDetail: "fake detail"}
 					})
 					r := newRigWithLink(t, &embedded.Worker{HeartbeatPeriod: time.Hour, Runner: runner}, time.Hour,
 						func() (ports.PlatformLink, ports.WorkerLink) {
@@ -129,6 +129,10 @@ func TestWorkerInterfaceParity(t *testing.T) {
 					case <-stopped:
 					default:
 						t.Fatal("result acknowledged before Runner stopped")
+					}
+					capture, err := r.store.ResultCapture(r.ctx, a.AttemptID)
+					if err != nil || len(capture.Reports) != 1 || capture.Reports[0].Provider != "fake" || capture.Reports[0].OutputTokens.Value != nil {
+						t.Fatalf("embedded usage lost: %v", err)
 					}
 					st := stepOf(t, r.store, a.ExecutionID)
 					if st.State != tc.state || st.CurrentLease != nil {

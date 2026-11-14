@@ -22,6 +22,7 @@ import (
 
 // Outcome is what a Runner reports for one attempt.
 type Outcome struct {
+	Usage       []ports.UsageReport
 	Result      ports.ResultOutcome
 	ErrorCode   string
 	ErrorDetail string
@@ -176,12 +177,12 @@ func (w *Worker) execute(ctx, linkCtx context.Context, link ports.WorkerLink, a 
 		if !at.asked.Load() || linkCtx.Err() != nil {
 			return true
 		}
-		_ = link.Send(linkCtx, ports.Result{AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken, Outcome: ports.OutcomeCancelled})
+		_ = link.Send(linkCtx, ports.Result{AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken, Outcome: ports.OutcomeCancelled, Usage: out.Usage})
 		return false
 	}
 	_ = link.Send(ctx, ports.Result{
 		AttemptID: a.AttemptID, FencingToken: a.Lease.FencingToken,
-		Outcome: out.Result, ErrorCode: out.ErrorCode, ErrorDetail: out.ErrorDetail,
+		Usage: out.Usage, Outcome: out.Result, ErrorCode: out.ErrorCode, ErrorDetail: out.ErrorDetail,
 	})
 	return false
 }
@@ -232,7 +233,7 @@ func (w *Worker) runSafely(ctx context.Context, link ports.WorkerLink, a ports.A
 		defer func() {
 			// A success that arrives at the Deadline stands; anything else past it is a timeout.
 			if ctx.Err() == context.DeadlineExceeded && out.Result != ports.OutcomeSucceeded {
-				out = Outcome{Result: ports.OutcomeFailed, ErrorCode: timeoutCode, ErrorDetail: "the step ran past its deadline"}
+				out = Outcome{Usage: out.Usage, Result: ports.OutcomeFailed, ErrorCode: timeoutCode, ErrorDetail: "the step ran past its deadline"}
 			}
 		}()
 	}

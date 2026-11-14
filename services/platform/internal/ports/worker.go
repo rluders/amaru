@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/rluders/amaru/services/platform/internal/domain"
 )
 
 // ErrLinkClosed is returned by Send and Receive once the link is closed. Test with errors.Is.
@@ -19,7 +21,7 @@ var ErrLinkClosed = errors.New("worker link closed")
 //
 // Implemented messages: Offer, Assignment, AcceptAttempt, RejectAttempt, LeaseRenew, LeaseRevoked,
 // Result, ResultAck, Cancel, StepEvents (only the remote_job event is acted on). Not implemented yet:
-// handshake and enrollment, LeaseRelease, SecretDelivery, Drain, ProtocolError, outputs and usage in Result, the envelope's
+// handshake and enrollment, LeaseRelease, SecretDelivery, Drain, ProtocolError, outputs in Result, the envelope's
 // message and ack ids (an in-process link does not lose messages).
 
 // Link is one end of a bidirectional, ordered message channel. Send and Receive may be called from
@@ -160,7 +162,20 @@ const (
 )
 
 // Result ends an attempt.
+type UsageReport = domain.UsageReport
+type IntMeasurement = domain.IntMeasurement
+type DoubleMeasurement = domain.DoubleMeasurement
+type Cost = domain.Cost
+type UsageSource = domain.UsageSource
+
+const (
+	UsageReported  = domain.UsageReported
+	UsageEstimated = domain.UsageEstimated
+	UsageUnknown   = domain.UsageUnknown
+)
+
 type Result struct {
+	Usage        []UsageReport `proto:"usage"`
 	AttemptID    string        `proto:"attempt_id"`
 	FencingToken uint64        `proto:"fencing_token"`
 	Outcome      ResultOutcome `proto:"outcome"`

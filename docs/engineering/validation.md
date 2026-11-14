@@ -97,3 +97,7 @@ The shared `LimitsSuite` runs over both in-process and JSON serialization links 
 This is one coordinator serving multiple Worker sessions, not distributed scheduling across Platform processes. All leased/running Steps currently count, including non-agent Steps; agent-only accounting and per-Project overrides are not implemented. A zero limit means uncapped, not disabled; zero Worker credit is tested separately. Queued state/reasons are verified through the store, not a client UI. See the [Linux EXE-006 record](../validation/m3/2026-11-12-linux-exe-006.md) for evidence and limitations.
 
 The [Linux ART-002 Step-attribution record](../validation/m3/2026-11-13-linux-art-002-step-attribution.md) covers rejection of unknown Step references in Evidence Events and Approval gates. It does not establish API access isolation or snapshot consistency.
+
+## Usage capture (ART-002 bounded slice)
+
+The [Linux Usage capture record](../validation/m3/2026-11-13-linux-art-002-usage-capture.md) covers Worker-result mapping, fenced attribution, atomic completion/capture/publication intent, replay conflicts and explicit unknown values. This does not establish public Event delivery, authorized API exposure, a consistent bundle snapshot or full ART-002 acceptance.

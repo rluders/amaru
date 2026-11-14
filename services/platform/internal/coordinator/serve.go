@@ -3,6 +3,8 @@ package coordinator
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -312,11 +314,51 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 	if err != nil {
 		return err
 	}
+	if err := domain.ValidateUsage(m.Usage); err != nil {
+		return err
+	}
+	if len(m.ErrorDetail) > 65536 || len(m.ErrorCode) > 256 {
+		return fmt.Errorf("%w: result error exceeds bound", domain.ErrInvalid)
+	}
+	if len(m.Usage) == 0 {
+		m.Usage = nil
+	}
+	raw, err := json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("%w: result encoding", domain.ErrInvalid)
+	}
+	sum := sha256.Sum256(raw)
+	fingerprint := hex.EncodeToString(sum[:])
+	// Detach the receipt from the in-process sender and redact untrusted labels.
+	var captured ports.Result
+	if err := json.Unmarshal(raw, &captured); err != nil {
+		return err
+	}
+	for i := range captured.Usage {
+		r := &captured.Usage[i]
+		r.Provider, _ = c.redactor.Redact(r.Provider)
+		r.Model, _ = c.redactor.Redact(r.Model)
+		if r.Cost != nil {
+			r.Cost.PriceTableVersion, _ = c.redactor.Redact(r.Cost.PriceTableVersion)
+		}
+	}
+
 	disp := ports.ResultAccepted
-	err = c.edit(ctx, ref, func(_ *domain.Execution, st *domain.StepExecution) (*change, error) {
+	err = c.edit(ctx, ref, func(e *domain.Execution, st *domain.StepExecution) (*change, error) {
 		now := c.now()
 		switch {
-		case st.AttemptID == m.AttemptID && st.FenceToken == m.FencingToken && st.State.Terminal():
+		case st.AttemptID == m.AttemptID && st.FenceToken == m.FencingToken && (st.State.Terminal() || st.State == domain.StepTimedOut):
+			receipt, err := c.store.ResultCapture(ctx, m.AttemptID)
+			if errors.Is(err, domain.ErrNotFound) {
+				disp = ports.ResultRejectedStale
+				return nil, nil
+			} // pre-capture or Platform-settled terminal state
+			if err != nil {
+				return nil, err
+			}
+			if receipt.Fingerprint != fingerprint {
+				return nil, fmt.Errorf("%w: conflicting result replay", domain.ErrInvalid)
+			}
 			disp = ports.ResultDuplicate
 			return nil, nil
 		case st.State != domain.StepRunning || !st.HoldsLease(m.AttemptID, m.FencingToken):
@@ -351,7 +393,14 @@ func (c *Coordinator) onResult(ctx context.Context, link ports.PlatformLink, m p
 		if ferr != nil {
 			return nil, ferr
 		}
-		return &change{events: []domain.ExecutionEvent{{Kind: kind, StepID: st.ID, Reason: st.Reason, At: now}}}, nil
+		return &change{
+			capture: &domain.ResultCapture{
+				ExecutionID: e.ID, StepID: st.ID, AttemptID: m.AttemptID, FenceToken: m.FencingToken,
+				ProjectID: e.ProjectID, EnvironmentID: e.EnvironmentID, CapturedAt: now,
+				Fingerprint: fingerprint, Reports: captured.Usage,
+			},
+			events: []domain.ExecutionEvent{{Kind: kind, StepID: st.ID, Reason: st.Reason, At: now}},
+		}, nil
 	})
 	if err != nil {
 		return err
@@ -377,8 +426,9 @@ func send(ctx context.Context, link ports.PlatformLink, m ports.PlatformMessage)
 
 // change is what an edit wants committed besides the Step: the Execution (when exec is set) and events.
 type change struct {
-	exec   bool
-	events []domain.ExecutionEvent
+	capture *domain.ResultCapture
+	exec    bool
+	events  []domain.ExecutionEvent
 }
 
 // edit reads the Step's Execution, lets fn change the Step (and the Execution), and commits the
@@ -406,7 +456,7 @@ func (c *Coordinator) edit(ctx context.Context, ref ports.StepRef, fn func(*doma
 		if ch == nil {
 			return nil
 		}
-		w := ports.ExecutionChange{Steps: []domain.StepExecution{steps[idx]}, Events: ch.events}
+		w := ports.ExecutionChange{Capture: ch.capture, Steps: []domain.StepExecution{steps[idx]}, Events: ch.events}
 		if ch.exec {
 			w.Execution = &e
 		}

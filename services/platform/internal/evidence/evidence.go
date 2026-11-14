@@ -64,6 +64,9 @@ func (r Reader) Bundle(ctx context.Context, executionID string) (domain.Executio
 	if in.Artifacts, err = r.Artifacts.ByExecution(ctx, executionID); err != nil {
 		return domain.ExecutionEvidence{}, err
 	}
+	if in.Usage, err = r.Executions.UsageCaptures(ctx, executionID); err != nil {
+		return domain.ExecutionEvidence{}, err
+	}
 	return domain.BuildExecutionEvidence(in)
 }
 
