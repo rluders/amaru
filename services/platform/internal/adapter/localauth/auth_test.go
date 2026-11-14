@@ -137,6 +137,73 @@ func TestLaunchGuardsAndNoRejectedDispatch(t *testing.T) {
 		}
 	}
 }
+func TestCSRFTokenCannotCrossSessions(t *testing.T) {
+	a, h, count := setup(t)
+	first, firstCSRF := launch(t, a, h)
+	second, secondCSRF := launch(t, a, h)
+	if first.Value == second.Value || firstCSRF == secondCSRF {
+		t.Fatal("sessions did not receive independent credentials")
+	}
+	sessions := []struct {
+		name              string
+		cookie            *http.Cookie
+		csrf, foreignCSRF string
+	}{
+		{"first", first, firstCSRF, secondCSRF},
+		{"second", second, secondCSRF, firstCSRF},
+	}
+	for _, session := range sessions {
+		t.Run(session.name, func(t *testing.T) {
+			for _, operation := range []struct{ method, path string }{
+				{"POST", "/command"},
+				{"DELETE", "/v1/auth/session"},
+			} {
+				before := count.Load()
+				w := call(h, operation.method, operation.path, map[string]string{
+					"Cookie": session.cookie.String(), "Origin": "http://localhost:7777", "X-Amaru-CSRF": session.foreignCSRF,
+				})
+				if w.Code != 403 || count.Load() != before || len(w.Result().Cookies()) != 0 {
+					t.Fatalf("%s with another session's CSRF token was not rejected without effects", operation.method)
+				}
+				for _, live := range sessions {
+					w = call(h, "GET", "/v1/auth/session", map[string]string{"Cookie": live.cookie.String()})
+					var got struct {
+						CSRF string `json:"csrfToken"`
+					}
+					if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &got) != nil || got.CSRF != live.csrf {
+						t.Fatal("rejected request changed a live session")
+					}
+				}
+			}
+			before := count.Load()
+			w := call(h, "POST", "/command", map[string]string{
+				"Cookie": session.cookie.String(), "Origin": "http://localhost:7777", "X-Amaru-CSRF": session.csrf,
+			})
+			if w.Code != 204 || count.Load() != before+1 {
+				t.Fatal("session's own CSRF token did not dispatch exactly one command")
+			}
+		})
+	}
+	// Positive logout controls also prove the rejected attempts did not revoke
+	// either session or invalidate its original CSRF token.
+	for i, session := range sessions {
+		w := call(h, "DELETE", "/v1/auth/session", map[string]string{
+			"Cookie": session.cookie.String(), "Origin": "http://localhost:7777", "X-Amaru-CSRF": session.csrf,
+		})
+		if w.Code != 204 || len(w.Result().Cookies()) != 1 || w.Result().Cookies()[0].MaxAge != -1 {
+			t.Fatal("session's own CSRF token did not log out")
+		}
+		if call(h, "GET", "/v1/auth/session", map[string]string{"Cookie": session.cookie.String()}).Code != 401 {
+			t.Fatal("logged-out session remained usable")
+		}
+		for _, remaining := range sessions[i+1:] {
+			if call(h, "GET", "/v1/auth/session", map[string]string{"Cookie": remaining.cookie.String()}).Code != 200 {
+				t.Fatal("logout revoked the independent session")
+			}
+		}
+	}
+}
+
 func TestExactExpiryReplayAndConcurrentExchange(t *testing.T) {
 	a, h, _ := setup(t)
 	now := time.Date(2026, 11, 12, 0, 0, 0, 0, time.UTC)

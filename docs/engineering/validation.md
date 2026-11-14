@@ -100,6 +100,13 @@ This is one coordinator serving multiple Worker sessions, not distributed schedu
 
 ### Local authentication (IAM-001)
 
+Session-bound CSRF rejection and the current launch/session/Host/Origin/WebSocket
+and Linux permission coverage audit are recorded in the
+[IAM-001 session CSRF verification](../validation/m3/2026-11-13-linux-iam-001-session-csrf.md).
+The default Auth tests reject another live session's valid token for mutations
+and logout, preserve both sessions after rejection, and verify each own-token
+positive control.
+
 `make check` includes the compact auth/discovery Go tests, auth schema/fixture parity and SDK integration against a test-only Go loopback server. On Linux the discovery tests check native private modes and cross-process ownership. Real browser validation is separate: from `services/platform`, run `go test -tags browser -count=1 -run TestFirefoxLaunchSessionAndLogout -v ./internal/adapter/localauth`. It launches isolated native Firefox profiles, discards diagnostics that could include launch URLs and tests localhost/IPv4 loopback cookie, CSRF and WebSocket revocation. Evidence and unvalidated composition/platform items: [2026-11-12 IAM-001](../validation/m3/2026-11-12-linux-iam-001.md).
 
 OBS-001 operational logging adapter evidence and remaining composition gates: [Linux record](../validation/m3/2026-11-12-linux-obs-001.md). `make check` includes secret-fixture capture, command/auth composition tests and [Worker Runner diagnostic tests](../validation/m3/2026-11-13-linux-obs-001-worker.md); it does not validate a running composed Platform server.
