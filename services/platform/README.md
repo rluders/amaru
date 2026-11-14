@@ -36,6 +36,11 @@ Go module `github.com/rluders/amaru/services/platform`: the Platform core. Intro
 | `internal/arch` | Architecture test: the core imports no OS, process, network, vendor or adapter package (negative-tested by adding a forbidden import). A second test keeps `internal/ports` and `internal/store/postgres` free of file-system imports, so nothing stored can land in a Project tree. |
 | `internal/platform` | Concrete process resource owners under accepted ADR-0068: external PostgreSQL pool connectivity, completion-gated schema application and existing Coordinator reconciliation, with shared initialization deadline and pool retention through dependent cleanup. A single-use Lane composition helper adds the aggregate startup watchdog and atomic readiness latch, with bounded rollback and no restart path. Coordinator-session and embedded-Worker owners gate readiness on usable transport and the initial Offer, then cancel/join without a synthetic Result. Actual Lane/fake SQL tests run in `make check`; separately tagged PostgreSQL tests cover fresh schema, failed later-stage rollback and retained Project data and unchanged reconciliation effects after the first successful run across owner recreation. No production entrypoint or bundled process owner. See [resource ownership and limits](internal/platform/README.md). |
 
+The [WRK-003 stale-edit domain record](../../docs/validation/m3/2026-11-14-linux-wrk-003-stale-edit.md)
+covers stale full-field Agent patch/replacement conflicts for Worktree permissions,
+refetch/reconciliation and invalid replacement. This is unit evidence only;
+authenticated Agent mutation, durable publication and file watching remain open.
+
 **Wire shape:** the Agent contract carries `revision` and `hash` (the head's `AgentVersion`), and `UpdateAgent`/delete carry `expectedRevision`, which `AgentHistory` checks. The guarded settings HTTP adapter below covers its resource; full product startup/API composition remains pending.
 
 The composed public API is not implemented. The compact authentication adapter below serves its auth subset in tests; there is no remote Worker transport or composed product WebSocket server. Other component rows above describe their own implementation limits. Approval states arrive with the other sub-issues of #13. Display-key allocation (the per-Instance counter) needs storage and arrives with WP-M3-02.
