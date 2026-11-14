@@ -106,3 +106,5 @@ The [Linux Usage capture record](../validation/m3/2026-11-13-linux-art-002-usage
 ## Internal Evidence read scope (ART-002)
 
 The [Linux read-scope record](../validation/m3/2026-11-14-linux-art-002-read-scope.md) covers one PostgreSQL transaction for all currently recorded bundle metadata, concurrent commits, audit pagination, cancellation and rollback. Lifecycle fakes run in `make check`; PostgreSQL cases require `make platform-test-pg`. This is internal metadata consistency evidence only: authorization, API exposure, blob availability and full ART-002 acceptance remain unvalidated.
+
+The [audit-page validation record](../validation/m3/2026-11-14-linux-art-002-audit-pages.md) covers rejection of oversized, duplicate, descending and non-advancing pages by the Evidence Reader. This does not bound the total audit history or complete the ART-002 walkthrough.
