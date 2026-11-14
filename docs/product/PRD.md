@@ -202,6 +202,7 @@ The phases are the milestones of the [master roadmap](../architecture/ROADMAP.md
 | The same contracts serve every client. | Contract fixtures validated in Go and TypeScript tests; no client-specific endpoints. |
 | Local deployment works on Windows, macOS and Linux. | Automated tests on all three + recorded manual validation per OS. |
 | Accepted work is efficient. | At most one implementation and one review run per accepted change in the recorded MVP validation runs, with cost recorded *(prototype Cycle 7 acceptance target)*. |
+| Amaru can be used to develop Amaru itself. | At M4 exit, one recorded supervised run uses the Amaru repository as its Project and delivers an accepted change through human review, approval and merge. |
 
 ## 13. Assumptions, risks, open questions
 
