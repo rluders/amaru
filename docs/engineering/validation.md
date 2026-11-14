@@ -80,6 +80,10 @@ While the Platform is built on Linux, **Windows and macOS runs are deferred**: o
 ### Scope decision (product owner, 2026-11-12)
 The owner stated "Cross-platform is best effort only for now, our main target is Linux" and selected **All remaining M3** when asked whether this includes milestone exit. Linux checks remain required. Native macOS/Windows runs and recorded provider runs on those OSes are best effort and do not block remaining M3 work or M3 exit. Keep compatibility checks and record each unrun platform as **not validated**; do not mark it passed. This changes the earlier obligation to complete those runs before M3 exit, not the M4 criteria or the security baseline. See the amended [M3 roadmap](../architecture/ROADMAP.md#m3-platform-core).
 
+## Work Item directory separation (ENV-010)
+
+The [Linux ENV-010 directory-alias record](../validation/m3/2026-11-13-linux-env-010-directory-alias.md) covers refusal of aliased Work Item directories and the refreshed #19 queue. Provider directory separation and test-helper confinement evidence do not establish production Worker launch or enforced-root reporting.
+
 ## Embedded Worker boundary (ENV-001)
 
 `make check` runs the coordinator assignment and cancellation suites over both the in-process link and a shared JSON serialization stand-in, plus `TestWorkerInterfaceParity` with the actual embedded Worker and a fake Runner. The latter checks success/failure, requested cancellation before result acknowledgement, duplicate-result deduplication, and restart recovery while the old Lease is still live (idempotent re-lease or non-idempotent interruption). Repeated reconciliation preserves settled state and Events. The Worker production package imports only the ports package within the module; the architecture test enforces that boundary.
