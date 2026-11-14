@@ -156,3 +156,11 @@ Commands (local Linux, existing suites; no new tests added):
 - `GOCACHE=/tmp/amaru-219-assessment-cache make docs-check`: PASS, exit 0,
   `doccheck: ok` after correcting the link.
 - `git diff --check`: PASS, exit 0.
+
+## Selected verification follow-up
+
+The bounded #170 Lifecycle diagnostic composition is now covered by tests in
+[the Linux follow-up record](2026-11-14-linux-obs-001-lifecycle.md), based on
+merged #389 at `c3f831391f025f1c14236418471276efb64b0a3d`. This supersedes
+only the selected slice's “not implemented” status above. Full #170/#18/M3
+acceptance and the deferred Agent authority decision remain open.
