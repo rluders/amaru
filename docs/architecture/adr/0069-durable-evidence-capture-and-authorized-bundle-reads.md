@@ -78,8 +78,79 @@ those refs. Absence of 0059–0068 on this base is intentional; do not reuse the
 Platform-owned capture with a transactionally consistent metadata view composed
 by a Project/Organization-authorized application service. Start with a complete
 Usage result-to-persistence slice after approval; defer public exposure until
-its contract and access/consistency tests are reviewed. Do not reinterpret raw
-StepEvents or lifecycle Events as durable checks, diffs or logs.
+its contract and access/consistency tests are reviewed as part of M3. Do not
+reinterpret raw StepEvents or lifecycle Events as durable checks, diffs or logs.
+
+### Product direction and milestone sequence (proposed)
+
+Choose the transactional metadata view as the long-term audit foundation, with
+Usage as the first delivery slice, not the final product boundary. Best-effort
+live views may supplement it; projections or sealed exports may be added later
+when measured needs justify them. Neither substitutes for authoritative capture,
+scoped access or the exact Evidence binding of a human Approval.
+
+Planning sources at reviewed head `0ff1ef010f258edca005ebb373b785c588ebc326`:
+[ROADMAP M3/M4](../ROADMAP.md#m3-platform-core), lines 109–155, assigns headless
+API execution and ART-002 to M3 and the visible diff/Evidence/cost and end-to-end
+audit walkthrough to M4. [WORK_PACKAGES](../WORK_PACKAGES.md), lines 235–247,
+requires a full test-Execution audit query in WP-M3-07; lines 286–336 assign
+checks/review, the inbox/Evidence view and recorded product walkthrough to M4.
+This proposal does not move those criteria or declare them met.
+
+The owner-supplied `docs/architecture/architecture.png` was visually inspected
+from the shared checkout on 2026-11-13. It is untracked and absent from this PR's
+base, so it has no immutable repository URL. Inspected PNG SHA-256:
+`cc5abaf9ff3167c7edd5ffc9be5a6129d177d77ae75e6823b4dfa23eadd35a0f`.
+Its Control Plane labels Identity & Access, Execution Coordination, Artifact Management, Reviews & Approvals and
+Policies & Governance; its Data Layer separates Artifact Storage from Platform
+Database. This supports the proposed ownership direction. The Experience Layer
+shows Web, Desktop and APIs & SDKs; it does not specify an Evidence protocol.
+The Brain, optional vector store and distributed deployment pictures are vision,
+not accepted M3 infrastructure or implemented behavior. Canonical authority
+remains [ARCHITECTURE §4](../ARCHITECTURE.md#4-platform-and-worker-boundary)
+and its public-API-only client rule (lines 154–158), not this illustration.
+
+After explicit owner approval, sequence the work as follows:
+
+1. **M3 capture:** complete Usage end to end, including identity, failed/cancelled
+   outcomes, redaction, transaction/outbox and replay tests. Then define and
+   implement the remaining recorder inputs and attribution with bounded payloads.
+   Use controlled producers/fakes to prove the full test-Execution query; do not
+   pull the M4 delivery loop or M5 retries/remote transport into M3.
+2. **M3 read/API foundation:** integrate transaction-aware metadata composition
+   and scoped authorization with WP-M3-06; review a versioned public contract and
+   fixtures before exposing the bundle. Prove concurrent reads, gaps and access
+   isolation. Headless does not mean internal-only: Web must inherit a tested
+   public boundary. Usage alone or an internal sequential Reader is insufficient
+   to complete #124/#19. Any deliberate deferral needs an explicit owner scope
+   change, not a silent move into M4.
+3. **M4 product integration:** connect real delivery/check/review producers
+   (WP-M4-03/04) and the inbox/diff/Evidence/cost view (WP-M4-06) to that API.
+   Preserve exact Approval bindings and show unknown usage, gaps and unavailable
+   bytes. WP-M4-07 records reconstruction of one change end to end and native
+   three-OS supervised runs; M3's Linux-first exception does not waive M4 exit.
+
+### Evidence identity and completeness (proposed)
+
+A capture identity identifies a durable fact; a content hash identifies bytes;
+a bundle digest identifies an assembled representation. Keep these distinct.
+Use Platform-derived Execution/Step/attempt attribution plus producer identity
+and stable ordinal for capture deduplication; a replay must preserve ordering
+and payload, with conflicts rejected rather than overwritten. References pin
+exact definition/context/Skill revisions, Artifact versions and hashes, and
+ordered history positions. Do not resolve an audit reference to mutable latest
+content. Existing accepted Approval bindings remain the review identity.
+
+Completeness must be assessed per expected Evidence kind and applicable attempt
+at the metadata read boundary: captured, pending, unavailable/expired, or
+explicitly not applicable with reason. These are proposed semantic distinctions,
+not agreed wire enum names. Recorder-not-implemented and producer-failed gaps
+must stay distinguishable; an empty list is not proof that nothing was needed.
+Terminal Execution state, complete metadata and currently retrievable bytes are
+independent. Missing Usage means unknown, never zero (ADR-0033). A timeout or
+store failure is an unsuccessful query, not a fabricated completeness gap.
+Do not seal Evidence solely because the Execution terminated; late enrichment
+remains a separate owner choice and must never rewrite a decided Approval.
 
 ### Capture and publication boundary (proposed)
 
@@ -137,8 +208,12 @@ StepEvents or lifecycle Events as durable checks, diffs or logs.
   must be scoped to principal permissions and Organization/Project.
 - Recommend one repeatable-read transaction for all Platform metadata used in a
   bundle, including authorization-relevant scope, ordered history, capture
-  references and explicit missing/expired/pending states. All pages use that same
-  read boundary. This is a proposed adapter guarantee, **not verified behavior**
+  references and explicit missing/expired/pending states. All internally fetched
+  pages use that same read boundary. Bound the transaction duration and query size. Do not keep a
+  database transaction open while a human reviews or a client fetches later
+  pages; cross-request pagination would require a separately reviewed snapshot
+  token/materialization contract, not ordinary cursors over changing data. This
+  is a proposed adapter guarantee, **not verified behavior**
   of the current ports. Existing separate adapter calls need transaction-aware
   composition; rereading only the Execution version is insufficient because
   context, Artifacts and audit may change independently.
