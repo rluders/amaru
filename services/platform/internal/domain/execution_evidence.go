@@ -161,6 +161,9 @@ func BuildExecutionEvidence(in ExecutionEvidenceInput) (ExecutionEvidence, error
 		if a.Gate.ExecutionID != id {
 			return ExecutionEvidence{}, invalid("evidence: approval %s gates execution %s, not %s", a.ID, a.Gate.ExecutionID, id)
 		}
+		if _, ok := steps[a.Gate.StepID]; !ok {
+			return ExecutionEvidence{}, invalid("evidence: approval %s gates unknown step %s", a.ID, a.Gate.StepID)
+		}
 		approvals[a.ID] = true
 	}
 	for _, ev := range in.Audit {
@@ -171,6 +174,11 @@ func BuildExecutionEvidence(in ExecutionEvidenceInput) (ExecutionEvidence, error
 	for _, ev := range in.Events {
 		if ev.ExecutionID != id {
 			return ExecutionEvidence{}, invalid("evidence: event %d belongs to execution %s, not %s", ev.Seq, ev.ExecutionID, id)
+		}
+		if ev.StepID != "" {
+			if _, ok := steps[ev.StepID]; !ok {
+				return ExecutionEvidence{}, invalid("evidence: event %d references unknown step %s", ev.Seq, ev.StepID)
+			}
 		}
 	}
 	if out.Events == nil {
