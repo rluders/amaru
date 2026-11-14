@@ -141,3 +141,36 @@ func TestBuildExecutionEvidenceRefusesPartsOfAnotherRun(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildExecutionEvidenceRejectsUnknownStepReferences(t *testing.T) {
+	for _, part := range []string{"event", "approval"} {
+		t.Run(part, func(t *testing.T) {
+			in := evidenceInput(t)
+			if part == "event" {
+				in.Events[0].StepID = "another-executions-step"
+			} else {
+				in.Approvals[0].Gate.StepID = "another-executions-step"
+			}
+			got, err := BuildExecutionEvidence(in)
+			if !errors.Is(err, ErrInvalid) {
+				t.Fatalf("got %v, want ErrInvalid", err)
+			}
+			if got.Digest != "" || got.Execution.ID != "" {
+				t.Fatal("invalid attribution returned a bundle")
+			}
+		})
+	}
+}
+
+func TestBuildExecutionEvidenceAllowsExecutionAndStepEvents(t *testing.T) {
+	in := evidenceInput(t)
+	in.Events[0].StepID = ""
+	in.Events = append(in.Events, ExecutionEvent{ExecutionID: in.Execution.ID, Seq: 2, Kind: EventStepLeased, StepID: in.Steps[0].ID})
+	got, err := BuildExecutionEvidence(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Events[0].StepID != "" || got.Events[1].StepID != in.Steps[0].ID || got.Digest == "" {
+		t.Fatalf("events changed: %+v", got.Events)
+	}
+}
