@@ -174,3 +174,18 @@ func TestCommandsProviderFailureAndCancellation(t *testing.T) {
 		t.Fatal("secret emitted")
 	}
 }
+
+// A sink is an adapter boundary; its panic value may contain credentials.
+type panicWriter struct{}
+
+func (panicWriter) Write([]byte) (int, error) { panic("credential-bearing sink panic") }
+
+func TestSinkPanicReturnsSafeError(t *testing.T) {
+	l, _ := New(panicWriter{})
+	ctx := WithIdentity(context.Background(), Identity{InstanceID: "i", CorrelationID: "c"})
+	for range 2 {
+		if err := l.Write(ctx, Record{Operation: "command", Outcome: "failed"}); err == nil || err.Error() != "operational log write failed" {
+			t.Fatal("unsafe or missing sink error")
+		}
+	}
+}
