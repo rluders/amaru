@@ -101,6 +101,16 @@ func (l *Logger) Write(ctx context.Context, rec Record) error {
 	line = append(line, '\n')
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	return l.writeLine(line)
+}
+
+// Contain sink panics without formatting their potentially credential-bearing values.
+func (l *Logger) writeLine(line []byte) (err error) {
+	defer func() {
+		if recover() != nil {
+			err = errors.New("operational log write failed")
+		}
+	}()
 	n, err := l.out.Write(line)
 	if err != nil || n != len(line) {
 		return errors.New("operational log write failed")

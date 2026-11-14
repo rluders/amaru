@@ -198,3 +198,54 @@ func TestHTTPUpgradeFlushAndPanicChannels(t *testing.T) {
 		t.Fatal("missing upgrade/panic outcome")
 	}
 }
+
+func TestHTTPSinkPanicOmitsRawDiagnostic(t *testing.T) {
+	var serverErrors bytes.Buffer
+	logger, _ := New(panicWriter{})
+	failures := make(chan error, 3)
+	server := httptest.NewUnstartedServer(logger.HTTP("instance", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/reject":
+			w.WriteHeader(http.StatusForbidden)
+		case "/panic":
+			panic("unregistered-handler-credential")
+		default:
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}), func(err error) { failures <- err }))
+	server.Config.ErrorLog = log.New(&serverErrors, "", 0)
+	server.Start()
+	defer server.Close()
+	for _, tc := range []struct {
+		path   string
+		status int
+	}{{"/ok", 204}, {"/reject", 403}, {"/panic", 0}} {
+		res, err := server.Client().Get(server.URL + tc.path)
+		if tc.status == 0 {
+			if err == nil {
+				res.Body.Close()
+				t.Fatal("panic did not abort connection")
+			}
+		} else {
+			if err != nil {
+				t.Fatal(err)
+			}
+			res.Body.Close()
+			if res.StatusCode != tc.status {
+				t.Fatal("logging changed response status")
+			}
+		}
+		select {
+		case err := <-failures:
+			if err == nil || err.Error() != "operational log write failed" {
+				t.Fatal("unsafe sink error")
+			}
+		default:
+			t.Fatal("missing sink failure callback")
+		}
+	}
+	server.Close()
+	if serverErrors.Len() != 0 {
+		t.Fatal("raw server diagnostic escaped")
+	}
+}
