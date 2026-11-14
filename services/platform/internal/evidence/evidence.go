@@ -95,14 +95,22 @@ func (r Reader) approvalAudit(ctx context.Context, approvals []domain.Approval) 
 		if err != nil {
 			return nil, err
 		}
+		if len(page) > auditPage {
+			return nil, fmt.Errorf("%w: evidence audit page exceeds limit %d", domain.ErrInvalid, auditPage)
+		}
+		last := after
 		for _, ev := range page {
+			if ev.Seq <= last {
+				return nil, fmt.Errorf("%w: evidence audit sequence %d does not advance past %d", domain.ErrInvalid, ev.Seq, last)
+			}
 			if ev.TargetType == "approval" && want[ev.TargetID] {
 				out = append(out, ev)
 			}
-			after = ev.Seq
+			last = ev.Seq
 		}
 		if len(page) < auditPage {
 			return out, nil
 		}
+		after = last
 	}
 }

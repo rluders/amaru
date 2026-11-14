@@ -213,3 +213,42 @@ func TestBundlePreservesHistoricalUsageWithoutCoveringCurrentAttempt(t *testing.
 		})
 	}
 }
+
+func TestBundleRejectsInvalidAuditPages(t *testing.T) {
+	for _, kind := range []string{"duplicate", "descending", "stale cursor", "oversized"} {
+		t.Run(kind, func(t *testing.T) {
+			r, s := readerFixture()
+			s.audit = func(after int64, limit int) ([]domain.AuditEvent, error) {
+				event := func(seq int64) domain.AuditEvent {
+					return domain.AuditEvent{Seq: seq, TargetType: "approval", TargetID: "a1"}
+				}
+				if after == 0 {
+					page := make([]domain.AuditEvent, limit)
+					for i := range page {
+						page[i] = event(int64(i + 1))
+					}
+					return page, nil
+				}
+				switch kind {
+				case "duplicate":
+					return []domain.AuditEvent{event(after + 1), event(after + 1)}, nil
+				case "descending":
+					return []domain.AuditEvent{event(after + 2), event(after + 1)}, nil
+				case "stale cursor":
+					return []domain.AuditEvent{event(after)}, nil
+				default:
+					page := make([]domain.AuditEvent, limit+1)
+					for i := range page {
+						page[i] = event(after + int64(i) + 1)
+					}
+					return page, nil
+				}
+			}
+			b, err := r.Bundle(context.Background(), "e1")
+			assertNoBundle(t, b, err, domain.ErrInvalid)
+			if len(s.auditCalls) != 2 {
+				t.Fatalf("audit calls = %v", s.auditCalls)
+			}
+		})
+	}
+}
