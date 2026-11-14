@@ -101,3 +101,8 @@ The [Linux ART-002 Step-attribution record](../validation/m3/2026-11-13-linux-ar
 ## Usage capture (ART-002 bounded slice)
 
 The [Linux Usage capture record](../validation/m3/2026-11-13-linux-art-002-usage-capture.md) covers Worker-result mapping, fenced attribution, atomic completion/capture/publication intent, replay conflicts and explicit unknown values. This does not establish public Event delivery, authorized API exposure, a consistent bundle snapshot or full ART-002 acceptance.
+
+
+## Internal Evidence read scope (ART-002)
+
+The [Linux read-scope record](../validation/m3/2026-11-14-linux-art-002-read-scope.md) covers one PostgreSQL transaction for all currently recorded bundle metadata, concurrent commits, audit pagination, cancellation and rollback. Lifecycle fakes run in `make check`; PostgreSQL cases require `make platform-test-pg`. This is internal metadata consistency evidence only: authorization, API exposure, blob availability and full ART-002 acceptance remain unvalidated.

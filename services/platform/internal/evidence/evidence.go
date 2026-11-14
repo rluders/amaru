@@ -9,15 +9,24 @@ import (
 	"fmt"
 
 	"github.com/rluders/amaru/services/platform/internal/domain"
-	"github.com/rluders/amaru/services/platform/internal/ports"
 )
 
 // Reader builds Evidence bundles. All three stores are required: a missing one would make a
 // bundle look complete without a part of its content.
 type Reader struct {
-	Executions ports.ExecutionStore
-	Contexts   ports.ContextStore
-	Artifacts  ports.ArtifactIndex
+	Executions interface {
+		Get(context.Context, string) (domain.Execution, []domain.StepExecution, error)
+		Events(context.Context, string) ([]domain.ExecutionEvent, error)
+		Approvals(context.Context, string) ([]domain.Approval, error)
+		Audit(context.Context, int64, int) ([]domain.AuditEvent, error)
+		UsageCaptures(context.Context, string) ([]domain.ResultCapture, error)
+	}
+	Contexts interface {
+		Get(context.Context, string, string) (domain.StepContext, error)
+	}
+	Artifacts interface {
+		ByExecution(context.Context, string) ([]domain.ArtifactVersion, error)
+	}
 }
 
 // auditPage is how many audit entries one read asks for.
@@ -25,7 +34,8 @@ const auditPage = 1000
 
 // Bundle returns the Evidence of the requested Execution, or domain.ErrNotFound. Store identity
 // mismatches return domain.ErrInvalid; any read failure returns no bundle. The parts are read
-// sequentially, not in one snapshot. Final reflects the Execution state read by Get; it does not
+// sequentially; a shared snapshot requires transaction-bound readers supplied by the adapter.
+// Final reflects the Execution state read by Get; it does not
 // certify snapshot consistency or prevent later Artifact versions from changing the Digest.
 func (r Reader) Bundle(ctx context.Context, executionID string) (domain.ExecutionEvidence, error) {
 	if r.Executions == nil || r.Contexts == nil || r.Artifacts == nil {

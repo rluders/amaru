@@ -102,13 +102,17 @@ func (s *ExecutionStore) Approvals(ctx context.Context, executionID string) ([]d
 		return nil, fmt.Errorf("postgres: approvals: %w", err)
 	}
 	defer tx.Rollback()
+	return executionApprovals(ctx, tx, executionID)
+}
+
+func executionApprovals(ctx context.Context, q metadataQuery, executionID string) ([]domain.Approval, error) {
 	var one int
-	if err := tx.QueryRowContext(ctx, `SELECT 1 FROM executions WHERE id = $1`, executionID).Scan(&one); errors.Is(err, sql.ErrNoRows) {
+	if err := q.QueryRowContext(ctx, `SELECT 1 FROM executions WHERE id = $1`, executionID).Scan(&one); errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, executionID)
 	} else if err != nil {
 		return nil, fmt.Errorf("postgres: approvals: %w", err)
 	}
-	rows, err := tx.QueryContext(ctx, `SELECT `+approvalColumns+` FROM approvals WHERE execution_id = $1 ORDER BY requested_at, id`, executionID)
+	rows, err := q.QueryContext(ctx, `SELECT `+approvalColumns+` FROM approvals WHERE execution_id = $1 ORDER BY requested_at, id`, executionID)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: approvals: %w", err)
 	}

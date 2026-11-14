@@ -375,13 +375,16 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 		return domain.Execution{}, nil, fmt.Errorf("postgres: get execution: %w", err)
 	}
 	defer tx.Rollback()
+	return getExecution(ctx, tx, id)
+}
 
+func getExecution(ctx context.Context, q metadataQuery, id string) (domain.Execution, []domain.StepExecution, error) {
 	var e domain.Execution
 	var state string
 	var started, ended sql.NullTime
 	var code, msg, defWorkflow, defRevision, defHash, defSnapshot sql.NullString
 	var requestedBy []byte
-	err = tx.QueryRowContext(ctx,
+	err := q.QueryRowContext(ctx,
 		`SELECT id, version, state, created_at, started_at, ended_at, error_code, error_message, project_id, environment_id,
 		   definition_workflow, definition_revision, definition_hash, definition_snapshot, requested_by, trigger_kind FROM executions WHERE id = $1`, id).
 		Scan(&e.ID, &e.Version, &state, &e.CreatedAt, &started, &ended, &code, &msg, &e.ProjectID, &e.EnvironmentID,
@@ -403,7 +406,7 @@ func (s *ExecutionStore) Get(ctx context.Context, id string) (domain.Execution, 
 		e.Error = &domain.ExecError{Code: code.String, Message: msg.String}
 	}
 
-	rows, err := tx.QueryContext(ctx,
+	rows, err := q.QueryContext(ctx,
 		`SELECT id, execution_id, version, state, reason, started_at, ended_at, error_code, error_message,
 		   idempotent, remote_job_id, remote_job_resumable, lease_owner, lease_expires_at, agent,
 		   capability, inputs, attempt_id, fence_token, timeout_seconds, skills
@@ -486,13 +489,17 @@ func (s *ExecutionStore) Events(ctx context.Context, id string) ([]domain.Execut
 		return nil, fmt.Errorf("postgres: events: %w", err)
 	}
 	defer tx.Rollback()
+	return executionEvents(ctx, tx, id)
+}
+
+func executionEvents(ctx context.Context, q metadataQuery, id string) ([]domain.ExecutionEvent, error) {
 	var one int
-	if err := tx.QueryRowContext(ctx, `SELECT 1 FROM executions WHERE id = $1`, id).Scan(&one); errors.Is(err, sql.ErrNoRows) {
+	if err := q.QueryRowContext(ctx, `SELECT 1 FROM executions WHERE id = $1`, id).Scan(&one); errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: execution %s", domain.ErrNotFound, id)
 	} else if err != nil {
 		return nil, fmt.Errorf("postgres: events: %w", err)
 	}
-	rows, err := tx.QueryContext(ctx,
+	rows, err := q.QueryContext(ctx,
 		`SELECT execution_id, seq, kind, step_id, reason, at FROM execution_events WHERE execution_id = $1 ORDER BY seq`, id)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: events: %w", err)
