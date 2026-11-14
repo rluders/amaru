@@ -220,3 +220,10 @@ The [Linux SDK log capture record](../validation/m3/2026-11-13-linux-obs-001-sdk
 This is integration-tested test-fixture composition under #170, with fake storage and Node-injected Cookie/Origin. It does not add product startup, PostgreSQL SDK, Provider, Execution/Event transport or native non-Linux evidence. #170/#191/#18 and M3 remain open for their outstanding gates.
 
 The [rejected-auth diagnostic record](../validation/m3/2026-11-13-linux-obs-001-rejected-auth.md) extends this capture to distinct invalid bearer, launch-code, CSRF and session-cookie values, including the encoded launch query. Rejection responses and both diagnostic channels must omit those values; rejected logout must preserve the legitimate session. This adds Linux test-fixture evidence for #170/#92, with the same product and platform limits above.
+
+
+### Committed Workflow dispatch isolation
+
+The [Linux Workflow dispatch record](../validation/m3/2026-11-13-linux-prj-002-workflow-dispatch.md) connects real Git attachment and Project-selected committed Workflow loading to actual coordinator/embedded Worker dispatch with fake persistence and Provider outcomes. Two Projects with matching Workflow/Step identifiers remain separate while one has invalid committed content, a pending Approval and a failed Execution. Healthy work completes before and after coordinator/Worker object recreation; original pins and prior Execution/Step/Event/Approval snapshots remain unchanged. Explicit test-owner hash-pinned Workflow trust is required; default Policy remains active.
+
+This is integration evidence for the application-to-Worker path, not public Workflow HTTP/SDK, production Provider/secret delivery, PostgreSQL/process restart or full #191 acceptance. The linked record refreshes native blockers, designated bases and remaining gates for #92/#170/#191/#219 and #16/#17/#19 after merged PR #373. Work/dependency mutation isolation, other definitions and product composition remain open. No Workflow reconciliation or change Event semantics are introduced.
