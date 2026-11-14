@@ -150,7 +150,8 @@ func BuildExecutionEvidence(in ExecutionEvidenceInput) (ExecutionEvidence, error
 	}
 	missingUsage := false
 	for i := range out.Steps {
-		if len(out.Steps[i].Usage) == 0 {
+		// Historical receipts remain visible, but cannot cover the current attempt.
+		if len(out.Steps[i].Usage) == 0 || in.Steps[i].AttemptID != "" && !hasUsageAttempt(out.Steps[i].Usage, in.Steps[i].AttemptID) {
 			out.Steps[i].UsageGap = "no accepted Worker result captured; usage unknown"
 			missingUsage = true
 		} else {
@@ -232,4 +233,9 @@ func BuildExecutionEvidence(in ExecutionEvidenceInput) (ExecutionEvidence, error
 	sum := sha256.Sum256(raw)
 	out.Digest = "sha256:" + hex.EncodeToString(sum[:])
 	return out, nil
+}
+
+// hasUsageAttempt is scoped to the Step: another Step's receipt is not coverage.
+func hasUsageAttempt(captures []ResultCapture, attempt string) bool {
+	return slices.ContainsFunc(captures, func(c ResultCapture) bool { return c.AttemptID == attempt })
 }
